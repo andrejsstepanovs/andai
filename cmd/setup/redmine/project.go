@@ -39,6 +39,12 @@ func runRedmineSaveProject(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error redmine project save: %v", err)
 	}
 
+	err = saveWiki(client, project)
+	if err != nil {
+		fmt.Println("Redmine Project Wiki Save Fail")
+		return fmt.Errorf("error redmine project save: %v", err)
+	}
+
 	fmt.Printf("ID: %d, Name: %s\n", project.Id, project.Name)
 
 	err = saveGit(project)
@@ -47,6 +53,36 @@ func runRedmineSaveProject(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error redmine git save: %v", err)
 	}
 
+	return nil
+}
+
+func saveWiki(client *redmine.Client, project redmine.Project) error {
+	const TITLE = "Wiki"
+	page, err := client.WikiPage(project.Id, TITLE)
+	if err != nil {
+		if "Not Found" != err.Error() {
+			fmt.Println("Redmine Wiki Page Fail")
+			return fmt.Errorf("error redmine wiki page: %v", err)
+		}
+		page = &redmine.WikiPage{
+			Title: TITLE,
+			Text:  viper.GetString("project.wiki"),
+		}
+		_, err = client.CreateWikiPage(project.Id, *page)
+		if err != nil {
+			fmt.Println("Redmine Wiki Page Create Fail")
+			return fmt.Errorf("error redmine wiki page create: %v", err)
+		}
+		fmt.Printf("Wiki page created: %s\n", TITLE)
+		return nil
+	}
+
+	page.Text = strings.TrimSpace(viper.GetString("project.wiki"))
+	err = client.UpdateWikiPage(project.Id, *page)
+	if err != nil && err.Error() != "EOF" {
+		fmt.Println("Redmine Wiki Page Update Fail")
+		return fmt.Errorf("error redmine wiki page update: %v", err)
+	}
 	return nil
 }
 
