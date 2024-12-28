@@ -1,13 +1,33 @@
-project:
-  id: "my-project"
-  name: "My Project"
-  description: "This is a sample project."
-  git:
-    branch: "main"
-    path: "/path/to/project/repository"
-aaa: aaa
-
 redmine:
   db: redmine:redmine@tcp(0.0.0.0:3306)/redmine # things from docker-compose
   url: "http://localhost:10083"
   api_key: "2159cef2fb6c82c4f66981f199798781e161c694"
+
+project:
+  id: "my-project"
+  name: "My Project"
+  description: "This is a sample project x."
+  git:
+    branch: "main"
+    path: "/path/to/project/repository"
+
+states:
+  Backlog:
+    description: Product backlog with user stories.
+    ai: False
+  To Do:
+    description: Tasks selected for the current sprint.
+    ai: True
+    prompt: Split Story task into smaller chunks or start working on a task.
+  In Progress:
+    description: Tasks currently being worked on.
+    ai: True
+  Testing:
+    description: Tasks undergoing testing.
+    ai: False
+  Rejected:
+    description: Tasks rejected during testing.
+    ai: True
+  Done:
+    description: Completed tasks.
+    ai: False

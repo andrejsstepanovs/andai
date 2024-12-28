@@ -31,6 +31,7 @@ func SetupUpdateCmd() *cobra.Command {
 		database.NewAdminCommand(),
 		database.NewSettingsCommand(),
 		database.NewGetTokenCommand(),
+		redmine.NewProjectCommand(),
 	)
 
 	return cmd
