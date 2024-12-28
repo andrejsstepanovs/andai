@@ -27,7 +27,7 @@ func main() {
 
 	rootCmd.AddCommand(
 		ping.SetupPingCmd(deps),
-		setup.SetupUpdateCmd(),
+		setup.SetupUpdateCmd(deps),
 	)
 
 	if err := rootCmd.Execute(); err != nil {

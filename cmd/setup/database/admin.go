@@ -1,46 +1,27 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
 
+	"github.com/andrejsstepanovs/andai/pkg/redmine"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-func NewAdminCommand() *cobra.Command {
+func NewAdminCommand(redmine *redmine.Model) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "admin",
 		Short: "Fix admin login no need to change password",
-		RunE:  runDatabaseAdmin,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Println("Update redmine admin must_change_passwd = 0")
+
+			err := redmine.DbSettingsAdminMustNotChangePassword()
+			if err != nil {
+				fmt.Println("Redmine Admin Setting Change Fail")
+				return fmt.Errorf("error db: %v", err)
+			}
+			return nil
+		},
 	}
 	return cmd
-}
-
-func runDatabaseAdmin(cmd *cobra.Command, args []string) error {
-	fmt.Println("Update redmine admin must_change_passwd = 0")
-
-	db, err := sql.Open("mysql", viper.GetString("redmine.db"))
-	if err != nil {
-		panic(err)
-	}
-
-	result, err := db.Exec("UPDATE users SET must_change_passwd = 0 WHERE login = ?", "admin")
-	if err != nil {
-		return fmt.Errorf("update users db err: %v", err)
-	}
-
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected err: %v", err)
-	}
-
-	if affected > 0 {
-		fmt.Println("Admin must_change_passwd set to 0")
-	} else {
-		fmt.Println("Admin must_change_passwd not changed")
-	}
-
-	return nil
 }
