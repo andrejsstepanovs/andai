@@ -11,11 +11,16 @@ func SetupUpdateCmd(deps *deps.AppDependencies) *cobra.Command {
 		Short: "Changes environment setup",
 	}
 
+	admin := newAdminCommand(deps.Model)
+	settings := newSettingsCommand(deps.Model)
+	token := newGetTokenCommand(deps.Model)
+	project := newProjectCommand(deps.Model)
+
 	cmd.AddCommand(
-		newAdminCommand(deps.Model),
-		newSettingsCommand(deps.Model),
-		newGetTokenCommand(deps.Model),
-		newProjectCommand(deps.Model),
+		admin,
+		settings,
+		token,
+		project,
 	)
 
 	return cmd
