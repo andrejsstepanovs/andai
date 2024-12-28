@@ -29,6 +29,7 @@ func SetupUpdateCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		database.NewAdminCommand(),
+		database.NewSettingsCommand(),
 	)
 
 	return cmd

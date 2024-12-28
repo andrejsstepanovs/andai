@@ -4,3 +4,4 @@ description: "This is a sample project."
 git:
   branch: "main"
   path: "/path/to/project/repository"
+

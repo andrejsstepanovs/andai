@@ -10,4 +10,4 @@ aaa: aaa
 redmine:
   db: redmine:redmine@tcp(0.0.0.0:3306)/redmine # things from docker-compose
   url: "http://localhost:10083"
-  api_key: "my-api"
+  api_key: "c8a1aae33822c33376dfa41d3a733c4c733c6a6c"
