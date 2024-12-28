@@ -1,19 +1,34 @@
 package setup
 
 import (
+	"github.com/andrejsstepanovs/andai/cmd/setup/database"
 	"github.com/andrejsstepanovs/andai/cmd/setup/redmine"
 	"github.com/spf13/cobra"
 )
 
-func SetupCmd() *cobra.Command {
+func SetupPingCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "setup",
-		Short: "Setup environment",
-		Long:  `Setup all necessary parts of the project.`,
+		Use:   "ping",
+		Short: "Ping environment",
+		Long:  `Check if all necessary connections work.`,
 	}
 
 	cmd.AddCommand(
+		database.NewPingCommand(),
 		redmine.NewPingCommand(),
+	)
+
+	return cmd
+}
+
+func SetupUpdateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "setup",
+		Short: "Changes environment setup",
+	}
+
+	cmd.AddCommand(
+		database.NewAdminCommand(),
 	)
 
 	return cmd

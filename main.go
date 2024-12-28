@@ -21,7 +21,8 @@ func main() {
 	}
 
 	rootCmd.AddCommand(
-		setup.SetupCmd(),
+		setup.SetupPingCmd(),
+		setup.SetupUpdateCmd(),
 	)
 
 	if err := rootCmd.Execute(); err != nil {

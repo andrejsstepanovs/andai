@@ -3,6 +3,7 @@ package redmine
 import (
 	"fmt"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/mattn/go-redmine"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -10,7 +11,7 @@ import (
 
 func NewPingCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "ping",
+		Use:   "redmine",
 		Short: "Ping connection to redmine",
 		RunE:  runRedminePing,
 	}
@@ -29,8 +30,6 @@ func runRedminePing(cmd *cobra.Command, args []string) error {
 	for _, project := range projects {
 		fmt.Println(project)
 	}
-
 	fmt.Println("Redmine Ping Success")
-
 	return nil
 }

@@ -1,12 +1,53 @@
 services:
+  phpmyadmin:
+    image: phpmyadmin
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      - PMA_ARBITRARY=1
+    depends_on:
+      - database
+    networks:
+      - redmine_network
+
+
+  database:
+    image: mariadb:11.2
+    environment:
+      - MARIADB_USER=redmine
+      - MARIADB_PASSWORD=redmine
+      - MARIADB_DATABASE=redmine
+      - MARIADB_RANDOM_ROOT_PASSWORD=1
+      - MARIADB_AUTO_UPGRADE=1
+    ports:
+      - "3306:3306"
+    volumes:
+      - database_data:/var/lib/mysql
+    command:
+      - mariadbd
+      - --transaction-isolation=READ-COMMITTED
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    networks:
+      - redmine_network
+
+
   redmine:
     build: ./docker-redmine/
     image: sameersbn/redmine:6.0.2
     environment:
       - TZ=Europe/Berlin
 
-      - DB_ADAPTER=sqlite3
-      - DB_NAME=db.sqlite3
+#      - DB_ADAPTER=sqlite3
+#      - DB_NAME=db.sqlite3
+      - DB_ADAPTER=mysql2
+      - DB_ENCODING=utf8mb4
+      - DB_HOST=database
+      - DB_PORT=3306
+      - DB_USER=redmine
+      - DB_PASS=redmine
+      - DB_NAME=redmine
 
       - REDMINE_PORT=10083
       - REDMINE_HTTPS=false
@@ -46,57 +87,59 @@ services:
       - REDMINE_SECRET_TOKEN=redmine
     ports:
       - "10083:80"
-    volumes:
-      - redmine_data:/home/redmine/data
-      - redmine_logs:/var/log/redmine
-      - ./www:/var/www
-    networks:
-      - redmine_network
-
-  dev:
-    build:
-      context: agents/
-      dockerfile: Dockerfile
-    volumes:
-      - ./www:/var/www
-    tty: true
-    stdin_open: true
-    container_name: ubuntu-dev
-    hostname: ubuntu-dev
-    networks:
-      - redmine_network
     depends_on:
-      - redmine
-    command: tail -f /dev/null
-    environment:
-      - TERM=xterm-256color
-      - SHELL=/bin/zsh
-      - CODER_REDMINE_API_KEY=${CODER_REDMINE_API_KEY}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - GITHUB_ACCESS_TOKEN=${GITHUB_ACCESS_TOKEN}
-      - REDMINE_URL=http://redmine
+      - database
+    volumes:
+      - ./data/redmine_logs:/var/log/redmine
+      - ./data/redmine/data:/home/redmine/data
+      - ./www:/var/www
+    networks:
+      - redmine_network
 
-      - REDMINE_ARCHITECT_LOGIN=${REDMINE_ARCHITECT_LOGIN}
-      - REDMINE_ARCHITECT_PASSWORD=${REDMINE_ARCHITECT_PASSWORD}
-      - REDMINE_ARCHITECT_API_KEY=${REDMINE_ARCHITECT_API_KEY}
-
-      - REDMINE_CODER_LOGIN=${REDMINE_CODER_LOGIN}
-      - REDMINE_CODER_PASSWORD=${REDMINE_CODER_PASSWORD}
-      - REDMINE_CODER_API_KEY=${REDMINE_CODER_API_KEY}
-
-      - REDMINE_CODER_JUNIOR_LOGIN=${REDMINE_CODER_JUNIOR_LOGIN}
-      - REDMINE_CODER_JUNIOR_PASSWORD=${REDMINE_CODER_JUNIOR_PASSWORD}
-      - REDMINE_CODER_JUNIOR_API_KEY=${REDMINE_CODER_JUNIOR_API_KEY}
-
-      - LM_STUDIO_API_BASE=${LM_STUDIO_API_BASE}
-      - LM_STUDIO_API_KEY=${LM_STUDIO_API_KEY}
-      - OLLAMA_API_BASE=${OLLAMA_API_BASE}
+#  dev:
+#    build:
+#      context: agents/
+#      dockerfile: Dockerfile
+#    volumes:
+#      - ./www:/var/www
+#    tty: true
+#    stdin_open: true
+#    container_name: ubuntu-dev
+#    hostname: ubuntu-dev
+#    networks:
+#      - redmine_network
+#    depends_on:
+#      - redmine
+#    command: tail -f /dev/null
+#    environment:
+#      - TERM=xterm-256color
+#      - SHELL=/bin/zsh
+#      - CODER_REDMINE_API_KEY=${CODER_REDMINE_API_KEY}
+#      - OPENAI_API_KEY=${OPENAI_API_KEY}
+#      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+#      - GITHUB_ACCESS_TOKEN=${GITHUB_ACCESS_TOKEN}
+#      - REDMINE_URL=http://redmine
+#
+#      - REDMINE_ARCHITECT_LOGIN=${REDMINE_ARCHITECT_LOGIN}
+#      - REDMINE_ARCHITECT_PASSWORD=${REDMINE_ARCHITECT_PASSWORD}
+#      - REDMINE_ARCHITECT_API_KEY=${REDMINE_ARCHITECT_API_KEY}
+#
+#      - REDMINE_CODER_LOGIN=${REDMINE_CODER_LOGIN}
+#      - REDMINE_CODER_PASSWORD=${REDMINE_CODER_PASSWORD}
+#      - REDMINE_CODER_API_KEY=${REDMINE_CODER_API_KEY}
+#
+#      - REDMINE_CODER_JUNIOR_LOGIN=${REDMINE_CODER_JUNIOR_LOGIN}
+#      - REDMINE_CODER_JUNIOR_PASSWORD=${REDMINE_CODER_JUNIOR_PASSWORD}
+#      - REDMINE_CODER_JUNIOR_API_KEY=${REDMINE_CODER_JUNIOR_API_KEY}
+#
+#      - LM_STUDIO_API_BASE=${LM_STUDIO_API_BASE}
+#      - LM_STUDIO_API_KEY=${LM_STUDIO_API_KEY}
+#      - OLLAMA_API_BASE=${OLLAMA_API_BASE}
 
 networks:
   redmine_network:
     driver: bridge
 
 volumes:
-  redmine_data:
-  redmine_logs:
+  database_data:
+
