@@ -27,12 +27,6 @@ func runRedmineSettings(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}
 
-	// INSERT INTO `settings` (`id`, `name`, `value`, `updated_on`) VALUES
-	//(1, 'default_notification_option', 'only_assigned', NULL),
-	//(2, 'text_formatting', 'common_mark', NULL),
-	//(3, 'rest_api_enabled', '1', '2024-12-28 19:03:46'),
-	//(4, 'jsonp_enabled', '0', '2024-12-28 19:03:46');
-
 	results, err := db.Query("SELECT id, name, value FROM settings WHERE name = ?", "rest_api_enabled")
 	if err != nil {
 		fmt.Println("Redmine Admin Fail")

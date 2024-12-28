@@ -22,13 +22,13 @@ func runRedminePing(cmd *cobra.Command, args []string) error {
 	fmt.Println("Processing Jira issue", len(args))
 
 	client := redmine.NewClient(viper.GetString("redmine.url"), viper.GetString("redmine.api_key"))
-	projects, err := client.News(1)
+	users, err := client.Users()
 	if err != nil {
 		fmt.Println("Redmine Ping Fail")
 		return fmt.Errorf("error redmine ping: %v", err)
 	}
-	for _, project := range projects {
-		fmt.Println(project)
+	for _, user := range users {
+		fmt.Println(fmt.Sprintf("ID: %d, Name: %s", user.Id, user.Login))
 	}
 	fmt.Println("Redmine Ping Success")
 	return nil
