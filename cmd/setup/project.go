@@ -15,7 +15,7 @@ func newProjectCommand(model *model.Model) *cobra.Command {
 		Use:   "project",
 		Short: "Save (Update) project",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("Processing Redmine project save", len(args))
+			fmt.Println("Processing Redmine project sync")
 			project := redmine.Project{
 				Name:        viper.GetString("project.name"),
 				Identifier:  viper.GetString("project.id"),
@@ -27,20 +27,21 @@ func newProjectCommand(model *model.Model) *cobra.Command {
 				fmt.Println("Redmine Project Save Fail")
 				return fmt.Errorf("error redmine project save: %v", err)
 			}
+			fmt.Println("Project OK")
 
-			err = model.SaveWiki(project, viper.GetString("project.wiki"))
+			err = model.DbSaveWiki(project, viper.GetString("project.wiki"))
 			if err != nil {
 				fmt.Println("Redmine Project Wiki Save Fail")
 				return fmt.Errorf("error redmine project save: %v", err)
 			}
-			fmt.Println("Wiki saved")
+			fmt.Println("Wiki OK")
 
-			err = model.SaveGit(project, viper.GetString("project.git_path"))
+			err = model.DbSaveGit(project, viper.GetString("project.git_path"))
 			if err != nil {
 				fmt.Println("Redmine Git Save Fail")
 				return fmt.Errorf("error redmine git save: %v", err)
 			}
-			fmt.Println("Git saved")
+			fmt.Println("Project repository OK")
 
 			return nil
 		},

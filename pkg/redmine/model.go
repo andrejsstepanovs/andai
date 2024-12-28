@@ -245,7 +245,7 @@ func (c *Model) DbSettingsEnableAPI() error {
 	return nil
 }
 
-func (c *Model) SaveWiki(project redmine.Project, content string) error {
+func (c *Model) DbSaveWiki(project redmine.Project, content string) error {
 	const TITLE = "Wiki"
 	content = strings.TrimSpace(content)
 
@@ -301,58 +301,56 @@ func (c *Model) SaveProject(project redmine.Project) (error, redmine.Project) {
 	return nil, *response
 }
 
-func (c *Model) SaveGit(project redmine.Project, gitPath string) error {
-	newUrl := fmt.Sprintf("%s/%s", strings.TrimRight(viper.GetString("redmine.repositories"), "/"), strings.TrimLeft(gitPath, "/"))
-
+func (c *Model) DbGetRepository(project redmine.Project) (models.Repository, error) {
 	results, err := c.db.Query("SELECT id, project_id, root_url FROM repositories WHERE identifier = ?", project.Identifier)
 	if err != nil {
-		fmt.Println("Redmine Admin Fail")
-		return fmt.Errorf("error redmine admin: %v", err)
+		return models.Repository{}, fmt.Errorf("error redmine admin: %v", err)
 	}
 	defer results.Close()
 
-	type Row struct {
-		ID        int
-		ProjectID string
-		RootUrl   string
-	}
-	var rows []Row
-
-	// Loop through rows, using Scan to assign column data to struct fields.
+	var rows []models.Repository
 	for results.Next() {
-		var row Row
+		var row models.Repository
 		if err := results.Scan(&row.ID, &row.ProjectID, &row.RootUrl); err != nil {
-			return err
+			return models.Repository{}, err
 		}
 		rows = append(rows, row)
 	}
-	if err = results.Err(); err != nil {
-		return err
+	err = results.Err()
+	if err != nil && !errors.As(err, &sql.ErrNoRows) {
+		return models.Repository{}, err
 	}
+	for _, row := range rows {
+		return row, nil
+	}
+	return models.Repository{}, nil
+}
 
-	if len(rows) > 0 {
-		for _, row := range rows {
-			fmt.Printf("ID: %d, ProjectID: %s, Url: %s\n", row.ID, row.ProjectID, row.RootUrl)
+func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
+	newUrl := fmt.Sprintf("%s/%s", strings.TrimRight(viper.GetString("redmine.repositories"), "/"), strings.TrimLeft(gitPath, "/"))
 
-			if row.RootUrl != newUrl {
-				fmt.Println("Git repository already exists. Changing URL..")
-
-				result, err := c.db.Exec("UPDATE repositories SET root_url = ?, created_on = NOW() WHERE id = ?", newUrl, row.ID)
-				if err != nil {
-					return fmt.Errorf("update settings db err: %v", err)
-				}
-				affected, err := result.RowsAffected()
-				if err != nil {
-					return fmt.Errorf("rows affected err: %v", err)
-				}
-				if affected > 0 {
-					fmt.Println("Git repository url updated")
-					return nil
-				}
-				return errors.New("Git repository url not changed")
+	repository, err := c.DbGetRepository(project)
+	if err != nil {
+		return fmt.Errorf("redmine get repository err: %v", err)
+	}
+	if repository.ID > 0 {
+		fmt.Printf("ID: %d, ProjectID: %s, Url: %s\n", repository.ID, repository.ProjectID, repository.RootUrl)
+		if repository.RootUrl != newUrl {
+			fmt.Println("Mismatch Repository root_url")
+			result, err := c.db.Exec("UPDATE repositories SET root_url = ?, created_on = NOW() WHERE id = ?", newUrl, repository.ID)
+			if err != nil {
+				return fmt.Errorf("update repository db err: %v", err)
 			}
+			affected, err := result.RowsAffected()
+			if err != nil {
+				return fmt.Errorf("rows affected err: %v", err)
+			}
+			if affected == 0 {
+				return errors.New("project repository root_url not changed")
+			}
+			fmt.Println("Project repository root_url updated")
+			return nil
 		}
-		return nil
 	}
 
 	query := "INSERT INTO repositories " +
@@ -361,21 +359,16 @@ func (c *Model) SaveGit(project redmine.Project, gitPath string) error {
 
 	result, err := c.db.Exec(query, project.Id, newUrl, "---\nextra_report_last_commit: '0'\n", project.Identifier)
 	if err != nil {
-		fmt.Println("Redmine Git Save Fail")
 		return fmt.Errorf("error redmine git save: %v", err)
 	}
-
 	affected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("rows affected err: %v", err)
 	}
-
-	if affected > 0 {
-		fmt.Println("Git repository saved")
-	} else {
-		return errors.New("Git repository not saved")
+	if affected == 0 {
+		return errors.New("project repository not saved")
 	}
 
+	fmt.Println("project repository inserted")
 	return nil
-
 }
