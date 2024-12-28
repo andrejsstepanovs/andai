@@ -15,7 +15,7 @@ func SetupUpdateCmd(deps *deps.AppDependencies) *cobra.Command {
 	cmd.AddCommand(
 		database.NewAdminCommand(deps.Model),
 		database.NewSettingsCommand(deps.Model),
-		database.NewGetTokenCommand(),
+		database.NewGetTokenCommand(deps.Model),
 		//api.NewProjectCommand(),
 	)
 
