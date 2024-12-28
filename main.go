@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/andrejsstepanovs/andai/cmd/setup"
+	"github.com/andrejsstepanovs/andai/pkg/deps"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -16,13 +17,15 @@ func main() {
 	initConfig()
 	//cobra.OnInitialize(initConfig)
 
+	deps := deps.NewAppDependencies()
+
 	rootCmd := &cobra.Command{
 		Use:   "main",
 		Short: "A simple CLI application",
 	}
 
 	rootCmd.AddCommand(
-		setup.SetupPingCmd(),
+		setup.SetupPingCmd(deps),
 		setup.SetupUpdateCmd(),
 	)
 

@@ -1,4 +1,4 @@
-package redmine
+package api
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 
 func NewPingCommand(redmine *redmine.Model) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "redmine",
+		Use:   "api",
 		Short: "Ping connection to redmine",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Println("Processing Jira issue", len(args))

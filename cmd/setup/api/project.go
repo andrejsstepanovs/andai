@@ -1,4 +1,4 @@
-package redmine
+package api
 
 import (
 	"database/sql"
