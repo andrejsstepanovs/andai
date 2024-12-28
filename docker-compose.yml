@@ -1,0 +1,102 @@
+services:
+  redmine:
+    build: ./docker-redmine/
+    image: sameersbn/redmine:6.0.2
+    environment:
+      - TZ=Europe/Berlin
+
+      - DB_ADAPTER=sqlite3
+      - DB_NAME=db.sqlite3
+
+      - REDMINE_PORT=10083
+      - REDMINE_HTTPS=false
+      - REDMINE_RELATIVE_URL_ROOT=
+      - REDMINE_SECRET_TOKEN=
+
+      - REDMINE_SUDO_MODE_ENABLED=false
+      - REDMINE_SUDO_MODE_TIMEOUT=15
+
+      - REDMINE_CONCURRENT_UPLOADS=2
+
+      - REDMINE_BACKUP_SCHEDULE=
+      - REDMINE_BACKUP_EXPIRY=
+      - REDMINE_BACKUP_TIME=
+
+      - SMTP_ENABLED=false
+      - SMTP_METHOD=smtp
+      - SMTP_DOMAIN=www.example.com
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=mailer@example.com
+      - SMTP_PASS=password
+      - SMTP_STARTTLS=true
+      - SMTP_AUTHENTICATION=:login
+
+      - IMAP_ENABLED=false
+      - IMAP_HOST=imap.gmail.com
+      - IMAP_PORT=993
+      - IMAP_USER=mailer@example.com
+      - IMAP_PASS=password
+      - IMAP_SSL=true
+      - IMAP_INTERVAL=30
+
+      - REDMINE_PASSWORD_MIN_LENGTH=4
+      - REDMINE_PASSWORD_MAX_AGE=0
+      - REDMINE_PASSWORD_REQUIRED_CHAR_CLASSES=0
+      - REDMINE_SECRET_TOKEN=redmine
+    ports:
+      - "10083:80"
+    volumes:
+      - redmine_data:/home/redmine/data
+      - redmine_logs:/var/log/redmine
+      - ./www:/var/www
+    networks:
+      - redmine_network
+
+  dev:
+    build:
+      context: agents/
+      dockerfile: Dockerfile
+    volumes:
+      - ./www:/var/www
+    tty: true
+    stdin_open: true
+    container_name: ubuntu-dev
+    hostname: ubuntu-dev
+    networks:
+      - redmine_network
+    depends_on:
+      - redmine
+    command: tail -f /dev/null
+    environment:
+      - TERM=xterm-256color
+      - SHELL=/bin/zsh
+      - CODER_REDMINE_API_KEY=${CODER_REDMINE_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GITHUB_ACCESS_TOKEN=${GITHUB_ACCESS_TOKEN}
+      - REDMINE_URL=http://redmine
+
+      - REDMINE_ARCHITECT_LOGIN=${REDMINE_ARCHITECT_LOGIN}
+      - REDMINE_ARCHITECT_PASSWORD=${REDMINE_ARCHITECT_PASSWORD}
+      - REDMINE_ARCHITECT_API_KEY=${REDMINE_ARCHITECT_API_KEY}
+
+      - REDMINE_CODER_LOGIN=${REDMINE_CODER_LOGIN}
+      - REDMINE_CODER_PASSWORD=${REDMINE_CODER_PASSWORD}
+      - REDMINE_CODER_API_KEY=${REDMINE_CODER_API_KEY}
+
+      - REDMINE_CODER_JUNIOR_LOGIN=${REDMINE_CODER_JUNIOR_LOGIN}
+      - REDMINE_CODER_JUNIOR_PASSWORD=${REDMINE_CODER_JUNIOR_PASSWORD}
+      - REDMINE_CODER_JUNIOR_API_KEY=${REDMINE_CODER_JUNIOR_API_KEY}
+
+      - LM_STUDIO_API_BASE=${LM_STUDIO_API_BASE}
+      - LM_STUDIO_API_KEY=${LM_STUDIO_API_KEY}
+      - OLLAMA_API_BASE=${OLLAMA_API_BASE}
+
+networks:
+  redmine_network:
+    driver: bridge
+
+volumes:
+  redmine_data:
+  redmine_logs:
