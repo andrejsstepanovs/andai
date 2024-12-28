@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/andrejsstepanovs/andai/cmd/ping"
 	"github.com/andrejsstepanovs/andai/cmd/setup"
 	"github.com/andrejsstepanovs/andai/pkg/deps"
 
@@ -25,7 +26,7 @@ func main() {
 	}
 
 	rootCmd.AddCommand(
-		setup.SetupPingCmd(deps),
+		ping.SetupPingCmd(deps),
 		setup.SetupUpdateCmd(),
 	)
 

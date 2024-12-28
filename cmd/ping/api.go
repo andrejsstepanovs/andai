@@ -1,4 +1,4 @@
-package api
+package ping
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewPingCommand(redmine *redmine.Model) *cobra.Command {
+func newApiPingCommand(redmine *redmine.Model) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "api",
 		Short: "Ping connection to redmine",

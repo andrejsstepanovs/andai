@@ -1,4 +1,4 @@
-package database
+package ping
 
 import (
 	"fmt"
@@ -8,9 +8,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewPingCommand(redmine *redmine.Model) *cobra.Command {
+func newDbPingCommand(redmine *redmine.Model) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "database",
+		Use:   "db",
 		Short: "Ping database connection",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Println("Processing Jira issue", len(args))
