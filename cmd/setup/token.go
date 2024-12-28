@@ -1,4 +1,4 @@
-package database
+package setup
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewGetTokenCommand(redmine *redmine.Model) *cobra.Command {
+func newGetTokenCommand(redmine *redmine.Model) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
 		Short: "Set (or get) redmine admin token",

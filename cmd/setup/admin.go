@@ -1,4 +1,4 @@
-package database
+package setup
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewAdminCommand(redmine *redmine.Model) *cobra.Command {
+func newAdminCommand(redmine *redmine.Model) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "admin",
 		Short: "Fix admin login no need to change password",

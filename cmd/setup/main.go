@@ -1,7 +1,6 @@
 package setup
 
 import (
-	"github.com/andrejsstepanovs/andai/cmd/setup/database"
 	"github.com/andrejsstepanovs/andai/pkg/deps"
 	"github.com/spf13/cobra"
 )
@@ -13,10 +12,10 @@ func SetupUpdateCmd(deps *deps.AppDependencies) *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		database.NewAdminCommand(deps.Model),
-		database.NewSettingsCommand(deps.Model),
-		database.NewGetTokenCommand(deps.Model),
-		//api.NewProjectCommand(),
+		newAdminCommand(deps.Model),
+		newSettingsCommand(deps.Model),
+		newGetTokenCommand(deps.Model),
+		newProjectCommand(deps.Model),
 	)
 
 	return cmd

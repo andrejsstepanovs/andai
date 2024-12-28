@@ -1,4 +1,4 @@
-package database
+package setup
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewSettingsCommand(redmine *redmine.Model) *cobra.Command {
+func newSettingsCommand(redmine *redmine.Model) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "settings",
 		Short: "Enable REST API in Redmine",
