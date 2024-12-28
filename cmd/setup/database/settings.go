@@ -13,7 +13,7 @@ import (
 func NewSettingsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "settings",
-		Short: "Setup redmine settings",
+		Short: "Enable REST API in Redmine",
 		RunE:  runRedmineSettings,
 	}
 	return cmd

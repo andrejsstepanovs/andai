@@ -13,7 +13,7 @@ import (
 func NewGetTokenCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
-		Short: "Get admin token",
+		Short: "Set (or get) redmine admin token",
 		RunE:  runGetAdminToken,
 	}
 	return cmd

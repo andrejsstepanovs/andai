@@ -12,7 +12,7 @@ import (
 func NewAdminCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "admin",
-		Short: "Fix admin",
+		Short: "Fix admin login no need to change password",
 		RunE:  runDatabaseAdmin,
 	}
 	return cmd
