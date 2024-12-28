@@ -13,7 +13,8 @@ import (
 var cfgFile string
 
 func main() {
-	cobra.OnInitialize(initConfig)
+	initConfig()
+	//cobra.OnInitialize(initConfig)
 
 	rootCmd := &cobra.Command{
 		Use:   "main",

@@ -3,6 +3,7 @@ package setup
 import (
 	"github.com/andrejsstepanovs/andai/cmd/setup/database"
 	"github.com/andrejsstepanovs/andai/cmd/setup/redmine"
+	"github.com/andrejsstepanovs/andai/pkg/deps"
 	"github.com/spf13/cobra"
 )
 
@@ -13,9 +14,10 @@ func SetupPingCmd() *cobra.Command {
 		Long:  `Check if all necessary connections work.`,
 	}
 
+	d := deps.NewAppDependencies()
 	cmd.AddCommand(
-		database.NewPingCommand(),
-		redmine.NewPingCommand(),
+		database.NewPingCommand(d.Model),
+		redmine.NewPingCommand(d.Model),
 	)
 
 	return cmd
