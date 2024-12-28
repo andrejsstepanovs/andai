@@ -12,13 +12,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
-
 func main() {
 	initConfig()
 	//cobra.OnInitialize(initConfig)
 
-	deps := deps.NewAppDependencies()
+	dependencies := deps.NewAppDependencies()
 
 	rootCmd := &cobra.Command{
 		Use:   "main",
@@ -26,8 +24,8 @@ func main() {
 	}
 
 	rootCmd.AddCommand(
-		ping.SetupPingCmd(deps),
-		setup.SetupUpdateCmd(deps),
+		ping.SetupPingCmd(dependencies),
+		setup.SetupUpdateCmd(dependencies),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
@@ -63,23 +61,5 @@ func initConfig() {
 			fmt.Println("Error reading config file:", err)
 		}
 		return
-	}
-}
-
-func CheckRequiredFlags(prefixKey string, requiredFlags []string, cmd *cobra.Command) {
-	unsetFlags := make([]string, 0, len(requiredFlags))
-	for _, f := range requiredFlags {
-		if !viper.GetViper().IsSet(prefixKey + f) {
-			unsetFlags = append(unsetFlags, f)
-		}
-	}
-
-	if len(unsetFlags) > 0 {
-		fmt.Fprintln(os.Stderr, "Error: required flags are not set:")
-		for _, f := range unsetFlags {
-			fmt.Fprintf(os.Stderr, " --%s\n", f)
-		}
-		cmd.Usage()
-		os.Exit(1)
 	}
 }
