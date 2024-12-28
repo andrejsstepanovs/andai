@@ -2,12 +2,13 @@ redmine:
   db: redmine:redmine@tcp(0.0.0.0:3306)/redmine # things from docker-compose
   url: "http://localhost:10083"
   api_key: "2159cef2fb6c82c4f66981f199798781e161c694"
+  repositories: "/var/repositories/"
 
 project:
   id: "my-project"
   name: "My Project"
   description: "This is a sample project x."
-  git: "/path/to/project/repository"
+  git_path: "/test/.git"
 
 states:
   Backlog:

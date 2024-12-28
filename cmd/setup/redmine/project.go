@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/mattn/go-redmine"
@@ -50,7 +51,7 @@ func runRedmineSaveProject(cmd *cobra.Command, args []string) error {
 }
 
 func saveGit(project redmine.Project) error {
-	newUrl := fmt.Sprintf("file:///%s", viper.GetString("project.git"))
+	newUrl := fmt.Sprintf("%s/%s", strings.TrimRight(viper.GetString("redmine.repositories"), "/"), strings.TrimLeft(viper.GetString("project.git_path"), "/"))
 
 	conn, err := sql.Open("mysql", viper.GetString("redmine.db"))
 	if err != nil {
@@ -58,7 +59,7 @@ func saveGit(project redmine.Project) error {
 		return fmt.Errorf("error redmine git save: %v", err)
 	}
 
-	results, err := conn.Query("SELECT id, project_id, url FROM repositories WHERE identifier = ?", project.Identifier)
+	results, err := conn.Query("SELECT id, project_id, root_url FROM repositories WHERE identifier = ?", project.Identifier)
 	if err != nil {
 		fmt.Println("Redmine Admin Fail")
 		return fmt.Errorf("error redmine admin: %v", err)
@@ -68,14 +69,14 @@ func saveGit(project redmine.Project) error {
 	type Row struct {
 		ID        int
 		ProjectID string
-		Url       string
+		RootUrl   string
 	}
 	var rows []Row
 
 	// Loop through rows, using Scan to assign column data to struct fields.
 	for results.Next() {
 		var row Row
-		if err := results.Scan(&row.ID, &row.ProjectID, &row.Url); err != nil {
+		if err := results.Scan(&row.ID, &row.ProjectID, &row.RootUrl); err != nil {
 			return err
 		}
 		rows = append(rows, row)
@@ -86,12 +87,12 @@ func saveGit(project redmine.Project) error {
 
 	if len(rows) > 0 {
 		for _, row := range rows {
-			fmt.Printf("ID: %d, ProjectID: %s, Url: %s\n", row.ID, row.ProjectID, row.Url)
+			fmt.Printf("ID: %d, ProjectID: %s, Url: %s\n", row.ID, row.ProjectID, row.RootUrl)
 
-			if row.Url != newUrl {
+			if row.RootUrl != newUrl {
 				fmt.Println("Git repository already exists. Changing URL..")
 
-				result, err := conn.Exec("UPDATE repositories SET url = ?, created_on = NOW() WHERE id = ?", newUrl, row.ID)
+				result, err := conn.Exec("UPDATE repositories SET root_url = ?, created_on = NOW() WHERE id = ?", newUrl, row.ID)
 				if err != nil {
 					return fmt.Errorf("update settings db err: %v", err)
 				}
@@ -110,7 +111,7 @@ func saveGit(project redmine.Project) error {
 	}
 
 	query := "INSERT INTO repositories " +
-		"(project_id, url, type, path_encoding, extra_info, identifier, is_default, created_on) " +
+		"(project_id, root_url, type, path_encoding, extra_info, identifier, is_default, created_on) " +
 		"VALUES(?, ?, 'Repository::Git', 'UTF-8', ?, ?, 1, NOW())"
 
 	result, err := conn.Exec(query, project.Id, newUrl, "---\nextra_report_last_commit: '0'\n", project.Identifier)

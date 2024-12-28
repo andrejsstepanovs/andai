@@ -92,7 +92,7 @@ services:
     volumes:
       - ./data/redmine_logs:/var/log/redmine
       - ./data/redmine/data:/home/redmine/data
-      - ./www:/var/www
+      - ./repositories:/var/repositories
     networks:
       - redmine_network
 
