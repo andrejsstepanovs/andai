@@ -7,9 +7,7 @@ project:
   id: "my-project"
   name: "My Project"
   description: "This is a sample project x."
-  git:
-    branch: "main"
-    path: "/path/to/project/repository"
+  git: "/path/to/project/repository"
 
 states:
   Backlog:

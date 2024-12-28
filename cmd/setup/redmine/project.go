@@ -1,6 +1,8 @@
 package redmine
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -37,6 +39,43 @@ func runRedmineSaveProject(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("ID: %d, Name: %s\n", project.Id, project.Name)
+
+	err = saveGit(project)
+	if err != nil {
+		fmt.Println("Redmine Git Save Fail")
+		return fmt.Errorf("error redmine git save: %v", err)
+	}
+
+	return nil
+}
+
+func saveGit(project redmine.Project) error {
+	query := "INSERT INTO repositories " +
+		"(project_id, url, type, path_encoding, extra_info, identifier, is_default, created_on) " +
+		"VALUES(?, ?, 'Repository::Git', 'UTF-8', ?, ?, 1, NOW())"
+
+	conn, err := sql.Open("mysql", viper.GetString("redmine.db"))
+	if err != nil {
+		fmt.Println("Redmine Git Save Fail")
+		return fmt.Errorf("error redmine git save: %v", err)
+	}
+
+	result, err := conn.Exec(query, project.Id, fmt.Sprintf("file:///%s", viper.GetString("project.git")), "---\nextra_report_last_commit: '0'\n", project.Identifier)
+	if err != nil {
+		fmt.Println("Redmine Git Save Fail")
+		return fmt.Errorf("error redmine git save: %v", err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rows affected err: %v", err)
+	}
+
+	if affected > 0 {
+		fmt.Println("Git repository saved")
+	} else {
+		return errors.New("Git repository not saved")
+	}
 
 	return nil
 }
