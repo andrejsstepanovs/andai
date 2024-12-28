@@ -353,9 +353,7 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 		}
 	}
 
-	query := "INSERT INTO repositories " +
-		"(project_id, root_url, type, path_encoding, extra_info, identifier, is_default, created_on) " +
-		"VALUES(?, ?, 'Repository::Git', 'UTF-8', ?, ?, 1, NOW())"
+	query := "INSERT INTO repositories (project_id, root_url, type, path_encoding, extra_info, identifier, is_default, created_on) VALUES(?, ?, 'Repository::Git', 'UTF-8', ?, ?, 1, NOW())"
 
 	result, err := c.db.Exec(query, project.Id, newUrl, "---\nextra_report_last_commit: '0'\n", project.Identifier)
 	if err != nil {
