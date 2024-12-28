@@ -50,9 +50,7 @@ func runRedmineSaveProject(cmd *cobra.Command, args []string) error {
 }
 
 func saveGit(project redmine.Project) error {
-	query := "INSERT INTO repositories " +
-		"(project_id, url, type, path_encoding, extra_info, identifier, is_default, created_on) " +
-		"VALUES(?, ?, 'Repository::Git', 'UTF-8', ?, ?, 1, NOW())"
+	newUrl := fmt.Sprintf("file:///%s", viper.GetString("project.git"))
 
 	conn, err := sql.Open("mysql", viper.GetString("redmine.db"))
 	if err != nil {
@@ -60,7 +58,62 @@ func saveGit(project redmine.Project) error {
 		return fmt.Errorf("error redmine git save: %v", err)
 	}
 
-	result, err := conn.Exec(query, project.Id, fmt.Sprintf("file:///%s", viper.GetString("project.git")), "---\nextra_report_last_commit: '0'\n", project.Identifier)
+	results, err := conn.Query("SELECT id, project_id, url FROM repositories WHERE identifier = ?", project.Identifier)
+	if err != nil {
+		fmt.Println("Redmine Admin Fail")
+		return fmt.Errorf("error redmine admin: %v", err)
+	}
+	defer results.Close()
+
+	type Row struct {
+		ID        int
+		ProjectID string
+		Url       string
+	}
+	var rows []Row
+
+	// Loop through rows, using Scan to assign column data to struct fields.
+	for results.Next() {
+		var row Row
+		if err := results.Scan(&row.ID, &row.ProjectID, &row.Url); err != nil {
+			return err
+		}
+		rows = append(rows, row)
+	}
+	if err = results.Err(); err != nil {
+		return err
+	}
+
+	if len(rows) > 0 {
+		for _, row := range rows {
+			fmt.Printf("ID: %d, ProjectID: %s, Url: %s\n", row.ID, row.ProjectID, row.Url)
+
+			if row.Url != newUrl {
+				fmt.Println("Git repository already exists. Changing URL..")
+
+				result, err := conn.Exec("UPDATE repositories SET url = ?, created_on = NOW() WHERE id = ?", newUrl, row.ID)
+				if err != nil {
+					return fmt.Errorf("update settings db err: %v", err)
+				}
+				affected, err := result.RowsAffected()
+				if err != nil {
+					return fmt.Errorf("rows affected err: %v", err)
+				}
+				if affected > 0 {
+					fmt.Println("Git repository url updated")
+					return nil
+				}
+				return errors.New("Git repository url not changed")
+			}
+		}
+		return nil
+	}
+
+	query := "INSERT INTO repositories " +
+		"(project_id, url, type, path_encoding, extra_info, identifier, is_default, created_on) " +
+		"VALUES(?, ?, 'Repository::Git', 'UTF-8', ?, ?, 1, NOW())"
+
+	result, err := conn.Exec(query, project.Id, newUrl, "---\nextra_report_last_commit: '0'\n", project.Identifier)
 	if err != nil {
 		fmt.Println("Redmine Git Save Fail")
 		return fmt.Errorf("error redmine git save: %v", err)

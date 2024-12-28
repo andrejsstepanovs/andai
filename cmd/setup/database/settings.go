@@ -55,7 +55,7 @@ func runRedmineSettings(cmd *cobra.Command, args []string) error {
 
 	if len(rows) > 0 {
 		for _, row := range rows {
-			fmt.Sprintf("ID: %d, Name: %s, Value: %s", row.ID, row.Name, row.Value)
+			fmt.Printf("ID: %d, Name: %s, Value: %s\n", row.ID, row.Name, row.Value)
 
 			if row.Value == "0" {
 				fmt.Println("Admin rest_api_enabled is not enabled. Enabling it now")
