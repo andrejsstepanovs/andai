@@ -75,6 +75,21 @@ func (c *Model) ApiGetUsers() ([]redmine.User, error) {
 	return users, nil
 }
 
+func (c *Model) DbUpdateApiToken(userId int, tokenValue string) error {
+	result, err := c.db.Exec("UPDATE tokens SET value = ?, updated_on = NOW() WHERE action = ? AND user_id = ?", tokenValue, "api", userId)
+	if err != nil {
+		return fmt.Errorf("update settings token db err: %v", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rows affected err: %v", err)
+	}
+	if affected == 0 {
+		return errors.New("token not updated")
+	}
+	return nil
+}
+
 func (c *Model) DbCreateApiToken(userId int, tokenValue string) error {
 	result, err := c.db.Exec("INSERT INTO tokens (value, action, user_id, created_on, updated_on) VALUES (?, ?, ?, NOW(), NOW())", tokenValue, "api", userId)
 	if err != nil {
