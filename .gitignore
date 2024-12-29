@@ -1,3 +1,5 @@
 .andai.yaml
 .idea
 data
+.bin
+build

@@ -77,6 +77,8 @@ RUN chsh -s $(which zsh)
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+COPY build/ /var/usr/local/bin/
+
 # Set working directory
 WORKDIR /app
 

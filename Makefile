@@ -14,7 +14,7 @@ LD_FLAGS             := -X main.Version=$(VERSION) -X main.GitHead=$(GIT_HEAD)
 PACKAGES             := $(shell find . -path ./data -prune , -name *.go | grep -v -E "vendor|tools|mocks|data" | xargs -n1 dirname | sort -u)
 MOCK_PACKAGES        := $(shell find . -path ./data -prune , -name "mocks" | grep -v -E "data")
 
-ENGINE_NAME            := ""
+ENGINE_NAME            := "andai"
 
 ENGINE_DIR             := .
 
@@ -72,12 +72,6 @@ BIN_PATH := PATH=".bin:$(abspath $(BIN)):$$PATH:"
 .PHONY: clean
 clean: ## Clean all generated artifacts
 	rm -rfv $(MOCK_PACKAGES) $(BUILD_PATH)
-
-.PHONY: compress
-compress: # compress assets to be embedded in the binary
-	@echo Compressing assets
-	zip -j ./pkg/repository/cbcu_mapping.zip ./pkg/repository/cbcu_mapping.csv
-
 
 .PHONY: lint
 lint: run-lint ## Lint
