@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	model "github.com/andrejsstepanovs/andai/pkg/redmine"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/mattn/go-redmine"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -14,7 +14,7 @@ func newProjectCommand(model *model.Model) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "project",
 		Short: "Save (Update) project",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			fmt.Println("Processing Redmine project sync")
 			project := redmine.Project{
 				Name:        viper.GetString("project.name"),

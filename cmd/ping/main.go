@@ -13,8 +13,8 @@ func SetupPingCmd(deps *deps.AppDependencies) *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		newApiPingCommand(deps.Model),
-		newDbPingCommand(deps.Model),
+		newAPIPingCommand(deps.Model),
+		newDBPingCommand(deps.Model),
 	)
 
 	return cmd

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/andrejsstepanovs/andai/pkg/redmine"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/spf13/cobra"
 )
 
@@ -12,7 +12,7 @@ func newAdminCommand(redmine *redmine.Model) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "admin",
 		Short: "Fix admin login no need to change password",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			fmt.Println("Update redmine admin must_change_passwd = 0")
 
 			err := redmine.DbSettingsAdminMustNotChangePassword()

@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func SetupUpdateCmd(deps *deps.AppDependencies) *cobra.Command {
+func UpdateCmd(deps *deps.AppDependencies) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "setup",
 		Short: "Changes environment setup",

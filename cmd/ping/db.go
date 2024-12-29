@@ -4,16 +4,16 @@ import (
 	"fmt"
 
 	"github.com/andrejsstepanovs/andai/pkg/redmine"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/spf13/cobra"
 )
 
-func newDbPingCommand(redmine *redmine.Model) *cobra.Command {
+func newDBPingCommand(redmine *redmine.Model) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "db",
 		Short: "Ping database connection",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("Processing Jira issue", len(args))
+		RunE: func(_ *cobra.Command, _ []string) error {
+			fmt.Println("Processing Jira issue")
 
 			users, err := redmine.DbGetAllUsers()
 			if err != nil {

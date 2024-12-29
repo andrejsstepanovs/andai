@@ -5,7 +5,7 @@ import (
 
 	"github.com/andrejsstepanovs/andai/pkg/redmine"
 	"github.com/andrejsstepanovs/andai/pkg/redmine/models"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -14,7 +14,7 @@ func newGetTokenCommand(redmine *redmine.Model) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
 		Short: "Set (or get) redmine admin token",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			newToken := viper.GetString("redmine.api_key")
 			fmt.Println("Get redmine admin token or creates it if missing")
 
