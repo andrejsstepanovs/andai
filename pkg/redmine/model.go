@@ -14,18 +14,17 @@ import (
 
 const ADMIN_LOGIN = "admin"
 
+type database interface {
+}
+
 type Model struct {
 	db  *sql.DB
 	api *redmine.Client
 }
 
-func NewModel() *Model {
-	db, err := sql.Open("mysql", viper.GetString("redmine.db"))
-	if err != nil {
-		panic(err)
-	}
+func NewModel(db *sql.DB, api *redmine.Client) *Model {
 	return &Model{
-		api: redmine.NewClient(viper.GetString("redmine.url"), viper.GetString("redmine.api_key")),
+		api: api,
 		db:  db,
 	}
 }

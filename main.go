@@ -16,7 +16,11 @@ func main() {
 	initConfig()
 	//cobra.OnInitialize(initConfig)
 
-	dependencies := deps.NewAppDependencies()
+	dependencies, err := deps.NewAppDependencies()
+	if err != nil {
+		fmt.Println("Error creating dependencies:", err)
+		os.Exit(1)
+	}
 
 	rootCmd := &cobra.Command{
 		Use:   "main",
