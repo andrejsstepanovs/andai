@@ -15,25 +15,37 @@ import (
 const ADMIN_LOGIN = "admin"
 
 type database interface {
+	Query(query string, args ...any) (*sql.Rows, error)
+	Exec(query string, args ...any) (sql.Result, error)
+}
+
+type api interface {
+	Users() ([]redmine.User, error)
+	WikiPage(projectId int, title string) (*redmine.WikiPage, error)
+	CreateWikiPage(projectId int, wikiPage redmine.WikiPage) (*redmine.WikiPage, error)
+	UpdateWikiPage(projectId int, wikiPage redmine.WikiPage) error
+	Projects() ([]redmine.Project, error)
+	UpdateProject(project redmine.Project) error
+	CreateProject(project redmine.Project) (*redmine.Project, error)
 }
 
 type Model struct {
-	db  *sql.DB
-	api *redmine.Client
+	db  database
+	api api
 }
 
-func NewModel(db *sql.DB, api *redmine.Client) *Model {
+func NewModel(db database, api api) *Model {
 	return &Model{
 		api: api,
 		db:  db,
 	}
 }
 
-func (c *Model) Api() *redmine.Client {
+func (c *Model) Api() api {
 	return c.api
 }
 
-func (c *Model) Db() *sql.DB {
+func (c *Model) Db() database {
 	return c.db
 }
 
