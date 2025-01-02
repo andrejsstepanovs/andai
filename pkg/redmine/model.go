@@ -82,6 +82,28 @@ func (c *Model) DbGetAllUsers() ([]redmine.User, error) {
 	return users, nil
 }
 
+func (c *Model) DbProjectTrackers(projectID int) ([]int, error) {
+	rows, err := c.db.Query("SELECT tracker_id FROM projects_trackers WHERE project_id = ?", projectID)
+	if err != nil {
+		return []int{}, fmt.Errorf("error database: %v", err)
+	}
+	defer rows.Close()
+
+	var trackerIDs []int
+	for rows.Next() {
+		var trackerID int
+		if err := rows.Scan(&trackerID); err != nil {
+			return []int{}, err
+		}
+		trackerIDs = append(trackerIDs, trackerID)
+	}
+	if err = rows.Err(); err != nil {
+		return []int{}, err
+	}
+
+	return trackerIDs, nil
+}
+
 func (c *Model) ApiGetUsers() ([]redmine.User, error) {
 	users, err := c.api.Users()
 	if err != nil {
@@ -340,16 +362,33 @@ func (c *Model) DbGetRepository(project redmine.Project) (models.Repository, err
 	return models.Repository{}, nil
 }
 
-func (c *Model) DbProjectTrackers(project redmine.Project) error {
+func (c *Model) DbSaveProjectTrackers(project redmine.Project) error {
 	allTrackers, err := c.api.Trackers()
 	if err != nil {
 		return fmt.Errorf("error redmine trackers: %v", err)
 	}
 
-	// get all project trackers and do not insert if already exists
-	// TODO
+	existingTrackerIDs, err := c.DbProjectTrackers(project.Id)
+	if err != nil {
+		return fmt.Errorf("get project trackers for project %d err: %v", project.Id, err)
+	}
 
+	createTrackers := make([]redmine.IdName, 0)
 	for _, tracker := range allTrackers {
+		exists := false
+		for _, existingTrackerID := range existingTrackerIDs {
+			if tracker.Id == existingTrackerID {
+				fmt.Printf("Tracker for %q already exists ID: %d\n", tracker.Name, tracker.Id)
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			createTrackers = append(createTrackers, tracker)
+		}
+	}
+
+	for _, tracker := range createTrackers {
 		fmt.Println(fmt.Sprintf("Tracker: %s", tracker.Name))
 		err = c.InsertProjectTracker(project.Id, tracker.Id)
 		if err != nil {
@@ -435,7 +474,7 @@ func (c *Model) SaveTrackers(trackers workflow.IssueTypes, defaultStatus redmine
 		exists := false
 		for _, ct := range current {
 			if ct.Name == string(t.Name) {
-				fmt.Printf("Tracker %s already exists: %s\n", ct.Name, ct.Id)
+				fmt.Printf("Tracker %s already exists: %d\n", ct.Name, ct.Id)
 				exists = true
 				break
 			}
