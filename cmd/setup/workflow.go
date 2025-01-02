@@ -54,7 +54,7 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 				fmt.Printf("Redmine Project %q Trackers OK\n", project.Name)
 			}
 
-			fmt.Println("Workflows:", len(workflowConfig.IssueTypes))
+			fmt.Println("Transitions:", len(workflowConfig.Transitions))
 
 			return nil
 		},

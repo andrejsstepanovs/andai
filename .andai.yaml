@@ -40,6 +40,22 @@ workflow:
       ai: False
       is_closed: True
 
+  transitions:
+    - source: Backlog
+      target: To Do
+    - source: To Do
+      target: In Progress
+    - source: In Progress
+      target: Testing
+    - source: Testing
+      target: Done
+    - source: Testing
+      target: Rejected
+    - source: Rejected
+      target: In Progress
+    - source: Testing
+      target: To Do
+
   issue_types:
     Task:
       description: A task that needs to be done.

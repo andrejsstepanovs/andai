@@ -13,14 +13,24 @@ type IssueTypeName string
 type States map[StateName]State
 type IssueTypes map[IssueTypeName]IssueType
 
+type Transitions []Transition
+
+type Transition struct {
+	Source StateName `yaml:"source"`
+	Target StateName `yaml:"target"`
+}
+
 // Workflow represents
 type Workflow struct {
-	States     States     `yaml:"states"`
-	IssueTypes IssueTypes `yaml:"issue_types"`
+	States      States      `yaml:"states"`
+	IssueTypes  IssueTypes  `yaml:"issue_types"`
+	Transitions Transitions `yaml:"transitions"`
 }
+
 type Job struct {
 	Steps []Step `yaml:"steps"`
 }
+
 type Step struct {
 	Aider  string `yaml:"aider"`
 	Prompt string `yaml:"prompt"`
@@ -50,14 +60,17 @@ func (s *States) Get(name StateName) State {
 // UnmarshalYAML implements custom unmarshaling for the Workflow struct.
 func (w *Workflow) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type rawWorkflow struct {
-		States     map[StateName]State         `yaml:"states"`
-		IssueTypes map[IssueTypeName]IssueType `yaml:"issue_types"`
+		States      map[StateName]State         `yaml:"states"`
+		IssueTypes  map[IssueTypeName]IssueType `yaml:"issue_types"`
+		Transitions Transitions                 `yaml:"transitions"`
 	}
 
 	var raw rawWorkflow
 	if err := unmarshal(&raw); err != nil {
 		return err
 	}
+
+	w.Transitions = raw.Transitions
 
 	// map States
 	cleanStates := make(map[StateName]State)
@@ -117,6 +130,17 @@ func (s *Settings) Validate() error {
 			if _, ok := stateNames[stateName]; !ok {
 				return fmt.Errorf("job %s does not have valid state %s", issueTypeName, stateName)
 			}
+		}
+	}
+
+	fmt.Println(s.Workflow.Transitions)
+	// validate transitions
+	for _, transition := range s.Workflow.Transitions {
+		if _, ok := stateNames[transition.Source]; !ok {
+			return fmt.Errorf("transition source %s does not exist", transition.Source)
+		}
+		if _, ok := stateNames[transition.Target]; !ok {
+			return fmt.Errorf("transition target %s does not exist", transition.Target)
 		}
 	}
 
