@@ -130,3 +130,13 @@ docker: build.linux ## Build docker image
 	docker build -t $(ENGINE_DOCKER_IMAGE):$(VERSION) -t $(ENGINE_DOCKER_IMAGE):latest \
 	--build-arg DEP_BASE_VERSION=${DEP_BASE_VERSION} .
 	@echo docker build of image $(ENGINE_DOCKER_IMAGE):$(VERSION) complete
+
+.PHONY: configure
+configure: build
+	$(BUILD_PATH)/andai ping db
+	$(BUILD_PATH)/andai setup admin
+	$(BUILD_PATH)/andai setup settings
+	$(BUILD_PATH)/andai setup token
+	$(BUILD_PATH)/andai ping api
+	$(BUILD_PATH)/andai setup project
+
