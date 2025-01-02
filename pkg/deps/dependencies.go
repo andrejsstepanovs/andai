@@ -25,7 +25,7 @@ func NewAppDependencies() (*AppDependencies, error) {
 	}
 	api := apiredmine.NewClient(viper.GetString("redmine.url"), viper.GetString("redmine.api_key"))
 
-	//api.IssueStatuses()
+	//api.Trackers()
 	Container = &AppDependencies{
 		Model: redmine.NewModel(db, api),
 	}

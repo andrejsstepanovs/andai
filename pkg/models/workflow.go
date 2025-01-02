@@ -27,6 +27,7 @@ type Step struct {
 }
 
 type IssueType struct {
+	Name        IssueTypeName     `yaml:"-"` // Exclude from YAML unmarshaling
 	Jobs        map[StateName]Job `yaml:"jobs"`
 	Description string            `yaml:"description"`
 }
@@ -75,7 +76,7 @@ func (w *Workflow) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		if name == "" {
 			continue
 		}
-
+		issueType.Name = name
 		cleanIssueTypes[name] = issueType
 	}
 	w.IssueTypes = cleanIssueTypes

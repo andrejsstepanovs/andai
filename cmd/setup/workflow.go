@@ -27,7 +27,17 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 				return fmt.Errorf("error redmine: %v", err)
 			}
 
+			defaultStatus, err := model.APIGetDefaultStatus()
+			if err != nil {
+				return fmt.Errorf("error redmine: %v", err)
+			}
+
 			fmt.Println("Trackers:", len(workflowConfig.IssueTypes))
+			err = model.SaveTrackers(workflowConfig.IssueTypes, defaultStatus)
+			if err != nil {
+				fmt.Println("Failed to save trackers")
+				return fmt.Errorf("redmine err: %v", err)
+			}
 
 			return nil
 		},

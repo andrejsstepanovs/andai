@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	workflow "github.com/andrejsstepanovs/andai/pkg/models"
 	"github.com/andrejsstepanovs/andai/pkg/redmine/models"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/mattn/go-redmine"
@@ -28,6 +29,7 @@ type api interface {
 	UpdateProject(project redmine.Project) error
 	CreateProject(project redmine.Project) (*redmine.Project, error)
 	IssueStatuses() ([]redmine.IssueStatus, error)
+	Trackers() ([]redmine.IdName, error)
 }
 
 type Model struct {
@@ -380,6 +382,73 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 	}
 
 	fmt.Println("project repository inserted")
+	return nil
+}
+
+func (c *Model) SaveTrackers(trackers workflow.IssueTypes, defaultStatus redmine.IssueStatus) error {
+	current, err := c.api.Trackers()
+	if err != nil {
+		return fmt.Errorf("error redmine trackers: %v", err)
+	}
+
+	newTrackers := make([]workflow.IssueType, 0)
+	for _, t := range trackers {
+		fmt.Println(fmt.Sprintf("Tracker: %s", t.Name))
+		exists := false
+		for _, ct := range current {
+			if ct.Name == string(t.Name) {
+				fmt.Printf("Tracker %s already exists: %s\n", ct.Name, ct.Id)
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			newTrackers = append(newTrackers, t)
+		}
+	}
+
+	if len(newTrackers) == 0 {
+		fmt.Println("Trackers OK")
+		return nil
+	}
+
+	for i, tracker := range newTrackers {
+		fmt.Println(fmt.Sprintf("Creating New Tracker: %s", tracker.Name))
+		err = c.InsertTracker(tracker, i+1, defaultStatus.Id)
+		if err != nil {
+			return fmt.Errorf("redmine tracker insert err: %v", err)
+		}
+	}
+
+	return nil
+}
+
+func (c *Model) APIGetDefaultStatus() (redmine.IssueStatus, error) {
+	statuses, err := c.api.IssueStatuses()
+	if err != nil {
+		return redmine.IssueStatus{}, fmt.Errorf("error redmine issue status: %v", err)
+	}
+
+	for _, status := range statuses {
+		return status, nil
+	}
+
+	return redmine.IssueStatus{}, errors.New("default status not found")
+}
+
+func (c *Model) InsertTracker(issueType workflow.IssueType, position, defaultState int) error {
+	query := "INSERT INTO trackers (name, description, position, default_status_id) VALUES (?, ?, ?, ?)"
+	result, err := c.db.Exec(query, issueType.Name, issueType.Description, position, defaultState)
+	if err != nil {
+		return fmt.Errorf("redmine tracker err: %v", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rows affected err: %v", err)
+	}
+	if affected == 0 {
+		return errors.New("tracker not created")
+	}
 	return nil
 }
 
