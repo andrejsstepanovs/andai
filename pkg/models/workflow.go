@@ -11,8 +11,20 @@ type Settings struct {
 }
 
 type StateName string
+
 type IssueTypeName string
+
 type States map[StateName]State
+
+func (s *States) GetFirst() State {
+	for _, state := range *s {
+		if state.IsFirst {
+			return state
+		}
+	}
+	return State{}
+}
+
 type IssueTypes map[IssueTypeName]IssueType
 
 type Transitions []Transition
@@ -66,6 +78,7 @@ type State struct {
 	AI          bool      `yaml:"ai"`
 	Prompt      string    `yaml:"prompt,omitempty"`
 	IsDefault   bool      `yaml:"is_default"`
+	IsFirst     bool      `yaml:"is_first"`
 	IsClosed    bool      `yaml:"is_closed"`
 }
 
@@ -119,14 +132,20 @@ func (s *Settings) Validate() error {
 		return fmt.Errorf("workflow states are required")
 	}
 
+	if s.Workflow.States.GetFirst().Name == "" {
+		return fmt.Errorf("at least one state must be marked as is_first")
+	}
+
 	stateNames := make(map[StateName]bool)
 
-	// check that there is at least one state with IsDefault set to true
-	// check that there is at least one state with IsClosed set to true
 	defaultExists := false
 	closedExists := false
+	firstExists := false
 	for _, state := range s.Workflow.States {
 		stateNames[state.Name] = true
+		if state.IsFirst {
+			firstExists = true
+		}
 		if state.IsDefault {
 			defaultExists = true
 		}
@@ -138,8 +157,11 @@ func (s *Settings) Validate() error {
 	if !defaultExists {
 		return fmt.Errorf("at least one state must be marked as default")
 	}
+	if !firstExists {
+		return fmt.Errorf("at least one state must be marked as is_first")
+	}
 	if !closedExists {
-		return fmt.Errorf("at least one state must be marked as closed")
+		return fmt.Errorf("at least one state must be marked as is_closed")
 	}
 
 	for issueTypeName, issueType := range s.Workflow.IssueTypes {

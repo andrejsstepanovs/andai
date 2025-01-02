@@ -510,14 +510,16 @@ func (c *Model) SaveTrackers(trackers workflow.IssueTypes, defaultStatus redmine
 	return nil
 }
 
-func (c *Model) APIGetDefaultStatus() (redmine.IssueStatus, error) {
+func (c *Model) APIGetIssueStatusByName(name string) (redmine.IssueStatus, error) {
 	statuses, err := c.api.IssueStatuses()
 	if err != nil {
 		return redmine.IssueStatus{}, fmt.Errorf("error redmine issue status: %v", err)
 	}
 
 	for _, status := range statuses {
-		return status, nil
+		if status.Name == name {
+			return status, nil
+		}
 	}
 
 	return redmine.IssueStatus{}, errors.New("default status not found")

@@ -27,7 +27,8 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 				return fmt.Errorf("error redmine: %v", err)
 			}
 
-			defaultStatus, err := model.APIGetDefaultStatus()
+			firstStatus := workflowConfig.States.GetFirst()
+			defaultStatus, err := model.APIGetIssueStatusByName(string(firstStatus.Name))
 			if err != nil {
 				return fmt.Errorf("error redmine: %v", err)
 			}
@@ -40,50 +41,67 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 				return fmt.Errorf("redmine err: %v", err)
 			}
 
-			projects, err := model.GetProjects()
-			fmt.Println("Projects:", len(projects))
+			err = projectTrackers(model)
 			if err != nil {
-				fmt.Println("Failed to get projects")
-				return fmt.Errorf("redmine err: %v", err)
-			}
-			for _, project := range projects {
-				err = model.DbSaveProjectTrackers(project)
-				if err != nil {
-					fmt.Printf("Redmine Project %q Trackers Save Fail\n", project.Name)
-					return fmt.Errorf("error redmine project trackers save: %v", err)
-				}
-				fmt.Printf("Redmine Project %q Trackers OK\n", project.Name)
+				return err
 			}
 
-			fmt.Println("Transitions:", len(workflowConfig.Transitions))
-			trackers, err := model.Api().Trackers()
+			err = transitions(model, workflowConfig, defaultStatus)
 			if err != nil {
-				fmt.Println("Failed to get trackers")
-				return fmt.Errorf("redmine err: %v", err)
-			}
-			statuses, err = model.Api().IssueStatuses()
-			if err != nil {
-				fmt.Println("Failed to get issue statuses")
-				return fmt.Errorf("redmine err: %v", err)
-			}
-			roleID, err := model.DBGetWorkerRole()
-			if err != nil {
-				fmt.Println("Failed to get worker role")
-				return fmt.Errorf("redmine err: %v", err)
-			}
-
-			for _, tracker := range trackers {
-				err = saveTransitions(model, tracker, statuses, defaultStatus, workflowConfig.Transitions, roleID)
-				if err != nil {
-					fmt.Println("Failed to save transitions")
-					return fmt.Errorf("redmine err: %v", err)
-				}
+				return err
 			}
 
 			return nil
 		},
 	}
 	return cmd
+}
+
+func projectTrackers(model *model.Model) error {
+	projects, err := model.GetProjects()
+	fmt.Println("Projects:", len(projects))
+	if err != nil {
+		fmt.Println("Failed to get projects")
+		return fmt.Errorf("redmine err: %v", err)
+	}
+	for _, project := range projects {
+		err = model.DbSaveProjectTrackers(project)
+		if err != nil {
+			fmt.Printf("Redmine Project %q Trackers Save Fail\n", project.Name)
+			return fmt.Errorf("error redmine project trackers save: %v", err)
+		}
+		fmt.Printf("Redmine Project %q Trackers OK\n", project.Name)
+	}
+	return nil
+}
+
+func transitions(model *model.Model, workflowConfig models.Workflow, defaultStatus redmine.IssueStatus) error {
+	fmt.Println("Transitions:", len(workflowConfig.Transitions))
+	trackers, err := model.Api().Trackers()
+	if err != nil {
+		fmt.Println("Failed to get trackers")
+		return fmt.Errorf("redmine err: %v", err)
+	}
+	statuses, err := model.Api().IssueStatuses()
+	if err != nil {
+		fmt.Println("Failed to get issue statuses")
+		return fmt.Errorf("redmine err: %v", err)
+	}
+	roleID, err := model.DBGetWorkerRole()
+	if err != nil {
+		fmt.Println("Failed to get worker role")
+		return fmt.Errorf("redmine err: %v", err)
+	}
+
+	for _, tracker := range trackers {
+		err = saveTransitions(model, tracker, statuses, defaultStatus, workflowConfig.Transitions, roleID)
+		if err != nil {
+			fmt.Println("Failed to save transitions")
+			return fmt.Errorf("redmine err: %v", err)
+		}
+	}
+
+	return nil
 }
 
 func saveTransitions(model *model.Model, tracker redmine.IdName, statuses []redmine.IssueStatus, defaultStatus redmine.IssueStatus, transitions models.Transitions, roleID int) error {
@@ -94,7 +112,7 @@ func saveTransitions(model *model.Model, tracker redmine.IdName, statuses []redm
 		roleID    int
 	}
 	list := make(map[key]bool)
-	list[key{fromID: 0, toID: defaultStatus.Id, trackerID: tracker.Id}] = false
+	list[key{fromID: 0, toID: defaultStatus.Id, trackerID: tracker.Id, roleID: roleID}] = false
 	for _, transition := range transitions {
 		fromID, toID := transition.GetIDs(statuses)
 		fmt.Printf("Transition: %s -> %s (%d -> %d)\n", transition.Source, transition.Target, fromID, toID)
@@ -139,7 +157,7 @@ func convertToStatuses(workflowStates models.States) []redmine.IssueStatus {
 	for _, state := range workflowStates {
 		statuses = append(statuses, redmine.IssueStatus{
 			Name:      string(state.Name),
-			IsDefault: state.IsDefault,
+			IsDefault: state.IsFirst,
 			IsClosed:  state.IsClosed,
 		})
 	}
@@ -153,10 +171,6 @@ func sortStatuses(statuses []redmine.IssueStatus) []redmine.IssueStatus {
 		// If i is default and j is not, i should come first
 		if statuses[i].IsDefault && !statuses[j].IsDefault {
 			return true
-		}
-		// If j is default and i is not, j should come first
-		if statuses[j].IsDefault && !statuses[i].IsDefault {
-			return false
 		}
 		// If i is closed and j is not, i should come last
 		if statuses[i].IsClosed && !statuses[j].IsClosed {

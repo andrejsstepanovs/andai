@@ -21,6 +21,7 @@ workflow:
     Backlog:
       description: Product backlog with user stories.
       ai: False
+      is_first: True
     To Do:
       description: Tasks selected for the current sprint.
       prompt: Split Story task into smaller chunks or start working on a task.
