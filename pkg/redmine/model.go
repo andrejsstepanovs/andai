@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+const ROLE_WORKER = "Worker"
 const ADMIN_LOGIN = "admin"
 
 type database interface {
@@ -582,8 +583,6 @@ func (c *Model) InsertIssueStatus(status redmine.IssueStatus, position int) erro
 	return nil
 }
 
-const ROLE_WORKER = "Worker"
-
 func (c *Model) DBGetWorkerRole() (int, error) {
 	results, err := c.db.Query("SELECT id FROM roles WHERE builtin = 0 AND name = ?", ROLE_WORKER)
 	if err != nil {
@@ -723,4 +722,53 @@ func (c *Model) DBCreateWorkerRole() error {
 		return errors.New("role not updated")
 	}
 	return nil
+}
+
+func (c *Model) DBInsertWorkflow(trackerID, oldStatusID, newStatusID, roleID int) error {
+	query := "INSERT INTO workflows (tracker_id, old_status_id, new_status_id, role_id, type) VALUES (?, ?, ?, ?, 'WorkflowTransition')"
+	result, err := c.db.Exec(query, trackerID, oldStatusID, newStatusID, roleID)
+	if err != nil {
+		return fmt.Errorf("insert workflow err: %v", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("workflow row affected err: %v", err)
+	}
+	if affected == 0 {
+		return errors.New("workflow not updated")
+	}
+	return nil
+}
+
+func (c *Model) DBGetWorkflows(trackerID int) ([]models.Workflow, error) {
+	rows, err := c.db.Query("SELECT id, tracker_id, old_status_id, new_status_id, role_id, assignee, author, type, field_name, rule FROM workflows WHERE tracker_id = ?", trackerID)
+	if err != nil {
+		return nil, fmt.Errorf("error database: %v", err)
+	}
+	defer rows.Close()
+
+	var workflows []models.Workflow
+	for rows.Next() {
+		var row models.Workflow
+		if err := rows.Scan(
+			&row.ID,
+			&row.TrackerID,
+			&row.OldStatusID,
+			&row.NewStatusID,
+			&row.RoleID,
+			&row.Assignee,
+			&row.Author,
+			&row.Type,
+			&row.FieldName,
+			&row.Rule,
+		); err != nil {
+			return nil, err
+		}
+		workflows = append(workflows, row)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return workflows, nil
 }
