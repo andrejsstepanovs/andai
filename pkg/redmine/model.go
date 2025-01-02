@@ -387,7 +387,7 @@ func (c *Model) DbSaveProjectTrackers(project redmine.Project) error {
 		exists := false
 		for _, existingTrackerID := range existingTrackerIDs {
 			if tracker.Id == existingTrackerID {
-				fmt.Printf("Tracker for %q already exists ID: %d\n", tracker.Name, tracker.Id)
+				fmt.Printf("Project %q Tracker for %q already exists ID: %d\n", project.Identifier, tracker.Name, tracker.Id)
 				exists = true
 				break
 			}
@@ -480,7 +480,6 @@ func (c *Model) SaveTrackers(trackers workflow.IssueTypes, defaultStatus redmine
 
 	newTrackers := make([]workflow.IssueType, 0)
 	for _, t := range trackers {
-		fmt.Println(fmt.Sprintf("Tracker: %s", t.Name))
 		exists := false
 		for _, ct := range current {
 			if ct.Name == string(t.Name) {
@@ -490,6 +489,7 @@ func (c *Model) SaveTrackers(trackers workflow.IssueTypes, defaultStatus redmine
 			}
 		}
 		if !exists {
+			fmt.Println(fmt.Sprintf("Tracker: %s", t.Name))
 			newTrackers = append(newTrackers, t)
 		}
 	}
@@ -561,7 +561,7 @@ func (c *Model) SaveIssueStatuses(statuses []redmine.IssueStatus) error {
 	}
 
 	if len(newStatuses) == 0 {
-		fmt.Println("Issue statuses OK")
+		fmt.Println("Issue Statuses OK")
 		return nil
 	}
 

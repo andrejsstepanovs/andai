@@ -18,7 +18,7 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 		RunE: func(_ *cobra.Command, _ []string) error {
 			fmt.Println("Update Redmine workflow")
 
-			fmt.Println("States:", len(workflowConfig.States))
+			fmt.Println("Issue States:", len(workflowConfig.States))
 			statuses := convertToStatuses(workflowConfig.States)
 			statuses = sortStatuses(statuses)
 			err := model.SaveIssueStatuses(statuses)
@@ -40,6 +40,7 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 			}
 
 			projects, err := model.GetProjects()
+			fmt.Println("Projects:", len(projects))
 			if err != nil {
 				fmt.Println("Failed to get projects")
 				return fmt.Errorf("redmine err: %v", err)
@@ -52,6 +53,8 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 				}
 				fmt.Printf("Redmine Project %q Trackers OK\n", project.Name)
 			}
+
+			fmt.Println("Workflows:", len(workflowConfig.IssueTypes))
 
 			return nil
 		},
