@@ -43,12 +43,6 @@ func newProjectCommand(model *model.Model) *cobra.Command {
 			}
 			fmt.Println("Project repository OK")
 
-			err = model.DbSaveProjectTrackers(project)
-			if err != nil {
-				fmt.Println("Redmine Project Trackers Save Fail")
-				return fmt.Errorf("error redmine project trackers save: %v", err)
-			}
-
 			return nil
 		},
 	}

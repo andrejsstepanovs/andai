@@ -309,6 +309,14 @@ func (c *Model) DbSaveWiki(project redmine.Project, content string) error {
 	return nil
 }
 
+func (c *Model) GetProjects() ([]redmine.Project, error) {
+	projects, err := c.api.Projects()
+	if err != nil {
+		return nil, fmt.Errorf("error redmine projects: %v", err)
+	}
+	return projects, nil
+}
+
 func (c *Model) SaveProject(project redmine.Project) (error, redmine.Project) {
 	projects, err := c.api.Projects()
 	if err != nil {

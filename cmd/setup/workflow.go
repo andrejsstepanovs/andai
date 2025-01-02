@@ -39,6 +39,20 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 				return fmt.Errorf("redmine err: %v", err)
 			}
 
+			projects, err := model.GetProjects()
+			if err != nil {
+				fmt.Println("Failed to get projects")
+				return fmt.Errorf("redmine err: %v", err)
+			}
+			for _, project := range projects {
+				err = model.DbSaveProjectTrackers(project)
+				if err != nil {
+					fmt.Printf("Redmine Project %q Trackers Save Fail\n", project.Name)
+					return fmt.Errorf("error redmine project trackers save: %v", err)
+				}
+				fmt.Printf("Redmine Project %q Trackers OK\n", project.Name)
+			}
+
 			return nil
 		},
 	}
