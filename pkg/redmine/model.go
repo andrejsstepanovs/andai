@@ -539,7 +539,7 @@ func (c *Model) InsertTracker(issueType workflow.IssueType, position, defaultSta
 	return nil
 }
 
-func (c *Model) SaveIssueStatuses(statuses []redmine.IssueStatus) error {
+func (c *Model) DBSaveIssueStatuses(statuses []redmine.IssueStatus) error {
 	current, err := c.api.IssueStatuses()
 	if err != nil {
 		return fmt.Errorf("error redmine issue status: %v", err)

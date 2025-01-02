@@ -55,6 +55,8 @@ workflow:
       target: In Progress
     - source: Testing
       target: To Do
+    - source: Done
+      target: To Do
 
   issue_types:
     Task:

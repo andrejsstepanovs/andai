@@ -9,6 +9,6 @@ type Workflow struct {
 	Assignee    int
 	Author      int
 	Type        string
-	FieldName   string
-	Rule        string
+	FieldName   *string
+	Rule        *string
 }
