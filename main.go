@@ -7,14 +7,23 @@ import (
 	"github.com/andrejsstepanovs/andai/cmd/ping"
 	"github.com/andrejsstepanovs/andai/cmd/setup"
 	"github.com/andrejsstepanovs/andai/pkg/deps"
-
+	"github.com/andrejsstepanovs/andai/pkg/models"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 )
 
 func main() {
-	initConfig()
-	//cobra.OnInitialize(initConfig)
+	configPath, err := initConfig()
+	if err != nil {
+		fmt.Println("Error initializing config:", err)
+		os.Exit(1)
+	}
+	workflow, err := loadWorkflow(configPath)
+	if err != nil {
+		fmt.Println("Error initializing workflow:", err)
+		os.Exit(1)
+	}
 
 	dependencies, err := deps.NewAppDependencies()
 	if err != nil {
@@ -29,7 +38,7 @@ func main() {
 
 	rootCmd.AddCommand(
 		ping.SetupPingCmd(dependencies),
-		setup.UpdateCmd(dependencies),
+		setup.SetupCmd(dependencies, workflow),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
@@ -38,7 +47,7 @@ func main() {
 	}
 }
 
-func initConfig() {
+func initConfig() (string, error) {
 	//Step 1: Set the config file name and type
 	viper.SetConfigName(".andai.yaml") // Name of the config file (without extension)
 	viper.SetConfigType("yaml")        // Type of the config file
@@ -51,19 +60,38 @@ func initConfig() {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Println("Error getting user home directory:", err)
-		return
+		return "", err
 	}
 	viper.AddConfigPath(home)
 
 	// Step 3: Read the config file
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			// Config file not found in any of the specified paths
 			fmt.Println("Config file not found in current directory or home directory")
 		} else {
-			// Config file was found but another error occurred
 			fmt.Println("Error reading config file:", err)
 		}
-		return
+		return "", err
 	}
+
+	filePath := viper.ConfigFileUsed()
+	return filePath, nil
+}
+
+func loadWorkflow(filePath string) (models.Workflow, error) {
+	fmt.Println("Using config file to load workflow:", filePath)
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return models.Workflow{}, err
+	}
+
+	var settings models.Settings
+	err = yaml.Unmarshal(content, &settings)
+	if err != nil {
+		fmt.Println("Error unmarshaling YAML:", err)
+		return models.Workflow{}, err
+	}
+
+	return settings.Workflow, nil
 }

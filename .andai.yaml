@@ -16,23 +16,26 @@ project:
     
     And a bit more.
 
-states:
-  Backlog:
-    description: Product backlog with user stories.
-    ai: False
-  To Do:
-    description: Tasks selected for the current sprint.
-    ai: True
-    prompt: Split Story task into smaller chunks or start working on a task.
-  In Progress:
-    description: Tasks currently being worked on.
-    ai: True
-  Testing:
-    description: Tasks undergoing testing.
-    ai: False
-  Rejected:
-    description: Tasks rejected during testing.
-    ai: True
-  Done:
-    description: Completed tasks.
-    ai: False
+workflow:
+  states:
+    Backlog:
+      description: Product backlog with user stories.
+      ai: False
+    To Do:
+      description: Tasks selected for the current sprint.
+      prompt: Split Story task into smaller chunks or start working on a task.
+      ai: True
+      is_default: True
+    In Progress:
+      description: Tasks currently being worked on.
+      ai: True
+    Testing:
+      description: Tasks undergoing testing.
+      ai: False
+    Rejected:
+      description: Tasks rejected during testing.
+      ai: True
+    Done:
+      description: Completed tasks.
+      ai: False
+      is_closed: True

@@ -27,6 +27,7 @@ type api interface {
 	Projects() ([]redmine.Project, error)
 	UpdateProject(project redmine.Project) error
 	CreateProject(project redmine.Project) (*redmine.Project, error)
+	IssueStatuses() ([]redmine.IssueStatus, error)
 }
 
 type Model struct {
@@ -379,5 +380,53 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 	}
 
 	fmt.Println("project repository inserted")
+	return nil
+}
+
+func (c *Model) SaveIssueStatuses(statuses []redmine.IssueStatus) error {
+	current, err := c.api.IssueStatuses()
+	if err != nil {
+		return fmt.Errorf("error redmine issue status: %v", err)
+	}
+
+	newStatuses := make([]redmine.IssueStatus, 0)
+	for _, status := range statuses {
+		fmt.Println(fmt.Sprintf("Name: %s", status.Name))
+		exists := false
+		for _, s := range current {
+			if s.Name == status.Name {
+				exists = true
+				fmt.Printf("Issue status %s already exists: %s\n", s.Name, s.Id)
+				break
+			}
+		}
+		if !exists {
+			newStatuses = append(newStatuses, status)
+		}
+	}
+
+	for i, status := range newStatuses {
+		fmt.Println(fmt.Sprintf("Creating New Issue Status: %s", status.Name))
+		err = c.InsertIssueStatus(status, i+1)
+		if err != nil {
+			return fmt.Errorf("redmine issue status insert err: %v", err)
+		}
+	}
+
+	return nil
+}
+
+func (c *Model) InsertIssueStatus(status redmine.IssueStatus, position int) error {
+	result, err := c.db.Exec("INSERT INTO issue_statuses (name, is_closed, position) VALUES (?, ?, ?)", status.Name, status.IsClosed, position)
+	if err != nil {
+		return fmt.Errorf("error redmine issue status insert: %v", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rows affected err: %v", err)
+	}
+	if affected == 0 {
+		return errors.New("token not created")
+	}
 	return nil
 }
