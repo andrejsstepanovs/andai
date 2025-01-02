@@ -51,6 +51,20 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 				return err
 			}
 
+			priorityID, err := model.GetDefaultNormalPriority()
+			if err != nil {
+				return err
+			}
+			if priorityID == 0 {
+				err = model.InsertDefaultNormalPriority()
+				if err != nil {
+					return err
+				}
+				fmt.Println("Default Normal Priority inserted")
+			} else {
+				fmt.Println("Default Normal Priority already exists")
+			}
+
 			return nil
 		},
 	}

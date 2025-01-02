@@ -15,6 +15,7 @@ import (
 
 const ROLE_WORKER = "Worker"
 const ADMIN_LOGIN = "admin"
+const ISSUE_PRIORITY = "Normal"
 
 type database interface {
 	Query(query string, args ...any) (*sql.Rows, error)
@@ -537,6 +538,47 @@ func (c *Model) InsertTracker(issueType workflow.IssueType, position, defaultSta
 	}
 	if affected == 0 {
 		return errors.New("tracker not created")
+	}
+	return nil
+}
+
+func (c *Model) GetDefaultNormalPriority() (int, error) {
+	results, err := c.db.Query("SELECT id FROM enumerations WHERE type = 'IssuePriority' AND is_default = 1 AND name = ?", ISSUE_PRIORITY)
+	if err != nil {
+		return 0, fmt.Errorf("redmine db err: %v", err)
+	}
+	defer results.Close()
+
+	var rows []int
+	for results.Next() {
+		var row int
+		if err := results.Scan(&row); err != nil {
+			return 0, err
+		}
+		rows = append(rows, row)
+	}
+	err = results.Err()
+	if err != nil && !errors.As(err, &sql.ErrNoRows) {
+		return 0, err
+	}
+	for _, row := range rows {
+		return row, nil
+	}
+	return 0, nil
+}
+
+func (c *Model) InsertDefaultNormalPriority() error {
+	query := "INSERT INTO enumerations (name, position, is_default, type, active, project_id, parent_id, position_name) VALUES (?, 1, 1, 'IssuePriority', 1, NULL, NULL, 'default');"
+	result, err := c.db.Exec(query, ISSUE_PRIORITY)
+	if err != nil {
+		return fmt.Errorf("redmine issue priority err: %v", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rows affected err: %v", err)
+	}
+	if affected == 0 {
+		return errors.New("issue priority not created")
 	}
 	return nil
 }
