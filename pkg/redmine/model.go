@@ -340,6 +340,25 @@ func (c *Model) DbGetRepository(project redmine.Project) (models.Repository, err
 	return models.Repository{}, nil
 }
 
+func (c *Model) DbProjectTrackers(project redmine.Project) error {
+	allTrackers, err := c.api.Trackers()
+	if err != nil {
+		return fmt.Errorf("error redmine trackers: %v", err)
+	}
+
+	// get all project trackers and do not insert if already exists
+	// TODO
+
+	for _, tracker := range allTrackers {
+		fmt.Println(fmt.Sprintf("Tracker: %s", tracker.Name))
+		err = c.InsertProjectTracker(project.Id, tracker.Id)
+		if err != nil {
+			return fmt.Errorf("redmine project tracker insert err: %v", err)
+		}
+	}
+	return nil
+}
+
 func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 	newUrl := fmt.Sprintf("%s/%s", strings.TrimRight(viper.GetString("redmine.repositories"), "/"), strings.TrimLeft(gitPath, "/"))
 
@@ -382,6 +401,25 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 	}
 
 	fmt.Println("project repository inserted")
+	return nil
+}
+
+func (c *Model) InsertProjectTracker(projectID, trackerID int) error {
+	query := "INSERT INTO projects_trackers (project_id, tracker_id) VALUES(?, ?)"
+
+	result, err := c.db.Exec(query, projectID, trackerID)
+	if err != nil {
+		return fmt.Errorf("error redmine project tracker insert: %v", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rows affected err: %v", err)
+	}
+	if affected == 0 {
+		return errors.New("project tracker not saved")
+	}
+
+	fmt.Println("project tracker inserted")
 	return nil
 }
 
