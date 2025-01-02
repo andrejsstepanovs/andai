@@ -27,6 +27,8 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 				return fmt.Errorf("error redmine: %v", err)
 			}
 
+			fmt.Println("Trackers:", len(workflowConfig.IssueTypes))
+
 			return nil
 		},
 	}
@@ -37,7 +39,7 @@ func convertToStatuses(workflowStates models.States) []redmine.IssueStatus {
 	statuses := make([]redmine.IssueStatus, 0)
 	for _, state := range workflowStates {
 		statuses = append(statuses, redmine.IssueStatus{
-			Name:      state.Name,
+			Name:      string(state.Name),
 			IsDefault: state.IsDefault,
 			IsClosed:  state.IsClosed,
 		})
@@ -46,9 +48,8 @@ func convertToStatuses(workflowStates models.States) []redmine.IssueStatus {
 	return statuses
 }
 
+// sortStatuses Sort statuses: IsDefault first, IsClosed last
 func sortStatuses(statuses []redmine.IssueStatus) []redmine.IssueStatus {
-
-	// Sort statuses: IsDefault first, IsClosed last
 	sort.Slice(statuses, func(i, j int) bool {
 		// If i is default and j is not, i should come first
 		if statuses[i].IsDefault && !statuses[j].IsDefault {

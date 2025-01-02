@@ -93,5 +93,11 @@ func loadWorkflow(filePath string) (models.Workflow, error) {
 		return models.Workflow{}, err
 	}
 
+	err = settings.Validate()
+	if err != nil {
+		fmt.Println("Error validating settings:", err)
+		return models.Workflow{}, err
+	}
+
 	return settings.Workflow, nil
 }

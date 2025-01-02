@@ -39,3 +39,25 @@ workflow:
       description: Completed tasks.
       ai: False
       is_closed: True
+
+  issue_types:
+    Task:
+      description: A task that needs to be done.
+      jobs:
+        In Progress:
+          steps:
+            - aider: architect
+              prompt: Analyze given task carefully and locate files that need to be worked on.
+            - aider: coder
+              prompt: Implement it
+    Story:
+      description: A user story.
+      jobs:
+        In Progress:
+          steps:
+            - aider: architect
+              prompt: Analyze given task carefully and locate files that need to be worked on.
+            - aider: ask
+              prompt: Implement it
+            - aider: coder
+              prompt: Implement necessary changes

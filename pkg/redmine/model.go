@@ -391,18 +391,22 @@ func (c *Model) SaveIssueStatuses(statuses []redmine.IssueStatus) error {
 
 	newStatuses := make([]redmine.IssueStatus, 0)
 	for _, status := range statuses {
-		fmt.Println(fmt.Sprintf("Name: %s", status.Name))
 		exists := false
 		for _, s := range current {
 			if s.Name == status.Name {
 				exists = true
-				fmt.Printf("Issue status %s already exists: %s\n", s.Name, s.Id)
+				//fmt.Printf("Issue status %s already exists: %s\n", s.Name, s.Id)
 				break
 			}
 		}
 		if !exists {
 			newStatuses = append(newStatuses, status)
 		}
+	}
+
+	if len(newStatuses) == 0 {
+		fmt.Println("Issue statuses OK")
+		return nil
 	}
 
 	for i, status := range newStatuses {
