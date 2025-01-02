@@ -407,22 +407,23 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 	}
 	if repository.ID > 0 {
 		fmt.Printf("ID: %d, ProjectID: %s, Url: %s\n", repository.ID, repository.ProjectID, repository.RootUrl)
-		if repository.RootUrl != newUrl {
-			fmt.Println("Mismatch Repository root_url")
-			result, err := c.db.Exec("UPDATE repositories SET root_url = ?, created_on = NOW() WHERE id = ?", newUrl, repository.ID)
-			if err != nil {
-				return fmt.Errorf("update repository db err: %v", err)
-			}
-			affected, err := result.RowsAffected()
-			if err != nil {
-				return fmt.Errorf("rows affected err: %v", err)
-			}
-			if affected == 0 {
-				return errors.New("project repository root_url not changed")
-			}
-			fmt.Println("Project repository root_url updated")
+		if repository.RootUrl == newUrl {
 			return nil
 		}
+		fmt.Println("Mismatch Repository root_url")
+		result, err := c.db.Exec("UPDATE repositories SET root_url = ?, created_on = NOW() WHERE id = ?", newUrl, repository.ID)
+		if err != nil {
+			return fmt.Errorf("update repository db err: %v", err)
+		}
+		affected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("rows affected err: %v", err)
+		}
+		if affected == 0 {
+			return errors.New("project repository root_url not changed")
+		}
+		fmt.Println("Project repository root_url updated")
+		return nil
 	}
 
 	query := "INSERT INTO repositories (project_id, root_url, type, path_encoding, extra_info, identifier, is_default, created_on) VALUES(?, ?, 'Repository::Git', 'UTF-8', ?, ?, 1, NOW())"
@@ -577,6 +578,149 @@ func (c *Model) InsertIssueStatus(status redmine.IssueStatus, position int) erro
 	}
 	if affected == 0 {
 		return errors.New("token not created")
+	}
+	return nil
+}
+
+const ROLE_WORKER = "Worker"
+
+func (c *Model) DBGetWorkerRole() (int, error) {
+	results, err := c.db.Query("SELECT id FROM roles WHERE builtin = 0 AND name = ?", ROLE_WORKER)
+	if err != nil {
+		return 0, fmt.Errorf("redmine db err: %v", err)
+	}
+	defer results.Close()
+
+	var rows []int
+	for results.Next() {
+		var row int
+		if err := results.Scan(&row); err != nil {
+			return 0, err
+		}
+		rows = append(rows, row)
+	}
+	err = results.Err()
+	if err != nil && !errors.As(err, &sql.ErrNoRows) {
+		return 0, err
+	}
+	for _, row := range rows {
+		return row, nil
+	}
+	return 0, nil
+}
+
+func (c *Model) DBCreateWorkerRole() error {
+	permissions := []string{
+		"---",
+		"- :add_project",
+		"- :edit_project",
+		"- :close_project",
+		"- :delete_project",
+		"- :select_project_publicity",
+		"- :select_project_modules",
+		"- :manage_members",
+		"- :manage_versions",
+		"- :add_subprojects",
+		"- :manage_public_queries",
+		"- :save_queries",
+		"- :view_messages",
+		"- :add_messages",
+		"- :edit_messages",
+		"- :edit_own_messages",
+		"- :delete_messages",
+		"- :delete_own_messages",
+		"- :view_message_watchers",
+		"- :add_message_watchers",
+		"- :delete_message_watchers",
+		"- :manage_boards",
+		"- :view_calendar",
+		"- :view_documents",
+		"- :add_documents",
+		"- :edit_documents",
+		"- :delete_documents",
+		"- :view_files",
+		"- :manage_files",
+		"- :view_gantt",
+		"- :view_issues",
+		"- :add_issues",
+		"- :edit_issues",
+		"- :edit_own_issues",
+		"- :copy_issues",
+		"- :manage_issue_relations",
+		"- :manage_subtasks",
+		"- :set_issues_private",
+		"- :set_own_issues_private",
+		"- :add_issue_notes",
+		"- :edit_issue_notes",
+		"- :edit_own_issue_notes",
+		"- :view_private_notes",
+		"- :set_notes_private",
+		"- :delete_issues",
+		"- :view_issue_watchers",
+		"- :add_issue_watchers",
+		"- :delete_issue_watchers",
+		"- :import_issues",
+		"- :manage_categories",
+		"- :view_news",
+		"- :manage_news",
+		"- :comment_news",
+		"- :view_changesets",
+		"- :browse_repository",
+		"- :commit_access",
+		"- :manage_related_issues",
+		"- :manage_repository",
+		"- :view_time_entries",
+		"- :log_time",
+		"- :edit_time_entries",
+		"- :edit_own_time_entries",
+		"- :manage_project_activities",
+		"- :log_time_for_other_users",
+		"- :import_time_entries",
+		"- :view_wiki_pages",
+		"- :view_wiki_edits",
+		"- :export_wiki_pages",
+		"- :edit_wiki_pages",
+		"- :rename_wiki_pages",
+		"- :delete_wiki_pages",
+		"- :delete_wiki_pages_attachments",
+		"- :view_wiki_page_watchers",
+		"- :add_wiki_page_watchers",
+		"- :delete_wiki_page_watchers",
+		"- :protect_wiki_pages",
+		"- :manage_wiki",
+		"",
+	}
+	settings := []string{
+		"---",
+		"permissions_all_trackers:",
+		"  view_issues: '1'",
+		"  add_issues: '1'",
+		"  edit_issues: '1'",
+		"  add_issue_notes: '1'",
+		"  delete_issues: '1'",
+		"permissions_tracker_ids:",
+		"  view_issues: []",
+		"  add_issues: []",
+		"  edit_issues: []",
+		"  add_issue_notes: []",
+		"  delete_issues: []",
+		"",
+	}
+	permissionsRaw := strings.Join(permissions, "\n")
+	settingsRaw := strings.Join(settings, "\n")
+
+	query := "INSERT INTO roles (name, position, assignable, builtin, permissions, issues_visibility, users_visibility, time_entries_visibility, all_roles_managed, settings) VALUES (?, 1, 1, 0, ?, 'all', 'all', 'all', 1, ?);"
+
+	result, err := c.db.Exec(query, ROLE_WORKER, permissionsRaw, settingsRaw)
+	if err != nil {
+		return fmt.Errorf("insert role err: %v", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("roles rows affected err: %v", err)
+	}
+	if affected == 0 {
+		return errors.New("role not updated")
 	}
 	return nil
 }
