@@ -2,6 +2,7 @@ package redmine
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -15,10 +16,6 @@ const (
 )
 
 func (c *Model) APIGetWorkableIssue(priorities models.Priorities) (redmine.Issue, error) {
-	//relations, _ := c.Api().IssueRelations(2)
-	//fmt.Printf("%d IS BLOCKED BY %d <- needs to be done first\n", relations[0].IssueToId, relations[0].IssueId)
-	//return redmine.Issue{}, nil
-
 	projects, err := c.ApiGetProjects()
 	if err != nil {
 		return redmine.Issue{}, fmt.Errorf("error redmine issue status: %v", err)
@@ -30,33 +27,21 @@ func (c *Model) APIGetWorkableIssue(priorities models.Priorities) (redmine.Issue
 			return redmine.Issue{}, fmt.Errorf("error redmine issues of project: %v", err)
 		}
 
-		dependencies := make(map[int][]int)
-		for _, issue := range projectIssues {
-			dependencies[issue.Id] = make([]int, 0)
-			relations, err := c.Api().IssueRelations(issue.Id)
-			if err != nil && err.Error() != "Not Found" {
-				return redmine.Issue{}, fmt.Errorf("error redmine issue relation: %v", err)
-			}
-			//fmt.Println("RELATIONS:", len(relations))
-			for _, relation := range relations {
-				if relation.RelationType != RelationBlocks {
-					continue
-				}
-				//fmt.Printf("ISSUE (%d) - %d IS BLOCKED BY %d <- needs to be done first\n", issue.Id, relation.IssueToId, relation.IssueId)
-				dependencies[relation.IssueToId] = append(dependencies[relation.IssueId], relation.IssueId)
-			}
+		dependencies, err := c.issueDependencies(projectIssues)
+		if err != nil {
+			return redmine.Issue{}, fmt.Errorf("error redmine issue dependencies: %v", err)
 		}
 
 		for issueID, blockedByIDs := range dependencies {
 			if len(blockedByIDs) == 0 {
-				fmt.Printf("ISSUE: %d is not blocked at all\n", issueID)
+				log.Printf("ISSUE: %d is not blocked at all\n", issueID)
 				continue
 			}
 			blocked := make([]string, 0)
 			for _, blockedBy := range blockedByIDs {
 				blocked = append(blocked, strconv.Itoa(blockedBy))
 			}
-			fmt.Printf("ISSUE: %d BLOCKED BY: %v\n", issueID, strings.Join(blocked, ", "))
+			log.Printf("ISSUE: %d BLOCKED BY: %v\n", issueID, strings.Join(blocked, ", "))
 		}
 
 		//issues := c.getCorrectIssue(projectIssues, priorities)
@@ -74,6 +59,27 @@ func (c *Model) APIGetWorkableIssue(priorities models.Priorities) (redmine.Issue
 	}
 
 	return redmine.Issue{}, nil
+}
+
+func (c *Model) issueDependencies(projectIssues []redmine.Issue) (map[int][]int, error) {
+	dependencies := make(map[int][]int)
+	for _, issue := range projectIssues {
+		dependencies[issue.Id] = make([]int, 0)
+		relations, err := c.Api().IssueRelations(issue.Id)
+		if err != nil && err.Error() != "Not Found" {
+			return dependencies, err
+		}
+		//fmt.Println("RELATIONS:", len(relations))
+		for _, relation := range relations {
+			if relation.RelationType != RelationBlocks {
+				continue
+			}
+			//fmt.Printf("ISSUE (%d) - %d IS BLOCKED BY %d <- needs to be done first\n", issue.Id, relation.IssueToId, relation.IssueId)
+			dependencies[relation.IssueToId] = append(dependencies[relation.IssueId], relation.IssueId)
+		}
+	}
+
+	return dependencies, nil
 }
 
 func (c *Model) getCorrectIssue(issues []redmine.Issue, priorities models.Priorities) []redmine.Issue {
