@@ -5,22 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
 
 	workflow "github.com/andrejsstepanovs/andai/pkg/models"
-	"github.com/andrejsstepanovs/andai/pkg/redmine/models"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/mattn/go-redmine"
-	"github.com/spf13/viper"
 )
 
 const (
 	queryGetProjectTrackers   = "SELECT tracker_id FROM projects_trackers WHERE project_id = ?"
 	queryInsertProjectTracker = "INSERT INTO projects_trackers (project_id, tracker_id) VALUES(?, ?)"
 	queryInsertTracker        = "INSERT INTO trackers (name, description, position, default_status_id) VALUES (?, ?, ?, ?)"
-	queryGetIssuePriority     = "SELECT id FROM enumerations WHERE type = 'IssuePriority' AND is_default = 1 AND name = ?"
-	queryInsertIssuePriority  = "INSERT INTO enumerations (name, position, is_default, type, active, project_id, parent_id, position_name) VALUES (?, 1, 1, 'IssuePriority', 1, NULL, NULL, 'default')"
-	queryInsertIssueStatus    = "INSERT INTO issue_statuses (name, is_closed, position) VALUES (?, ?, ?)"
 )
 
 func (c *Model) DbProjectTrackers(projectID int) ([]int, error) {
@@ -133,87 +127,6 @@ func (c *Model) DBInsertTracker(issueType workflow.IssueType, position, defaultS
 	}
 	if affected == 0 {
 		return errors.New("tracker not created")
-	}
-	return nil
-}
-
-func (c *Model) GetDefaultNormalPriority() (int, error) {
-	var ids []int
-	err := c.queryAndScan(queryGetIssuePriority, func(rows *sql.Rows) error {
-		var row int
-		if err := rows.Scan(&row); err != nil {
-			return err
-		}
-		ids = append(ids, row)
-		return nil
-	}, ISSUE_PRIORITY)
-
-	if err != nil && !errors.As(err, &sql.ErrNoRows) {
-		return 0, err
-	}
-	for _, id := range ids {
-		return id, nil
-	}
-	return 0, nil
-}
-
-func (c *Model) DBInsertDefaultNormalPriority() error {
-	result, err := c.execDML(queryInsertIssuePriority, ISSUE_PRIORITY)
-	if err != nil {
-		return fmt.Errorf("redmine issue priority err: %v", err)
-	}
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected err: %v", err)
-	}
-	if affected == 0 {
-		return errors.New("issue priority not created")
-	}
-	return nil
-}
-
-func (c *Model) DBSaveIssueStatuses(statuses []redmine.IssueStatus, current []redmine.IssueStatus) error {
-	newStatuses := make([]redmine.IssueStatus, 0)
-	for _, status := range statuses {
-		exists := false
-		for _, s := range current {
-			if s.Name == status.Name {
-				exists = true
-				break
-			}
-		}
-		if !exists {
-			newStatuses = append(newStatuses, status)
-		}
-	}
-
-	if len(newStatuses) == 0 {
-		log.Println("Issue Statuses OK")
-		return nil
-	}
-
-	for i, status := range newStatuses {
-		log.Println(fmt.Sprintf("Creating New Issue Status: %s", status.Name))
-		err := c.DBInsertIssueStatus(status, i+1)
-		if err != nil {
-			return fmt.Errorf("redmine issue status insert err: %v", err)
-		}
-	}
-
-	return nil
-}
-
-func (c *Model) DBInsertIssueStatus(status redmine.IssueStatus, position int) error {
-	result, err := c.execDML(queryInsertIssueStatus, status.Name, status.IsClosed, position)
-	if err != nil {
-		return fmt.Errorf("error redmine issue status insert: %v", err)
-	}
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected err: %v", err)
-	}
-	if affected == 0 {
-		return errors.New("token not created")
 	}
 	return nil
 }

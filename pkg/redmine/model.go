@@ -9,7 +9,6 @@ import (
 
 const ROLE_WORKER = "Worker"
 const ADMIN_LOGIN = "admin"
-const ISSUE_PRIORITY = "Normal"
 
 type database interface {
 	Query(query string, args ...any) (*sql.Rows, error)
