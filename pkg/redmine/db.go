@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	workflow "github.com/andrejsstepanovs/andai/pkg/models"
@@ -38,10 +39,9 @@ const (
 )
 
 func (c *Model) DbGetAllUsers() ([]redmine.User, error) {
-	rows, err := c.db.Query(queryGetAllUsers)
+	rows, err := c.queryRows(queryGetAllUsers)
 	if err != nil {
-		fmt.Println("Redmine Database Ping Fail")
-		return nil, fmt.Errorf("error database: %v", err)
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -68,9 +68,9 @@ func (c *Model) DbGetAllUsers() ([]redmine.User, error) {
 }
 
 func (c *Model) DbProjectTrackers(projectID int) ([]int, error) {
-	rows, err := c.db.Query(queryGetProjectTrackers, projectID)
+	rows, err := c.queryRows(queryGetProjectTrackers, projectID)
 	if err != nil {
-		return []int{}, fmt.Errorf("error database: %v", err)
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -120,9 +120,9 @@ func (c *Model) DbCreateApiToken(userId int, tokenValue string) error {
 }
 
 func (c *Model) DbGetToken(userId int) (models.Token, error) {
-	results, err := c.db.Query(queryGetToken, "api", userId)
+	results, err := c.queryRows(queryGetToken, "api", userId)
 	if err != nil {
-		return models.Token{}, fmt.Errorf("error redmine admin: %v", err)
+		return models.Token{}, err
 	}
 	defer results.Close()
 
@@ -156,18 +156,18 @@ func (c *Model) DbSettingsAdminMustNotChangePassword() error {
 	}
 
 	if affected > 0 {
-		fmt.Println("Admin must_change_passwd set to 0")
+		log.Println("Admin must_change_passwd set to 0")
 	} else {
-		fmt.Println("Admin must_change_passwd not changed")
+		log.Println("Admin must_change_passwd not changed")
 	}
 
 	return nil
 }
 
 func (c *Model) DbGetSettings(settingName string) ([]models.Settings, error) {
-	results, err := c.db.Query(queryGetSettings, settingName)
+	results, err := c.queryRows(queryGetSettings, settingName)
 	if err != nil {
-		return nil, fmt.Errorf("db settings err: %v", err)
+		return nil, err
 	}
 	defer results.Close()
 
@@ -196,7 +196,7 @@ func (c *Model) DbSettingsInsert(settingName, value string) error {
 		return fmt.Errorf("rows affected err: %v", err)
 	}
 	if affected == 0 {
-		return errors.New("Admin rest_api_enabled not changed")
+		return errors.New("admin rest_api_enabled not changed")
 	}
 	return nil
 }
@@ -222,26 +222,26 @@ func (c *Model) DbSettingsEnableAPI() error {
 
 	rows, err := c.DbGetSettings(settingsName)
 	for _, row := range rows {
-		fmt.Printf("Setting Identifier: %d, Name: %s, Value: %s\n", row.ID, row.Name, row.Value)
+		log.Printf("Setting Identifier: %d, Name: %s, Value: %s\n", row.ID, row.Name, row.Value)
 		if row.Value != settingsValue {
-			fmt.Printf("Setting %s is not enabled\n", settingsName)
+			log.Printf("Setting %s is not enabled\n", settingsName)
 			err = c.DbSettingsUpdate(settingsName, settingsValue)
 			if err != nil {
 				return fmt.Errorf("update settings db err: %v", err)
 			}
-			fmt.Printf("Setting %s updated to %s\n", settingsName, settingsValue)
+			log.Printf("Setting %s updated to %s\n", settingsName, settingsValue)
 			return nil
 		}
-		fmt.Printf("Setting %s is OK\n", settingsName)
+		log.Printf("Setting %s is OK\n", settingsName)
 		return nil
 	}
 
-	fmt.Printf("Setting %s is not present\n", settingsName)
+	log.Printf("Setting %s is not present\n", settingsName)
 	err = c.DbSettingsInsert(settingsName, settingsValue)
 	if err != nil {
 		return fmt.Errorf("insert settings db err: %v", err)
 	}
-	fmt.Printf("Setting %s created with value: %s\n", settingsName, settingsValue)
+	log.Printf("Setting %s created with value: %s\n", settingsName, settingsValue)
 	return nil
 }
 
@@ -251,24 +251,24 @@ func (c *Model) DBSaveTrackers(trackers workflow.IssueTypes, defaultStatus redmi
 		exists := false
 		for _, ct := range current {
 			if ct.Name == string(t.Name) {
-				fmt.Printf("Tracker %s already exists: %d\n", ct.Name, ct.Id)
+				log.Printf("Tracker %s already exists: %d\n", ct.Name, ct.Id)
 				exists = true
 				break
 			}
 		}
 		if !exists {
-			fmt.Println(fmt.Sprintf("Tracker: %s", t.Name))
+			log.Println(fmt.Sprintf("Tracker: %s", t.Name))
 			newTrackers = append(newTrackers, t)
 		}
 	}
 
 	if len(newTrackers) == 0 {
-		fmt.Println("Trackers OK")
+		log.Println("Trackers OK")
 		return nil
 	}
 
 	for i, tracker := range newTrackers {
-		fmt.Println(fmt.Sprintf("Creating New Tracker: %s", tracker.Name))
+		log.Println(fmt.Sprintf("Creating New Tracker: %s", tracker.Name))
 		err := c.DBInsertTracker(tracker, i+1, defaultStatus.Id)
 		if err != nil {
 			return fmt.Errorf("redmine tracker insert err: %v", err)
@@ -279,9 +279,9 @@ func (c *Model) DBSaveTrackers(trackers workflow.IssueTypes, defaultStatus redmi
 }
 
 func (c *Model) DbGetRepository(project redmine.Project) (models.Repository, error) {
-	results, err := c.db.Query(queryGetProjectRepository, project.Identifier)
+	results, err := c.queryRows(queryGetProjectRepository, project.Identifier)
 	if err != nil {
-		return models.Repository{}, fmt.Errorf("error redmine admin: %v", err)
+		return models.Repository{}, err
 	}
 	defer results.Close()
 
@@ -314,7 +314,7 @@ func (c *Model) DbSaveProjectTrackers(project redmine.Project, allTrackers []red
 		exists := false
 		for _, existingTrackerID := range existingTrackerIDs {
 			if tracker.Id == existingTrackerID {
-				fmt.Printf("Project %q Tracker for %q already exists Identifier: %d\n", project.Identifier, tracker.Name, tracker.Id)
+				log.Printf("Project %q Tracker for %q already exists Identifier: %d\n", project.Identifier, tracker.Name, tracker.Id)
 				exists = true
 				break
 			}
@@ -325,7 +325,7 @@ func (c *Model) DbSaveProjectTrackers(project redmine.Project, allTrackers []red
 	}
 
 	for _, tracker := range createTrackers {
-		fmt.Println(fmt.Sprintf("Tracker: %s", tracker.Name))
+		log.Println(fmt.Sprintf("Tracker: %s", tracker.Name))
 		err = c.DBInsertProjectTracker(project.Id, tracker.Id)
 		if err != nil {
 			return fmt.Errorf("redmine project tracker insert err: %v", err)
@@ -342,11 +342,11 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 		return fmt.Errorf("redmine get repository err: %v", err)
 	}
 	if repository.ID > 0 {
-		fmt.Printf("Repository ID: %d, ProjectID: %s, Url: %s\n", repository.ID, repository.ProjectID, repository.RootUrl)
+		log.Printf("Repository ID: %d, ProjectID: %s, Url: %s\n", repository.ID, repository.ProjectID, repository.RootUrl)
 		if repository.RootUrl == newUrl {
 			return nil
 		}
-		fmt.Println("Mismatch Repository root_url")
+		log.Println("Mismatch Repository root_url")
 		result, err := c.db.Exec(queryUpdateRepository, newUrl, repository.ID)
 		if err != nil {
 			return fmt.Errorf("update repository db err: %v", err)
@@ -358,7 +358,7 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 		if affected == 0 {
 			return errors.New("project repository root_url not changed")
 		}
-		fmt.Printf("Project %s repository root_url updated\n", project.Identifier)
+		log.Printf("Project %s repository root_url updated\n", project.Identifier)
 		return nil
 	}
 
@@ -374,7 +374,7 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 		return errors.New("project repository not saved")
 	}
 
-	fmt.Println("project repository inserted")
+	log.Println("project repository inserted")
 	return nil
 }
 
@@ -391,7 +391,7 @@ func (c *Model) DBInsertProjectTracker(projectID, trackerID int) error {
 		return errors.New("project tracker not saved")
 	}
 
-	fmt.Println("project tracker inserted")
+	log.Println("project tracker inserted")
 	return nil
 }
 
@@ -411,9 +411,9 @@ func (c *Model) DBInsertTracker(issueType workflow.IssueType, position, defaultS
 }
 
 func (c *Model) GetDefaultNormalPriority() (int, error) {
-	results, err := c.db.Query(queryGetIssuePriority, ISSUE_PRIORITY)
+	results, err := c.queryRows(queryGetIssuePriority, ISSUE_PRIORITY)
 	if err != nil {
-		return 0, fmt.Errorf("redmine db err: %v", err)
+		return 0, err
 	}
 	defer results.Close()
 
@@ -466,12 +466,12 @@ func (c *Model) DBSaveIssueStatuses(statuses []redmine.IssueStatus, current []re
 	}
 
 	if len(newStatuses) == 0 {
-		fmt.Println("Issue Statuses OK")
+		log.Println("Issue Statuses OK")
 		return nil
 	}
 
 	for i, status := range newStatuses {
-		fmt.Println(fmt.Sprintf("Creating New Issue Status: %s", status.Name))
+		log.Println(fmt.Sprintf("Creating New Issue Status: %s", status.Name))
 		err := c.DBInsertIssueStatus(status, i+1)
 		if err != nil {
 			return fmt.Errorf("redmine issue status insert err: %v", err)
@@ -497,9 +497,9 @@ func (c *Model) DBInsertIssueStatus(status redmine.IssueStatus, position int) er
 }
 
 func (c *Model) DBGetWorkerRole() (int, error) {
-	results, err := c.db.Query(queryGetRole, ROLE_WORKER)
+	results, err := c.queryRows(queryGetRole, ROLE_WORKER)
 	if err != nil {
-		return 0, fmt.Errorf("redmine db err: %v", err)
+		return 0, err
 	}
 	defer results.Close()
 
@@ -651,9 +651,9 @@ func (c *Model) DBInsertWorkflow(trackerID, oldStatusID, newStatusID, roleID int
 }
 
 func (c *Model) DBGetWorkflows(trackerID int) ([]models.Workflow, error) {
-	rows, err := c.db.Query(queryGetWorkflow, trackerID)
+	rows, err := c.queryRows(queryGetWorkflow, trackerID)
 	if err != nil {
-		return nil, fmt.Errorf("error database: %v", err)
+		return nil, err
 	}
 	defer rows.Close()
 
