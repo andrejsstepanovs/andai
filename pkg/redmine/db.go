@@ -38,6 +38,11 @@ const (
 	queryGetWorkflow             = "SELECT id, tracker_id, old_status_id, new_status_id, role_id, assignee, author, type, field_name, rule FROM workflows WHERE tracker_id = ?"
 )
 
+const (
+	TokenActionAPI        = "api"
+	SettingRestAPIEnabled = "rest_api_enabled"
+)
+
 func (c *Model) DbGetAllUsers() ([]redmine.User, error) {
 	var users []redmine.User
 	err := c.queryAndScan(queryGetAllUsers, func(rows *sql.Rows) error {
@@ -73,22 +78,23 @@ func (c *Model) DbProjectTrackers(projectID int) ([]int, error) {
 }
 
 func (c *Model) DbUpdateApiToken(userId int, tokenValue string) error {
-	result, err := c.execDML(queryUpdateTokens, tokenValue, "api", userId)
+	result, err := c.execDML(queryUpdateTokens, tokenValue, TokenActionAPI, userId)
 	if err != nil {
-		return fmt.Errorf("update settings token db err: %v", err)
+		return fmt.Errorf("failed to update API token for user %d: %w", userId, err)
 	}
 	affected, err := result.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("rows affected err: %v", err)
+		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 	if affected == 0 {
-		return errors.New("token not updated")
+		return fmt.Errorf("no rows affected for user %d", userId)
 	}
+	log.Printf("API token updated for user %d\n", userId)
 	return nil
 }
 
 func (c *Model) DbCreateApiToken(userId int, tokenValue string) error {
-	result, err := c.execDML(queryInsertTokens, tokenValue, "api", userId)
+	result, err := c.execDML(queryInsertTokens, tokenValue, TokenActionAPI, userId)
 	if err != nil {
 		return fmt.Errorf("insert settings token db err: %v", err)
 	}
@@ -111,7 +117,7 @@ func (c *Model) DbGetToken(userId int) (models.Token, error) {
 		}
 		tokens = append(tokens, token)
 		return nil
-	}, "api", userId)
+	}, TokenActionAPI, userId)
 
 	if err != nil {
 		return models.Token{}, err
@@ -191,31 +197,30 @@ func (c *Model) DbSettingsUpdate(settingName, value string) error {
 }
 
 func (c *Model) DbSettingsEnableAPI() error {
-	const settingsName = "rest_api_enabled"
 	const settingsValue = "1"
 
-	rows, err := c.DbGetSettings(settingsName)
+	rows, err := c.DbGetSettings(SettingRestAPIEnabled)
 	for _, row := range rows {
 		log.Printf("Setting Identifier: %d, Name: %s, Value: %s\n", row.ID, row.Name, row.Value)
 		if row.Value != settingsValue {
-			log.Printf("Setting %s is not enabled\n", settingsName)
-			err = c.DbSettingsUpdate(settingsName, settingsValue)
+			log.Printf("Setting %s is not enabled\n", SettingRestAPIEnabled)
+			err = c.DbSettingsUpdate(SettingRestAPIEnabled, settingsValue)
 			if err != nil {
 				return fmt.Errorf("update settings db err: %v", err)
 			}
-			log.Printf("Setting %s updated to %s\n", settingsName, settingsValue)
+			log.Printf("Setting %s updated to %s\n", SettingRestAPIEnabled, settingsValue)
 			return nil
 		}
-		log.Printf("Setting %s is OK\n", settingsName)
+		log.Printf("Setting %s is OK\n", SettingRestAPIEnabled)
 		return nil
 	}
 
-	log.Printf("Setting %s is not present\n", settingsName)
-	err = c.DbSettingsInsert(settingsName, settingsValue)
+	log.Printf("Setting %s is not present\n", SettingRestAPIEnabled)
+	err = c.DbSettingsInsert(SettingRestAPIEnabled, settingsValue)
 	if err != nil {
 		return fmt.Errorf("insert settings db err: %v", err)
 	}
-	log.Printf("Setting %s created with value: %s\n", settingsName, settingsValue)
+	log.Printf("Setting %s created with value: %s\n", SettingRestAPIEnabled, settingsValue)
 	return nil
 }
 
