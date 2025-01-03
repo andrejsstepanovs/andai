@@ -2,6 +2,7 @@ package ping
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/andrejsstepanovs/andai/pkg/redmine"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
@@ -17,15 +18,15 @@ func newDBPingCommand(redmine *redmine.Model) *cobra.Command {
 
 			users, err := redmine.DbGetAllUsers()
 			if err != nil {
-				fmt.Println("Failed to load users")
+				log.Println("Failed to load users")
 				return fmt.Errorf("error getting users: %v", err)
 			}
 
-			fmt.Println("Users from Database")
+			log.Println("Users from Database")
 			for _, user := range users {
-				fmt.Printf("Identifier: %d, Login: %q Lastname: %q\n", user.Id, user.Login, user.Lastname)
+				log.Printf("Identifier: %d, Login: %q Lastname: %q\n", user.Id, user.Login, user.Lastname)
 			}
-			fmt.Println("Database Ping Success")
+			log.Println("Database Ping Success")
 
 			return nil
 		},

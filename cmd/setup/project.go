@@ -2,6 +2,7 @@ package setup
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	model "github.com/andrejsstepanovs/andai/pkg/redmine"
@@ -15,9 +16,9 @@ func newProjectsCommand(model *model.Model, projectsConf models.Projects) *cobra
 		Use:   "projects",
 		Short: "Save (Update) projects",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			fmt.Println("Processing Projects sync")
+			log.Println("Processing Projects sync")
 			for _, p := range projectsConf {
-				fmt.Printf("Processing: %s (%s)\n", p.Name, p.Identifier)
+				log.Printf("Processing: %s (%s)\n", p.Name, p.Identifier)
 
 				project := redmine.Project{
 					Name:        p.Name,
@@ -27,25 +28,25 @@ func newProjectsCommand(model *model.Model, projectsConf models.Projects) *cobra
 
 				err, project := model.ApiSaveProject(project)
 				if err != nil {
-					fmt.Println("Redmine Project Save Fail")
+					log.Println("Redmine Project Save Fail")
 					return fmt.Errorf("error redmine project save: %v", err)
 				}
-				fmt.Println("Project OK")
+				log.Println("Project OK")
 
 				err = model.ApiSaveWiki(project, p.Wiki)
 				if err != nil {
-					fmt.Println("Redmine Project Wiki Save Fail")
+					log.Println("Redmine Project Wiki Save Fail")
 					return fmt.Errorf("error redmine project save: %v", err)
 				}
-				fmt.Println("Wiki OK")
+				log.Println("Wiki OK")
 
 				err = model.DbSaveGit(project, p.GitPath)
 				if err != nil {
-					fmt.Println("Redmine Git Save Fail")
+					log.Println("Redmine Git Save Fail")
 					return fmt.Errorf("error redmine git save: %v", err)
 				}
 			}
-			fmt.Println("Project repository OK")
+			log.Println("Project repository OK")
 
 			return nil
 		},

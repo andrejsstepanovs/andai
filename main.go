@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 
 	"github.com/andrejsstepanovs/andai/cmd/ping"
@@ -16,18 +16,18 @@ import (
 func main() {
 	configPath, err := initConfig()
 	if err != nil {
-		fmt.Println("Error initializing config:", err)
+		log.Println("Error initializing config:", err)
 		os.Exit(1)
 	}
 	settings, err := loadSettings(configPath)
 	if err != nil {
-		fmt.Println("Error initializing settings:", err)
+		log.Println("Error initializing settings:", err)
 		os.Exit(1)
 	}
 
 	dependencies, err := deps.NewAppDependencies()
 	if err != nil {
-		fmt.Println("Error creating dependencies:", err)
+		log.Println("Error creating dependencies:", err)
 		os.Exit(1)
 	}
 
@@ -42,7 +42,7 @@ func main() {
 	)
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		os.Exit(1)
 	}
 }
@@ -59,7 +59,7 @@ func initConfig() (string, error) {
 	// Fallback to the user's home directory
 	home, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Println("Error getting user home directory:", err)
+		log.Println("Error getting user home directory:", err)
 		return "", err
 	}
 	viper.AddConfigPath(home)
@@ -67,9 +67,9 @@ func initConfig() (string, error) {
 	// Step 3: Read the config file
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			fmt.Println("Config file not found in current directory or home directory")
+			log.Println("Config file not found in current directory or home directory")
 		} else {
-			fmt.Println("Error reading config file:", err)
+			log.Println("Error reading config file:", err)
 		}
 		return "", err
 	}
@@ -79,23 +79,23 @@ func initConfig() (string, error) {
 }
 
 func loadSettings(filePath string) (models.Settings, error) {
-	fmt.Println("Using config file to load workflow:", filePath)
+	log.Println("Using config file to load workflow:", filePath)
 	content, err := os.ReadFile(filePath) // nolint:gosec
 	if err != nil {
-		fmt.Println("Error reading file:", err)
+		log.Println("Error reading file:", err)
 		return models.Settings{}, err
 	}
 
 	var settings models.Settings
 	err = yaml.Unmarshal(content, &settings)
 	if err != nil {
-		fmt.Println("Error unmarshaling YAML:", err)
+		log.Println("Error unmarshaling YAML:", err)
 		return models.Settings{}, err
 	}
 
 	err = settings.Validate()
 	if err != nil {
-		fmt.Println("Error validating settings:", err)
+		log.Println("Error validating settings:", err)
 		return models.Settings{}, err
 	}
 

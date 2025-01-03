@@ -133,11 +133,11 @@ docker: build.linux ## Build docker image
 
 .PHONY: configure
 configure: build
-	$(BUILD_PATH)/andai ping db
-	$(BUILD_PATH)/andai setup admin
-	$(BUILD_PATH)/andai setup settings
-	$(BUILD_PATH)/andai setup token
-	$(BUILD_PATH)/andai ping api
-	$(BUILD_PATH)/andai setup projects
-	$(BUILD_PATH)/andai setup workflow
-
+	$(BUILD_PATH)/andai ping db && \
+	$(BUILD_PATH)/andai setup admin && \
+	$(BUILD_PATH)/andai setup settings && \
+	$(BUILD_PATH)/andai setup token && \
+	$(BUILD_PATH)/andai ping api && \
+	$(BUILD_PATH)/andai setup projects && \
+	$(BUILD_PATH)/andai setup workflow && \
+	echo "Configure Success"

@@ -2,6 +2,7 @@ package ping
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/andrejsstepanovs/andai/pkg/redmine"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
@@ -13,17 +14,17 @@ func newAPIPingCommand(redmine *redmine.Model) *cobra.Command {
 		Use:   "api",
 		Short: "Ping connection to redmine",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			fmt.Println("Processing Jira issue")
+			log.Println("Processing Jira issue")
 
 			users, err := redmine.ApiGetUsers()
 			if err != nil {
-				fmt.Println("Redmine Ping Fail")
+				log.Println("Redmine Ping Fail")
 				return fmt.Errorf("error redmine ping: %v", err)
 			}
 			for _, user := range users {
-				fmt.Printf("Identifier: %d, Name: %s\n", user.Id, user.Login)
+				log.Printf("Identifier: %d, Name: %s\n", user.Id, user.Login)
 			}
-			fmt.Println("Redmine Ping Success")
+			log.Println("Redmine Ping Success")
 			return nil
 		},
 	}

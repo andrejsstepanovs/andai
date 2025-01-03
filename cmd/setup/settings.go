@@ -2,6 +2,7 @@ package setup
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/andrejsstepanovs/andai/pkg/redmine"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
@@ -13,25 +14,25 @@ func newSettingsCommand(redmine *redmine.Model) *cobra.Command {
 		Use:   "settings",
 		Short: "Enable REST API in Redmine",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			fmt.Println("Update Redmine settings")
+			log.Println("Update Redmine settings")
 
 			err := redmine.DbSettingsEnableAPI()
 			if err != nil {
-				fmt.Println("Redmine Settings Failed to enable API")
+				log.Println("Redmine Settings Failed to enable API")
 				return fmt.Errorf("error redmine: %v", err)
 			}
 
 			err = redmine.DBCreateWorkerRole()
 			if err != nil {
-				fmt.Println("Role creation failed")
+				log.Println("Role creation failed")
 				return fmt.Errorf("error redmine: %v", err)
 			}
 			roleID, err := redmine.DBGetWorkerRole()
 			if err != nil {
-				fmt.Println("Role not found")
+				log.Println("Role not found")
 				return fmt.Errorf("error redmine: %v", err)
 			}
-			fmt.Printf("Worker Role OK. Identifier: %d\n", roleID)
+			log.Printf("Worker Role OK. Identifier: %d\n", roleID)
 
 			return nil
 		},

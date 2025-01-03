@@ -2,6 +2,7 @@ package setup
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/andrejsstepanovs/andai/pkg/redmine"
 	"github.com/andrejsstepanovs/andai/pkg/redmine/models"
@@ -16,13 +17,13 @@ func newGetTokenCommand(redmine *redmine.Model) *cobra.Command {
 		Short: "Set (or get) redmine admin token",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			newToken := viper.GetString("redmine.api_key")
-			fmt.Println("Get redmine admin token or creates it if missing")
+			log.Println("Get redmine admin token or creates it if missing")
 
 			admin, err := redmine.ApiAdmin()
 			if err != nil {
 				return fmt.Errorf("error redmine admin: %v", err)
 			}
-			fmt.Println("Admin Identifier:", admin.Id)
+			log.Println("Admin Identifier:", admin.Id)
 
 			getToken := func() (models.Token, error) {
 				token, err := redmine.DbGetToken(admin.Id)
@@ -30,7 +31,7 @@ func newGetTokenCommand(redmine *redmine.Model) *cobra.Command {
 					return models.Token{}, fmt.Errorf("db err: %v", err)
 				}
 				if token.ID > 0 {
-					fmt.Println("Token:", token.Value)
+					log.Println("Token:", token.Value)
 				}
 				return token, nil
 			}
@@ -45,12 +46,12 @@ func newGetTokenCommand(redmine *redmine.Model) *cobra.Command {
 					return nil
 				}
 
-				fmt.Println("Token mismatch")
+				log.Println("Token mismatch")
 				err = redmine.DbUpdateApiToken(admin.Id, newToken)
 				if err != nil {
 					return fmt.Errorf("after updated err: %v", err)
 				}
-				fmt.Println("Token updated")
+				log.Println("Token updated")
 				token, err = getToken()
 				if err != nil {
 					return err
@@ -62,7 +63,7 @@ func newGetTokenCommand(redmine *redmine.Model) *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("after created err: %v", err)
 			}
-			fmt.Println("New token created")
+			log.Println("New token created")
 
 			_, err = getToken()
 			return err
