@@ -35,7 +35,12 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 			fmt.Println("Default Status:", defaultStatus.Name)
 
 			fmt.Println("Trackers:", len(workflowConfig.IssueTypes))
-			err = model.SaveTrackers(workflowConfig.IssueTypes, defaultStatus)
+
+			current, err := model.Api().Trackers()
+			if err != nil {
+				return fmt.Errorf("error redmine trackers: %v", err)
+			}
+			err = model.DBSaveTrackers(workflowConfig.IssueTypes, defaultStatus, current)
 			if err != nil {
 				fmt.Println("Failed to save trackers")
 				return fmt.Errorf("redmine err: %v", err)
@@ -56,7 +61,7 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 				return err
 			}
 			if priorityID == 0 {
-				err = model.InsertDefaultNormalPriority()
+				err = model.DBInsertDefaultNormalPriority()
 				if err != nil {
 					return err
 				}
