@@ -4,6 +4,12 @@ redmine:
   api_key: "2159cef2fb6c82c4f66981f199798781e161c694"
   repositories: "/var/repositories/"
 
+llm_models:
+    - name: "coder"
+      model: "gpt-4o-mini"
+      provider: "openai"
+      api_key: ""
+
 projects:
   - identifier: "my-project"
     name: "My Project"

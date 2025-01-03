@@ -7,8 +7,9 @@ import (
 )
 
 type Settings struct {
-	Workflow Workflow `yaml:"workflow"`
-	Projects Projects `yaml:"projects"`
+	Workflow  Workflow  `yaml:"workflow"`
+	Projects  Projects  `yaml:"projects"`
+	LlmModels LlmModels `yaml:"llm_models"`
 }
 
 type StateName string
@@ -48,6 +49,24 @@ func (t *Transition) GetIDs(statuses []redmine.IssueStatus) (from int, to int) {
 		}
 	}
 	return
+}
+
+type LlmModels []LlmModel
+
+type LlmModel struct {
+	Name     string `yaml:"name"`
+	Model    string `yaml:"model"`
+	Provider string `yaml:"provider"`
+	APIKey   string `yaml:"api_key"`
+}
+
+func (m LlmModels) Get(name string) LlmModel {
+	for _, model := range m {
+		if model.Name == name {
+			return model
+		}
+	}
+	panic(fmt.Sprintf("model %s not found", name))
 }
 
 // Workflow represents

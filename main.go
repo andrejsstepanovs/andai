@@ -6,6 +6,7 @@ import (
 
 	"github.com/andrejsstepanovs/andai/cmd/ping"
 	"github.com/andrejsstepanovs/andai/cmd/setup"
+	"github.com/andrejsstepanovs/andai/cmd/work"
 	"github.com/andrejsstepanovs/andai/pkg/deps"
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	"github.com/spf13/cobra"
@@ -39,6 +40,7 @@ func main() {
 	rootCmd.AddCommand(
 		ping.SetupPingCmd(dependencies),
 		setup.Cmd(dependencies, settings),
+		work.Cmd(dependencies, settings),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
