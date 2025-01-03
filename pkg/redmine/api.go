@@ -3,6 +3,7 @@ package redmine
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -72,16 +73,16 @@ func (c *Model) ApiSaveProject(project redmine.Project) (error, redmine.Project)
 	}
 
 	for _, p := range current {
-		fmt.Printf("ID: %d, Name: %s Identifier: %s\n", p.Id, p.Name, p.Identifier)
+		log.Printf("ID: %d, Name: %s Identifier: %s\n", p.Id, p.Name, p.Identifier)
 		if p.Identifier == project.Identifier {
-			fmt.Printf("Project already exists: %s\n", p.Name)
+			log.Printf("Project already exists: %s\n", p.Name)
 			project.Id = p.Id
 			err = c.Api().UpdateProject(project)
 			if err != nil && err.Error() != "EOF" {
-				fmt.Println("Redmine Update Project Failed")
+				log.Println("Redmine Update Project Failed")
 				return fmt.Errorf("error redmine update project: %v", err.Error()), redmine.Project{}
 			}
-			fmt.Printf("Project updated: %s\n", project.Name)
+			log.Printf("Project updated: %s\n", project.Name)
 			return nil, project
 		}
 	}
