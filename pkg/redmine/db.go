@@ -13,8 +13,32 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	queryGetAllUsers             = "SELECT id, login, firstname, lastname FROM users"
+	queryGetProjectTrackers      = "SELECT tracker_id FROM projects_trackers WHERE project_id = ?"
+	queryUpdateTokens            = "UPDATE tokens SET value = ?, updated_on = NOW() WHERE action = ? AND user_id = ?"
+	queryInsertTokens            = "INSERT INTO tokens (value, action, user_id, created_on, updated_on) VALUES (?, ?, ?, NOW(), NOW())"
+	queryGetToken                = "SELECT id, action, value FROM tokens WHERE action = ? AND user_id = ?"
+	queryUpdateAdminNoChangePass = "UPDATE users SET must_change_passwd = 0 WHERE login = ?"
+	queryGetSettings             = "SELECT id, name, value FROM settings WHERE name = ?"
+	queryInsertSettings          = "INSERT INTO settings (name, value, updated_on) VALUES (?, ?, NOW())"
+	queryUpdateSettingsValue     = "UPDATE settings SET value = ?, updated_on = NOW() WHERE name = ?"
+	queryGetProjectRepository    = "SELECT id, project_id, root_url FROM repositories WHERE identifier = ?"
+	queryInsertRepository        = "INSERT INTO repositories (project_id, root_url, type, path_encoding, extra_info, identifier, is_default, created_on) VALUES(?, ?, 'Repository::Git', 'UTF-8', ?, ?, 1, NOW())"
+	queryUpdateRepository        = "UPDATE repositories SET root_url = ?, created_on = NOW() WHERE id = ?"
+	queryInsertProjectTracker    = "INSERT INTO projects_trackers (project_id, tracker_id) VALUES(?, ?)"
+	queryInsertTracker           = "INSERT INTO trackers (name, description, position, default_status_id) VALUES (?, ?, ?, ?)"
+	queryGetIssuePriority        = "SELECT id FROM enumerations WHERE type = 'IssuePriority' AND is_default = 1 AND name = ?"
+	queryInsertIssuePriority     = "INSERT INTO enumerations (name, position, is_default, type, active, project_id, parent_id, position_name) VALUES (?, 1, 1, 'IssuePriority', 1, NULL, NULL, 'default')"
+	queryInsertIssueStatus       = "INSERT INTO issue_statuses (name, is_closed, position) VALUES (?, ?, ?)"
+	queryGetRole                 = "SELECT id FROM roles WHERE builtin = 0 AND name = ?"
+	queryInsertRole              = "INSERT INTO roles (name, position, assignable, builtin, permissions, issues_visibility, users_visibility, time_entries_visibility, all_roles_managed, settings) VALUES (?, 1, 1, 0, ?, 'all', 'all', 'all', 1, ?)"
+	queryInsertWorkflow          = "INSERT INTO workflows (tracker_id, old_status_id, new_status_id, role_id, type) VALUES (?, ?, ?, ?, 'WorkflowTransition')"
+	queryGetWorkflow             = "SELECT id, tracker_id, old_status_id, new_status_id, role_id, assignee, author, type, field_name, rule FROM workflows WHERE tracker_id = ?"
+)
+
 func (c *Model) DbGetAllUsers() ([]redmine.User, error) {
-	rows, err := c.db.Query("SELECT id, login, firstname, lastname FROM users")
+	rows, err := c.db.Query(queryGetAllUsers)
 	if err != nil {
 		fmt.Println("Redmine Database Ping Fail")
 		return nil, fmt.Errorf("error database: %v", err)
@@ -44,7 +68,7 @@ func (c *Model) DbGetAllUsers() ([]redmine.User, error) {
 }
 
 func (c *Model) DbProjectTrackers(projectID int) ([]int, error) {
-	rows, err := c.db.Query("SELECT tracker_id FROM projects_trackers WHERE project_id = ?", projectID)
+	rows, err := c.db.Query(queryGetProjectTrackers, projectID)
 	if err != nil {
 		return []int{}, fmt.Errorf("error database: %v", err)
 	}
@@ -66,7 +90,7 @@ func (c *Model) DbProjectTrackers(projectID int) ([]int, error) {
 }
 
 func (c *Model) DbUpdateApiToken(userId int, tokenValue string) error {
-	result, err := c.db.Exec("UPDATE tokens SET value = ?, updated_on = NOW() WHERE action = ? AND user_id = ?", tokenValue, "api", userId)
+	result, err := c.db.Exec(queryUpdateTokens, tokenValue, "api", userId)
 	if err != nil {
 		return fmt.Errorf("update settings token db err: %v", err)
 	}
@@ -81,7 +105,7 @@ func (c *Model) DbUpdateApiToken(userId int, tokenValue string) error {
 }
 
 func (c *Model) DbCreateApiToken(userId int, tokenValue string) error {
-	result, err := c.db.Exec("INSERT INTO tokens (value, action, user_id, created_on, updated_on) VALUES (?, ?, ?, NOW(), NOW())", tokenValue, "api", userId)
+	result, err := c.db.Exec(queryInsertTokens, tokenValue, "api", userId)
 	if err != nil {
 		return fmt.Errorf("insert settings token db err: %v", err)
 	}
@@ -96,7 +120,7 @@ func (c *Model) DbCreateApiToken(userId int, tokenValue string) error {
 }
 
 func (c *Model) DbGetToken(userId int) (models.Token, error) {
-	results, err := c.db.Query("SELECT id, action, value FROM tokens WHERE action = ? AND user_id = ?", "api", userId)
+	results, err := c.db.Query(queryGetToken, "api", userId)
 	if err != nil {
 		return models.Token{}, fmt.Errorf("error redmine admin: %v", err)
 	}
@@ -121,7 +145,7 @@ func (c *Model) DbGetToken(userId int) (models.Token, error) {
 }
 
 func (c *Model) DbSettingsAdminMustNotChangePassword() error {
-	result, err := c.db.Exec("UPDATE users SET must_change_passwd = 0 WHERE login = ?", "admin")
+	result, err := c.db.Exec(queryUpdateAdminNoChangePass, "admin")
 	if err != nil {
 		return fmt.Errorf("update users db err: %v", err)
 	}
@@ -141,7 +165,7 @@ func (c *Model) DbSettingsAdminMustNotChangePassword() error {
 }
 
 func (c *Model) DbGetSettings(settingName string) ([]models.Settings, error) {
-	results, err := c.db.Query("SELECT id, name, value FROM settings WHERE name = ?", settingName)
+	results, err := c.db.Query(queryGetSettings, settingName)
 	if err != nil {
 		return nil, fmt.Errorf("db settings err: %v", err)
 	}
@@ -163,7 +187,7 @@ func (c *Model) DbGetSettings(settingName string) ([]models.Settings, error) {
 }
 
 func (c *Model) DbSettingsInsert(settingName, value string) error {
-	result, err := c.db.Exec("INSERT INTO settings (name, value, updated_on) VALUES (?, ?, NOW())", settingName, value)
+	result, err := c.db.Exec(queryInsertSettings, settingName, value)
 	if err != nil {
 		return fmt.Errorf("update settings db err: %v", err)
 	}
@@ -178,7 +202,7 @@ func (c *Model) DbSettingsInsert(settingName, value string) error {
 }
 
 func (c *Model) DbSettingsUpdate(settingName, value string) error {
-	result, err := c.db.Exec("UPDATE settings SET value = ?, updated_on = NOW() WHERE name = ?", value, settingName)
+	result, err := c.db.Exec(queryUpdateSettingsValue, value, settingName)
 	if err != nil {
 		return fmt.Errorf("update settings db err: %v", err)
 	}
@@ -193,31 +217,31 @@ func (c *Model) DbSettingsUpdate(settingName, value string) error {
 }
 
 func (c *Model) DbSettingsEnableAPI() error {
-	const SETTING_NAME = "rest_api_enabled"
-	const SETTING_VALUE = "1"
+	const settingsName = "rest_api_enabled"
+	const settingsValue = "1"
 
-	rows, err := c.DbGetSettings(SETTING_NAME)
+	rows, err := c.DbGetSettings(settingsName)
 	for _, row := range rows {
 		fmt.Printf("Setting Identifier: %d, Name: %s, Value: %s\n", row.ID, row.Name, row.Value)
-		if row.Value != SETTING_VALUE {
-			fmt.Printf("Setting %s is not enabled\n", SETTING_NAME)
-			err = c.DbSettingsUpdate(SETTING_NAME, SETTING_VALUE)
+		if row.Value != settingsValue {
+			fmt.Printf("Setting %s is not enabled\n", settingsName)
+			err = c.DbSettingsUpdate(settingsName, settingsValue)
 			if err != nil {
 				return fmt.Errorf("update settings db err: %v", err)
 			}
-			fmt.Printf("Setting %s updated to %s\n", SETTING_NAME, SETTING_VALUE)
+			fmt.Printf("Setting %s updated to %s\n", settingsName, settingsValue)
 			return nil
 		}
-		fmt.Printf("Setting %s is OK\n", SETTING_NAME)
+		fmt.Printf("Setting %s is OK\n", settingsName)
 		return nil
 	}
 
-	fmt.Printf("Setting %s is not present\n", SETTING_NAME)
-	err = c.DbSettingsInsert(SETTING_NAME, SETTING_VALUE)
+	fmt.Printf("Setting %s is not present\n", settingsName)
+	err = c.DbSettingsInsert(settingsName, settingsValue)
 	if err != nil {
 		return fmt.Errorf("insert settings db err: %v", err)
 	}
-	fmt.Printf("Setting %s created with value: %s\n", SETTING_NAME, SETTING_VALUE)
+	fmt.Printf("Setting %s created with value: %s\n", settingsName, settingsValue)
 	return nil
 }
 
@@ -255,7 +279,7 @@ func (c *Model) DBSaveTrackers(trackers workflow.IssueTypes, defaultStatus redmi
 }
 
 func (c *Model) DbGetRepository(project redmine.Project) (models.Repository, error) {
-	results, err := c.db.Query("SELECT id, project_id, root_url FROM repositories WHERE identifier = ?", project.Identifier)
+	results, err := c.db.Query(queryGetProjectRepository, project.Identifier)
 	if err != nil {
 		return models.Repository{}, fmt.Errorf("error redmine admin: %v", err)
 	}
@@ -279,12 +303,7 @@ func (c *Model) DbGetRepository(project redmine.Project) (models.Repository, err
 	return models.Repository{}, nil
 }
 
-func (c *Model) DbSaveProjectTrackers(project redmine.Project) error {
-	allTrackers, err := c.api.Trackers()
-	if err != nil {
-		return fmt.Errorf("error redmine trackers: %v", err)
-	}
-
+func (c *Model) DbSaveProjectTrackers(project redmine.Project, allTrackers []redmine.IdName) error {
 	existingTrackerIDs, err := c.DbProjectTrackers(project.Id)
 	if err != nil {
 		return fmt.Errorf("get project trackers for project %d err: %v", project.Id, err)
@@ -328,7 +347,7 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 			return nil
 		}
 		fmt.Println("Mismatch Repository root_url")
-		result, err := c.db.Exec("UPDATE repositories SET root_url = ?, created_on = NOW() WHERE id = ?", newUrl, repository.ID)
+		result, err := c.db.Exec(queryUpdateRepository, newUrl, repository.ID)
 		if err != nil {
 			return fmt.Errorf("update repository db err: %v", err)
 		}
@@ -343,9 +362,7 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 		return nil
 	}
 
-	query := "INSERT INTO repositories (project_id, root_url, type, path_encoding, extra_info, identifier, is_default, created_on) VALUES(?, ?, 'Repository::Git', 'UTF-8', ?, ?, 1, NOW())"
-
-	result, err := c.db.Exec(query, project.Id, newUrl, "---\nextra_report_last_commit: '0'\n", project.Identifier)
+	result, err := c.db.Exec(queryInsertRepository, project.Id, newUrl, "---\nextra_report_last_commit: '0'\n", project.Identifier)
 	if err != nil {
 		return fmt.Errorf("error redmine git save: %v", err)
 	}
@@ -362,9 +379,7 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 }
 
 func (c *Model) DBInsertProjectTracker(projectID, trackerID int) error {
-	query := "INSERT INTO projects_trackers (project_id, tracker_id) VALUES(?, ?)"
-
-	result, err := c.db.Exec(query, projectID, trackerID)
+	result, err := c.db.Exec(queryInsertProjectTracker, projectID, trackerID)
 	if err != nil {
 		return fmt.Errorf("error redmine project tracker insert: %v", err)
 	}
@@ -381,8 +396,7 @@ func (c *Model) DBInsertProjectTracker(projectID, trackerID int) error {
 }
 
 func (c *Model) DBInsertTracker(issueType workflow.IssueType, position, defaultState int) error {
-	query := "INSERT INTO trackers (name, description, position, default_status_id) VALUES (?, ?, ?, ?)"
-	result, err := c.db.Exec(query, issueType.Name, issueType.Description, position, defaultState)
+	result, err := c.db.Exec(queryInsertTracker, issueType.Name, issueType.Description, position, defaultState)
 	if err != nil {
 		return fmt.Errorf("redmine tracker err: %v", err)
 	}
@@ -397,7 +411,7 @@ func (c *Model) DBInsertTracker(issueType workflow.IssueType, position, defaultS
 }
 
 func (c *Model) GetDefaultNormalPriority() (int, error) {
-	results, err := c.db.Query("SELECT id FROM enumerations WHERE type = 'IssuePriority' AND is_default = 1 AND name = ?", ISSUE_PRIORITY)
+	results, err := c.db.Query(queryGetIssuePriority, ISSUE_PRIORITY)
 	if err != nil {
 		return 0, fmt.Errorf("redmine db err: %v", err)
 	}
@@ -422,8 +436,7 @@ func (c *Model) GetDefaultNormalPriority() (int, error) {
 }
 
 func (c *Model) DBInsertDefaultNormalPriority() error {
-	query := "INSERT INTO enumerations (name, position, is_default, type, active, project_id, parent_id, position_name) VALUES (?, 1, 1, 'IssuePriority', 1, NULL, NULL, 'default');"
-	result, err := c.db.Exec(query, ISSUE_PRIORITY)
+	result, err := c.db.Exec(queryInsertIssuePriority, ISSUE_PRIORITY)
 	if err != nil {
 		return fmt.Errorf("redmine issue priority err: %v", err)
 	}
@@ -437,19 +450,13 @@ func (c *Model) DBInsertDefaultNormalPriority() error {
 	return nil
 }
 
-func (c *Model) DBSaveIssueStatuses(statuses []redmine.IssueStatus) error {
-	current, err := c.api.IssueStatuses()
-	if err != nil {
-		return fmt.Errorf("error redmine issue status: %v", err)
-	}
-
+func (c *Model) DBSaveIssueStatuses(statuses []redmine.IssueStatus, current []redmine.IssueStatus) error {
 	newStatuses := make([]redmine.IssueStatus, 0)
 	for _, status := range statuses {
 		exists := false
 		for _, s := range current {
 			if s.Name == status.Name {
 				exists = true
-				//fmt.Printf("Issue status %s already exists: %s\n", s.Name, s.Id)
 				break
 			}
 		}
@@ -465,7 +472,7 @@ func (c *Model) DBSaveIssueStatuses(statuses []redmine.IssueStatus) error {
 
 	for i, status := range newStatuses {
 		fmt.Println(fmt.Sprintf("Creating New Issue Status: %s", status.Name))
-		err = c.DBInsertIssueStatus(status, i+1)
+		err := c.DBInsertIssueStatus(status, i+1)
 		if err != nil {
 			return fmt.Errorf("redmine issue status insert err: %v", err)
 		}
@@ -475,7 +482,7 @@ func (c *Model) DBSaveIssueStatuses(statuses []redmine.IssueStatus) error {
 }
 
 func (c *Model) DBInsertIssueStatus(status redmine.IssueStatus, position int) error {
-	result, err := c.db.Exec("INSERT INTO issue_statuses (name, is_closed, position) VALUES (?, ?, ?)", status.Name, status.IsClosed, position)
+	result, err := c.db.Exec(queryInsertIssueStatus, status.Name, status.IsClosed, position)
 	if err != nil {
 		return fmt.Errorf("error redmine issue status insert: %v", err)
 	}
@@ -490,7 +497,7 @@ func (c *Model) DBInsertIssueStatus(status redmine.IssueStatus, position int) er
 }
 
 func (c *Model) DBGetWorkerRole() (int, error) {
-	results, err := c.db.Query("SELECT id FROM roles WHERE builtin = 0 AND name = ?", ROLE_WORKER)
+	results, err := c.db.Query(queryGetRole, ROLE_WORKER)
 	if err != nil {
 		return 0, fmt.Errorf("redmine db err: %v", err)
 	}
@@ -614,9 +621,7 @@ func (c *Model) DBCreateWorkerRole() error {
 	permissionsRaw := strings.Join(permissions, "\n")
 	settingsRaw := strings.Join(settings, "\n")
 
-	query := "INSERT INTO roles (name, position, assignable, builtin, permissions, issues_visibility, users_visibility, time_entries_visibility, all_roles_managed, settings) VALUES (?, 1, 1, 0, ?, 'all', 'all', 'all', 1, ?);"
-
-	result, err := c.db.Exec(query, ROLE_WORKER, permissionsRaw, settingsRaw)
+	result, err := c.db.Exec(queryInsertRole, ROLE_WORKER, permissionsRaw, settingsRaw)
 	if err != nil {
 		return fmt.Errorf("insert role err: %v", err)
 	}
@@ -631,8 +636,7 @@ func (c *Model) DBCreateWorkerRole() error {
 }
 
 func (c *Model) DBInsertWorkflow(trackerID, oldStatusID, newStatusID, roleID int) error {
-	query := "INSERT INTO workflows (tracker_id, old_status_id, new_status_id, role_id, type) VALUES (?, ?, ?, ?, 'WorkflowTransition')"
-	result, err := c.db.Exec(query, trackerID, oldStatusID, newStatusID, roleID)
+	result, err := c.db.Exec(queryInsertWorkflow, trackerID, oldStatusID, newStatusID, roleID)
 	if err != nil {
 		return fmt.Errorf("insert workflow err: %v", err)
 	}
@@ -647,7 +651,7 @@ func (c *Model) DBInsertWorkflow(trackerID, oldStatusID, newStatusID, roleID int
 }
 
 func (c *Model) DBGetWorkflows(trackerID int) ([]models.Workflow, error) {
-	rows, err := c.db.Query("SELECT id, tracker_id, old_status_id, new_status_id, role_id, assignee, author, type, field_name, rule FROM workflows WHERE tracker_id = ?", trackerID)
+	rows, err := c.db.Query(queryGetWorkflow, trackerID)
 	if err != nil {
 		return nil, fmt.Errorf("error database: %v", err)
 	}

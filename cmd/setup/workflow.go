@@ -21,7 +21,12 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 			fmt.Println("Issue States:", len(workflowConfig.States))
 			statuses := convertToStatuses(workflowConfig.States)
 			statuses = sortStatuses(statuses)
-			err := model.DBSaveIssueStatuses(statuses)
+
+			currentIssueStatuses, err := model.Api().IssueStatuses()
+			if err != nil {
+				return fmt.Errorf("error redmine issue status: %v", err)
+			}
+			err = model.DBSaveIssueStatuses(statuses, currentIssueStatuses)
 			if err != nil {
 				fmt.Println("Redmine Settings Failed to enable API")
 				return fmt.Errorf("error redmine: %v", err)
@@ -36,11 +41,11 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 
 			fmt.Println("Trackers:", len(workflowConfig.IssueTypes))
 
-			current, err := model.Api().Trackers()
+			currentTrackers, err := model.Api().Trackers()
 			if err != nil {
 				return fmt.Errorf("error redmine trackers: %v", err)
 			}
-			err = model.DBSaveTrackers(workflowConfig.IssueTypes, defaultStatus, current)
+			err = model.DBSaveTrackers(workflowConfig.IssueTypes, defaultStatus, currentTrackers)
 			if err != nil {
 				fmt.Println("Failed to save trackers")
 				return fmt.Errorf("redmine err: %v", err)
@@ -83,8 +88,12 @@ func projectTrackers(model *model.Model) error {
 		fmt.Println("Failed to get projects")
 		return fmt.Errorf("redmine err: %v", err)
 	}
+	allTrackers, err := model.Api().Trackers()
+	if err != nil {
+		return fmt.Errorf("error redmine trackers: %v", err)
+	}
 	for _, project := range projects {
-		err = model.DbSaveProjectTrackers(project)
+		err = model.DbSaveProjectTrackers(project, allTrackers)
 		if err != nil {
 			fmt.Printf("Redmine Project %q Trackers Save Fail\n", project.Name)
 			return fmt.Errorf("error redmine project trackers save: %v", err)
