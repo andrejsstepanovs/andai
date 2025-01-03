@@ -3,6 +3,8 @@ package deps
 import (
 	"database/sql"
 
+	"github.com/andrejsstepanovs/andai/pkg/llm"
+	"github.com/andrejsstepanovs/andai/pkg/models"
 	"github.com/andrejsstepanovs/andai/pkg/redmine"
 	apiredmine "github.com/mattn/go-redmine"
 	"github.com/spf13/viper"
@@ -10,11 +12,12 @@ import (
 
 type AppDependencies struct {
 	Model *redmine.Model
+	LLM   *llm.LLM
 }
 
 var Container *AppDependencies
 
-func NewAppDependencies() (*AppDependencies, error) {
+func NewAppDependencies(models models.LlmModels) (*AppDependencies, error) {
 	if Container != nil {
 		return Container, nil
 	}
@@ -25,9 +28,12 @@ func NewAppDependencies() (*AppDependencies, error) {
 	}
 	api := apiredmine.NewClient(viper.GetString("redmine.url"), viper.GetString("redmine.api_key"))
 
+	llm := llm.NewLLM(models)
+
 	//api.IssueStat()
 	Container = &AppDependencies{
 		Model: redmine.NewModel(db, api),
+		LLM:   llm,
 	}
 
 	return Container, nil

@@ -14,7 +14,7 @@ func (l *LLM) Simple(input string) (string, error) {
 	basicPrompt := gollm.NewPrompt(input)
 	fmt.Printf("Basic prompt created: %+v\n", basicPrompt)
 
-	response, err := l.clientCoder.Generate(ctx, basicPrompt)
+	response, err := l.Coder.Generate(ctx, basicPrompt)
 	if err != nil {
 		log.Fatalf("Failed to generate text: %v", err)
 		return "", err

@@ -13,7 +13,7 @@ func Cmd(deps *deps.AppDependencies, settings models.Settings) *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		newWorkCommand(deps.Model, settings.LlmModels),
+		newWorkCommand(deps.Model, deps.LLM, settings.LlmModels),
 	)
 
 	return cmd

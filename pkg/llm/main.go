@@ -9,24 +9,37 @@ import (
 )
 
 type LLM struct {
-	clientCoder gollm.LLM
+	Coder gollm.LLM
 }
 
-func NewLLM(config models.Workflow) *LLM {
-	coder, err := gollm.NewLLM(
-		gollm.SetProvider("openai"),
-		gollm.SetModel("gpt-4o-mini"),
-		//gollm.SetAPIKey(apiKey),
-		gollm.SetMaxTokens(200),
-		gollm.SetMaxRetries(3),
-		gollm.SetRetryDelay(time.Second*2),
-		gollm.SetLogLevel(gollm.LogLevelInfo),
-	)
+func NewLLM(config models.LlmModels) *LLM {
+	coderCfg := config.Get("coder")
+
+	llm := &LLM{}
+
+	coder, err := llm.getCoder(coderCfg)
 	if err != nil {
 		log.Fatalf("Failed to create LLM: %v", err)
 	}
 
-	return &LLM{
-		clientCoder: coder,
+	llm.Coder = coder
+
+	return llm
+}
+
+func (l *LLM) getCoder(config models.LlmModel) (gollm.LLM, error) {
+	coder, err := gollm.NewLLM(
+		gollm.SetProvider(config.Provider),
+		gollm.SetModel(config.Model),
+		gollm.SetAPIKey(config.APIKey),
+		gollm.SetMaxRetries(3),
+		gollm.SetRetryDelay(time.Second*2),
+		gollm.SetLogLevel(gollm.LogLevelInfo),
+		//gollm.SetMaxTokens(200),
+	)
+	if err != nil {
+		log.Fatalf("Failed to create LLM: %v", err)
+		return nil, err
 	}
+	return coder, nil
 }

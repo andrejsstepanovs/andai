@@ -26,7 +26,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	dependencies, err := deps.NewAppDependencies()
+	dependencies, err := deps.NewAppDependencies(settings.LlmModels)
 	if err != nil {
 		log.Println("Error creating dependencies:", err)
 		os.Exit(1)
