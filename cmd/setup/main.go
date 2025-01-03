@@ -6,24 +6,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func SetupCmd(deps *deps.AppDependencies, workflowConfig models.Workflow) *cobra.Command {
+func SetupCmd(deps *deps.AppDependencies, settings models.Settings) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "setup",
 		Short: "Changes environment setup",
 	}
 
-	admin := newAdminCommand(deps.Model)
-	settings := newSettingsCommand(deps.Model)
-	token := newGetTokenCommand(deps.Model)
-	project := newProjectCommand(deps.Model)
-	workflow := newWorkflowCommand(deps.Model, workflowConfig)
-
 	cmd.AddCommand(
-		admin,
-		settings,
-		token,
-		project,
-		workflow,
+		newAdminCommand(deps.Model),
+		newSettingsCommand(deps.Model),
+		newGetTokenCommand(deps.Model),
+		newProjectsCommand(deps.Model, settings.Projects),
+		newWorkflowCommand(deps.Model, settings.Workflow),
 	)
 
 	return cmd

@@ -3,45 +3,50 @@ package setup
 import (
 	"fmt"
 
+	"github.com/andrejsstepanovs/andai/pkg/models"
 	model "github.com/andrejsstepanovs/andai/pkg/redmine"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/mattn/go-redmine"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-func newProjectCommand(model *model.Model) *cobra.Command {
+func newProjectsCommand(model *model.Model, projectsConf models.Projects) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "project",
-		Short: "Save (Update) project",
+		Use:   "projects",
+		Short: "Save (Update) projects",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			fmt.Println("Processing Redmine project sync")
-			project := redmine.Project{
-				Name:        viper.GetString("project.name"),
-				Identifier:  viper.GetString("project.id"),
-				Description: viper.GetString("project.description"),
-			}
+			fmt.Println("Processing Projects sync")
+			for _, p := range projectsConf {
+				fmt.Printf("Processing: %s (%s)\n", p.Name, p.Identifier)
 
-			err, project := model.SaveProject(project)
-			if err != nil {
-				fmt.Println("Redmine Project Save Fail")
-				return fmt.Errorf("error redmine project save: %v", err)
-			}
-			fmt.Println("Project OK")
+				project := redmine.Project{
+					Name:        p.Name,
+					Identifier:  p.Identifier,
+					Description: p.Description,
+				}
 
-			err = model.DbSaveWiki(project, viper.GetString("project.wiki"))
-			if err != nil {
-				fmt.Println("Redmine Project Wiki Save Fail")
-				return fmt.Errorf("error redmine project save: %v", err)
-			}
-			fmt.Println("Wiki OK")
+				err, project := model.SaveProject(project)
+				if err != nil {
+					fmt.Println("Redmine Project Save Fail")
+					return fmt.Errorf("error redmine project save: %v", err)
+				}
+				fmt.Println("Project OK")
 
-			err = model.DbSaveGit(project, viper.GetString("project.git_path"))
-			if err != nil {
-				fmt.Println("Redmine Git Save Fail")
-				return fmt.Errorf("error redmine git save: %v", err)
+				err = model.DbSaveWiki(project, p.Wiki)
+				if err != nil {
+					fmt.Println("Redmine Project Wiki Save Fail")
+					return fmt.Errorf("error redmine project save: %v", err)
+				}
+				fmt.Println("Wiki OK")
+
+				err = model.DbSaveGit(project, p.GitPath)
+				if err != nil {
+					fmt.Println("Redmine Git Save Fail")
+					return fmt.Errorf("error redmine git save: %v", err)
+				}
+
 			}
-			fmt.Println("Project repository OK")
+			//fmt.Println("Project repository OK")
 
 			return nil
 		},

@@ -4,17 +4,17 @@ redmine:
   api_key: "2159cef2fb6c82c4f66981f199798781e161c694"
   repositories: "/var/repositories/"
 
-project:
-  id: "my-project"
-  name: "My Project"
-  description: "This is a sample project x."
-  git_path: "/test/.git"
-  wiki: |
-    # My Project
-    This is a sample project.
-    More text
-    
-    And a bit more.
+projects:
+  - identifier: "my-project"
+    name: "My Project"
+    description: "This is a sample project x."
+    git_path: "/test/.git"
+    wiki: |
+      # My Project
+      This is a sample project.
+      More text
+      
+      And a bit more.
 
 workflow:
   states:

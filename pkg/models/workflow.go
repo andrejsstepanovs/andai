@@ -8,6 +8,7 @@ import (
 
 type Settings struct {
 	Workflow Workflow `yaml:"workflow"`
+	Projects Projects `yaml:"projects"`
 }
 
 type StateName string

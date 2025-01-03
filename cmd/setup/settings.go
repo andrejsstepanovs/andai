@@ -38,7 +38,7 @@ func newSettingsCommand(redmine *redmine.Model) *cobra.Command {
 				fmt.Println("Role not found")
 				return fmt.Errorf("error redmine: %v", err)
 			}
-			fmt.Printf("Worker Role OK. ID: %d\n", roleID)
+			fmt.Printf("Worker Role OK. Identifier: %d\n", roleID)
 
 			return nil
 		},

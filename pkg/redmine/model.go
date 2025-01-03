@@ -260,7 +260,7 @@ func (c *Model) DbSettingsEnableAPI() error {
 
 	rows, err := c.DbGetSettings(SETTING_NAME)
 	for _, row := range rows {
-		fmt.Printf("Setting ID: %d, Name: %s, Value: %s\n", row.ID, row.Name, row.Value)
+		fmt.Printf("Setting Identifier: %d, Name: %s, Value: %s\n", row.ID, row.Name, row.Value)
 		if row.Value != SETTING_VALUE {
 			fmt.Printf("Setting %s is not enabled\n", SETTING_NAME)
 			err = c.DbSettingsUpdate(SETTING_NAME, SETTING_VALUE)
@@ -319,14 +319,14 @@ func (c *Model) GetProjects() ([]redmine.Project, error) {
 }
 
 func (c *Model) SaveProject(project redmine.Project) (error, redmine.Project) {
-	projects, err := c.api.Projects()
+	current, err := c.api.Projects()
 	if err != nil {
-		return fmt.Errorf("error redmine projects: %v", err), redmine.Project{}
+		return fmt.Errorf("redmine api projects err: %v", err), redmine.Project{}
 	}
 
-	for _, p := range projects {
-		fmt.Println(fmt.Sprintf("ID: %d, Name: %s", p.Id, p.Name))
-		if p.Identifier == viper.GetString("project.id") {
+	for _, p := range current {
+		fmt.Printf("ID: %d, Name: %s Identifier: %s\n", p.Id, p.Name, p.Identifier)
+		if p.Identifier == project.Identifier {
 			fmt.Printf("Project already exists: %s\n", p.Name)
 			project.Id = p.Id
 			err = c.api.UpdateProject(project)
@@ -388,7 +388,7 @@ func (c *Model) DbSaveProjectTrackers(project redmine.Project) error {
 		exists := false
 		for _, existingTrackerID := range existingTrackerIDs {
 			if tracker.Id == existingTrackerID {
-				fmt.Printf("Project %q Tracker for %q already exists ID: %d\n", project.Identifier, tracker.Name, tracker.Id)
+				fmt.Printf("Project %q Tracker for %q already exists Identifier: %d\n", project.Identifier, tracker.Name, tracker.Id)
 				exists = true
 				break
 			}
@@ -416,7 +416,7 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 		return fmt.Errorf("redmine get repository err: %v", err)
 	}
 	if repository.ID > 0 {
-		fmt.Printf("ID: %d, ProjectID: %s, Url: %s\n", repository.ID, repository.ProjectID, repository.RootUrl)
+		fmt.Printf("Repository ID: %d, ProjectID: %s, Url: %s\n", repository.ID, repository.ProjectID, repository.RootUrl)
 		if repository.RootUrl == newUrl {
 			return nil
 		}
@@ -432,7 +432,7 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 		if affected == 0 {
 			return errors.New("project repository root_url not changed")
 		}
-		fmt.Println("Project repository root_url updated")
+		fmt.Printf("Project %s repository root_url updated\n", project.Identifier)
 		return nil
 	}
 

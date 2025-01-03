@@ -19,9 +19,9 @@ func main() {
 		fmt.Println("Error initializing config:", err)
 		os.Exit(1)
 	}
-	workflow, err := loadWorkflow(configPath)
+	settings, err := loadSettings(configPath)
 	if err != nil {
-		fmt.Println("Error initializing workflow:", err)
+		fmt.Println("Error initializing settings:", err)
 		os.Exit(1)
 	}
 
@@ -38,7 +38,7 @@ func main() {
 
 	rootCmd.AddCommand(
 		ping.SetupPingCmd(dependencies),
-		setup.SetupCmd(dependencies, workflow),
+		setup.SetupCmd(dependencies, settings),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
@@ -78,26 +78,26 @@ func initConfig() (string, error) {
 	return filePath, nil
 }
 
-func loadWorkflow(filePath string) (models.Workflow, error) {
+func loadSettings(filePath string) (models.Settings, error) {
 	fmt.Println("Using config file to load workflow:", filePath)
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		fmt.Println("Error reading file:", err)
-		return models.Workflow{}, err
+		return models.Settings{}, err
 	}
 
 	var settings models.Settings
 	err = yaml.Unmarshal(content, &settings)
 	if err != nil {
 		fmt.Println("Error unmarshaling YAML:", err)
-		return models.Workflow{}, err
+		return models.Settings{}, err
 	}
 
 	err = settings.Validate()
 	if err != nil {
 		fmt.Println("Error validating settings:", err)
-		return models.Workflow{}, err
+		return models.Settings{}, err
 	}
 
-	return settings.Workflow, nil
+	return settings, nil
 }

@@ -21,7 +21,7 @@ func newAPIPingCommand(redmine *redmine.Model) *cobra.Command {
 				return fmt.Errorf("error redmine ping: %v", err)
 			}
 			for _, user := range users {
-				fmt.Printf("ID: %d, Name: %s\n", user.Id, user.Login)
+				fmt.Printf("Identifier: %d, Name: %s\n", user.Id, user.Login)
 			}
 			fmt.Println("Redmine Ping Success")
 			return nil

@@ -22,7 +22,7 @@ func newGetTokenCommand(redmine *redmine.Model) *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("error redmine admin: %v", err)
 			}
-			fmt.Println("Admin ID:", admin.Id)
+			fmt.Println("Admin Identifier:", admin.Id)
 
 			getToken := func() (models.Token, error) {
 				token, err := redmine.DbGetToken(admin.Id)

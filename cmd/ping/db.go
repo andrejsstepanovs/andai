@@ -23,7 +23,7 @@ func newDBPingCommand(redmine *redmine.Model) *cobra.Command {
 
 			fmt.Println("Users from Database")
 			for _, user := range users {
-				fmt.Printf("ID: %d, Login: %q Lastname: %q\n", user.Id, user.Login, user.Lastname)
+				fmt.Printf("Identifier: %d, Login: %q Lastname: %q\n", user.Id, user.Login, user.Lastname)
 			}
 			fmt.Println("Database Ping Success")
 
