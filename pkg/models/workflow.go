@@ -67,14 +67,14 @@ type Step struct {
 }
 
 type IssueType struct {
-	Name        IssueTypeName     `yaml:"-"` // Exclude from YAML unmarshaling
+	Name        IssueTypeName     `yaml:"-"` // Exclude from YAML unmarshalling
 	Jobs        map[StateName]Job `yaml:"jobs"`
 	Description string            `yaml:"description"`
 }
 
 // State represents a single state within the workflow.
 type State struct {
-	Name        StateName `yaml:"-"` // Exclude from YAML unmarshaling
+	Name        StateName `yaml:"-"` // Exclude from YAML unmarshalling
 	Description string    `yaml:"description"`
 	AI          bool      `yaml:"ai"`
 	Prompt      string    `yaml:"prompt,omitempty"`
@@ -88,7 +88,7 @@ func (s *States) Get(name StateName) State {
 	return (*s)[name]
 }
 
-// UnmarshalYAML implements custom unmarshaling for the Workflow struct.
+// UnmarshalYAML implements custom unmarshalling for the Workflow struct.
 func (w *Workflow) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type rawWorkflow struct {
 		States      map[StateName]State         `yaml:"states"`
