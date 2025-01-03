@@ -27,6 +27,15 @@ func (s *States) GetFirst() State {
 	return State{}
 }
 
+func (s *States) GetClosed() State {
+	for _, state := range *s {
+		if state.IsClosed {
+			return state
+		}
+	}
+	return State{}
+}
+
 type IssueTypes map[IssueTypeName]IssueType
 
 type Transitions []Transition

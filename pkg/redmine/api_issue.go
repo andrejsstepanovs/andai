@@ -3,8 +3,6 @@ package redmine
 import (
 	"fmt"
 	"log"
-	"strconv"
-	"strings"
 
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	_ "github.com/go-sql-driver/mysql"
@@ -32,33 +30,88 @@ func (c *Model) APIGetWorkableIssue(priorities models.Priorities) (redmine.Issue
 			return redmine.Issue{}, fmt.Errorf("error redmine issue dependencies: %v", err)
 		}
 
-		for issueID, blockedByIDs := range dependencies {
-			if len(blockedByIDs) == 0 {
-				log.Printf("Issue (%d) is not blocked at all\n", issueID)
-				continue
+		//for issueID, blockedByIDs := range dependencies {
+		//	if len(blockedByIDs) == 0 {
+		//		log.Printf("Issue (%d) is not blocked at all\n", issueID)
+		//		continue
+		//	}
+		//	blocked := make([]string, 0)
+		//	for _, blockedBy := range blockedByIDs {
+		//		blocked = append(blocked, strconv.Itoa(blockedBy))
+		//	}
+		//	log.Printf("Issue (%d) BLOCKED BY: %v\n", issueID, strings.Join(blocked, ", "))
+		//}
+
+		cleanedDependencies := c.removeClosedDependencies(dependencies, projectIssues)
+		//for issueID, blockedByIDs := range cleanedDependencies {
+		//	if len(blockedByIDs) == 0 {
+		//		log.Printf("Issue (%d) is not blocked at all\n", issueID)
+		//		continue
+		//	}
+		//	blocked := make([]string, 0)
+		//	for _, blockedBy := range blockedByIDs {
+		//		blocked = append(blocked, strconv.Itoa(blockedBy))
+		//	}
+		//	log.Printf("Issue (%d) BLOCKED BY: %v\n", issueID, strings.Join(blocked, ", "))
+		//}
+
+		unblockedIDs := make([]int, 0)
+		for issueID, depIDs := range cleanedDependencies {
+			if len(depIDs) == 0 {
+				unblockedIDs = append(unblockedIDs, issueID)
 			}
-			blocked := make([]string, 0)
-			for _, blockedBy := range blockedByIDs {
-				blocked = append(blocked, strconv.Itoa(blockedBy))
-			}
-			log.Printf("Issue (%d) BLOCKED BY: %v\n", issueID, strings.Join(blocked, ", "))
 		}
 
-		//issues := c.getCorrectIssue(projectIssues, priorities)
-		//for _, issue := range issues {
-		//	for issueID, blockedByIDs := range dependencies {
-		//		if issue.Id == issueID {
-		//			if len()
-		//			fmt.Printf("SKIP ISSUE: %d (%d -> %d)", issue.Id, from, to)
-		//			continue
-		//		}
-		//	}
-		//
-		//	fmt.Println("WORKABLE ISSUE:", issue.Id)
-		//}
+		if len(unblockedIDs) == 0 {
+			log.Println("No workable issues")
+			return redmine.Issue{}, nil
+		}
+
+		validIssues := make([]redmine.Issue, 0)
+		for _, okIssueID := range unblockedIDs {
+			for _, issue := range projectIssues {
+				if issue.Id == okIssueID {
+					validIssues = append(validIssues, issue)
+					break
+				}
+			}
+		}
+
+		issues := c.getCorrectIssue(validIssues, priorities)
+
+		for _, issue := range issues {
+			return issue, nil
+		}
 	}
 
 	return redmine.Issue{}, nil
+}
+
+func (c *Model) removeClosedDependencies(dependencies map[int][]int, issues []redmine.Issue) map[int][]int {
+	cleaned := make(map[int][]int)
+	for issueID, blockedByIDs := range dependencies {
+		if len(blockedByIDs) == 0 {
+			cleaned[issueID] = blockedByIDs
+			continue
+		}
+
+		for _, blockedBy := range blockedByIDs {
+			// if dont exist then its closed
+			isClosed := true
+			for _, issue := range issues {
+				if issue.Id == blockedBy {
+					isClosed = false
+					break
+				}
+			}
+
+			if !isClosed {
+				cleaned[issueID] = append(cleaned[issueID], blockedBy)
+			}
+		}
+	}
+
+	return cleaned
 }
 
 func (c *Model) issueDependencies(projectIssues []redmine.Issue) (map[int][]int, error) {
