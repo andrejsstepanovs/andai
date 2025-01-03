@@ -29,3 +29,18 @@ func (c *Model) checkIfExists(query string, args ...interface{}) (bool, error) {
 	defer rows.Close()
 	return rows.Next(), nil
 }
+
+func (c *Model) queryAndScan(query string, scanFunc func(*sql.Rows) error, args ...interface{}) error {
+	rows, err := c.queryRows(query, args...)
+	if err != nil {
+		return fmt.Errorf("query failed: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := scanFunc(rows); err != nil {
+			return fmt.Errorf("scan failed: %w", err)
+		}
+	}
+	return rows.Err()
+}

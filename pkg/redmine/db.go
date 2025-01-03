@@ -39,51 +39,34 @@ const (
 )
 
 func (c *Model) DbGetAllUsers() ([]redmine.User, error) {
-	rows, err := c.queryRows(queryGetAllUsers)
+	var users []redmine.User
+	err := c.queryAndScan(queryGetAllUsers, func(rows *sql.Rows) error {
+		var user redmine.User
+		if err := rows.Scan(&user.Id, &user.Login, &user.Firstname, &user.Lastname); err != nil {
+			return err
+		}
+		users = append(users, user)
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	var users []redmine.User
-
-	// Loop through rows, using Scan to assign column data to struct fields.
-	for rows.Next() {
-		var user redmine.User
-		if err := rows.Scan(
-			&user.Id,
-			&user.Login,
-			&user.Firstname,
-			&user.Lastname,
-		); err != nil {
-			return nil, err
-		}
-		users = append(users, user)
-	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
 	return users, nil
 }
 
 func (c *Model) DbProjectTrackers(projectID int) ([]int, error) {
-	rows, err := c.queryRows(queryGetProjectTrackers, projectID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
 	var trackerIDs []int
-	for rows.Next() {
+	err := c.queryAndScan(queryGetProjectTrackers, func(rows *sql.Rows) error {
 		var trackerID int
 		if err := rows.Scan(&trackerID); err != nil {
-			return []int{}, err
+			return err
 		}
 		trackerIDs = append(trackerIDs, trackerID)
-	}
-	if err = rows.Err(); err != nil {
-		return []int{}, err
+		return nil
+	}, projectID)
+
+	if err != nil {
+		return nil, err
 	}
 
 	return trackerIDs, nil
@@ -120,23 +103,20 @@ func (c *Model) DbCreateApiToken(userId int, tokenValue string) error {
 }
 
 func (c *Model) DbGetToken(userId int) (models.Token, error) {
-	results, err := c.queryRows(queryGetToken, "api", userId)
-	if err != nil {
-		return models.Token{}, fmt.Errorf("failed to retrieve token for user %d: %w", userId, err)
-	}
-	defer results.Close()
-
 	var tokens []models.Token
-	for results.Next() {
+	err := c.queryAndScan(queryGetToken, func(rows *sql.Rows) error {
 		var token models.Token
-		if err := results.Scan(&token.ID, &token.Action, &token.Value); err != nil {
-			return models.Token{}, fmt.Errorf("failed to scan token row: %w", err)
+		if err := rows.Scan(&token.ID, &token.Action, &token.Value); err != nil {
+			return err
 		}
 		tokens = append(tokens, token)
+		return nil
+	}, "api", userId)
+
+	if err != nil {
+		return models.Token{}, err
 	}
-	if err = results.Err(); err != nil && !errors.As(err, &sql.ErrNoRows) {
-		return models.Token{}, fmt.Errorf("error scanning token rows: %w", err)
-	}
+
 	if len(tokens) > 0 {
 		return tokens[0], nil
 	}
@@ -164,25 +144,20 @@ func (c *Model) DbSettingsAdminMustNotChangePassword() error {
 }
 
 func (c *Model) DbGetSettings(settingName string) ([]models.Settings, error) {
-	results, err := c.queryRows(queryGetSettings, settingName)
-	if err != nil {
-		return nil, err
-	}
-	defer results.Close()
-
-	var rows []models.Settings
-	for results.Next() {
+	var settings []models.Settings
+	err := c.queryAndScan(queryGetSettings, func(rows *sql.Rows) error {
 		var row models.Settings
-		if err := results.Scan(&row.ID, &row.Name, &row.Value); err != nil {
-			return nil, err
+		if err := rows.Scan(&row.ID, &row.Name, &row.Value); err != nil {
+			return err
 		}
-		rows = append(rows, row)
-	}
-	err = results.Err()
+		settings = append(settings, row)
+		return nil
+	}, settingName)
+
 	if err != nil && !errors.As(err, &sql.ErrNoRows) {
 		return nil, err
 	}
-	return rows, nil
+	return settings, nil
 }
 
 func (c *Model) DbSettingsInsert(settingName, value string) error {
@@ -278,25 +253,20 @@ func (c *Model) DBSaveTrackers(trackers workflow.IssueTypes, defaultStatus redmi
 }
 
 func (c *Model) DbGetRepository(project redmine.Project) (models.Repository, error) {
-	results, err := c.queryRows(queryGetProjectRepository, project.Identifier)
-	if err != nil {
-		return models.Repository{}, err
-	}
-	defer results.Close()
-
-	var rows []models.Repository
-	for results.Next() {
+	var repos []models.Repository
+	err := c.queryAndScan(queryGetProjectRepository, func(rows *sql.Rows) error {
 		var row models.Repository
-		if err := results.Scan(&row.ID, &row.ProjectID, &row.RootUrl); err != nil {
-			return models.Repository{}, err
+		if err := rows.Scan(&row.ID, &row.ProjectID, &row.RootUrl); err != nil {
+			return err
 		}
-		rows = append(rows, row)
-	}
-	err = results.Err()
+		repos = append(repos, row)
+		return nil
+	}, project.Identifier)
+
 	if err != nil && !errors.As(err, &sql.ErrNoRows) {
 		return models.Repository{}, err
 	}
-	for _, row := range rows {
+	for _, row := range repos {
 		return row, nil
 	}
 	return models.Repository{}, nil
@@ -410,26 +380,21 @@ func (c *Model) DBInsertTracker(issueType workflow.IssueType, position, defaultS
 }
 
 func (c *Model) GetDefaultNormalPriority() (int, error) {
-	results, err := c.queryRows(queryGetIssuePriority, ISSUE_PRIORITY)
-	if err != nil {
-		return 0, err
-	}
-	defer results.Close()
-
-	var rows []int
-	for results.Next() {
+	var ids []int
+	err := c.queryAndScan(queryGetIssuePriority, func(rows *sql.Rows) error {
 		var row int
-		if err := results.Scan(&row); err != nil {
-			return 0, err
+		if err := rows.Scan(&row); err != nil {
+			return err
 		}
-		rows = append(rows, row)
-	}
-	err = results.Err()
+		ids = append(ids, row)
+		return nil
+	}, ISSUE_PRIORITY)
+
 	if err != nil && !errors.As(err, &sql.ErrNoRows) {
 		return 0, err
 	}
-	for _, row := range rows {
-		return row, nil
+	for _, id := range ids {
+		return id, nil
 	}
 	return 0, nil
 }
@@ -496,26 +461,22 @@ func (c *Model) DBInsertIssueStatus(status redmine.IssueStatus, position int) er
 }
 
 func (c *Model) DBGetWorkerRole() (int, error) {
-	results, err := c.queryRows(queryGetRole, ROLE_WORKER)
-	if err != nil {
-		return 0, err
-	}
-	defer results.Close()
-
-	var rows []int
-	for results.Next() {
+	var ids []int
+	err := c.queryAndScan(queryGetRole, func(rows *sql.Rows) error {
 		var row int
-		if err := results.Scan(&row); err != nil {
-			return 0, err
+		if err := rows.Scan(&row); err != nil {
+			return err
 		}
-		rows = append(rows, row)
-	}
-	err = results.Err()
+		ids = append(ids, row)
+		return nil
+	}, ROLE_WORKER)
+
 	if err != nil && !errors.As(err, &sql.ErrNoRows) {
 		return 0, err
 	}
-	for _, row := range rows {
-		return row, nil
+
+	for _, id := range ids {
+		return id, nil
 	}
 	return 0, nil
 }
@@ -659,14 +620,8 @@ func (c *Model) DBInsertWorkflow(trackerID, oldStatusID, newStatusID, roleID int
 }
 
 func (c *Model) DBGetWorkflows(trackerID int) ([]models.Workflow, error) {
-	rows, err := c.queryRows(queryGetWorkflow, trackerID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
 	var workflows []models.Workflow
-	for rows.Next() {
+	err := c.queryAndScan(queryGetWorkflow, func(rows *sql.Rows) error {
 		var row models.Workflow
 		if err := rows.Scan(
 			&row.ID,
@@ -680,11 +635,13 @@ func (c *Model) DBGetWorkflows(trackerID int) ([]models.Workflow, error) {
 			&row.FieldName,
 			&row.Rule,
 		); err != nil {
-			return nil, err
+			return err
 		}
 		workflows = append(workflows, row)
-	}
-	if err = rows.Err(); err != nil {
+		return nil
+	}, trackerID)
+
+	if err != nil {
 		return nil, err
 	}
 
