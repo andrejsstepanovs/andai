@@ -3,6 +3,8 @@ package redmine
 import (
 	"database/sql"
 	"fmt"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func (c *Model) queryRows(query string, args ...interface{}) (*sql.Rows, error) {
