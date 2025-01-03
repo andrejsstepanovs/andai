@@ -34,14 +34,14 @@ func (c *Model) APIGetWorkableIssue(priorities models.Priorities) (redmine.Issue
 
 		for issueID, blockedByIDs := range dependencies {
 			if len(blockedByIDs) == 0 {
-				log.Printf("ISSUE: %d is not blocked at all\n", issueID)
+				log.Printf("Issue (%d) is not blocked at all\n", issueID)
 				continue
 			}
 			blocked := make([]string, 0)
 			for _, blockedBy := range blockedByIDs {
 				blocked = append(blocked, strconv.Itoa(blockedBy))
 			}
-			log.Printf("ISSUE: %d BLOCKED BY: %v\n", issueID, strings.Join(blocked, ", "))
+			log.Printf("Issue (%d) BLOCKED BY: %v\n", issueID, strings.Join(blocked, ", "))
 		}
 
 		//issues := c.getCorrectIssue(projectIssues, priorities)
