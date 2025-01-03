@@ -173,7 +173,6 @@ func (s *Settings) Validate() error {
 		}
 	}
 
-	fmt.Println(s.Workflow.Transitions)
 	// validate transitions
 	for _, transition := range s.Workflow.Transitions {
 		if _, ok := stateNames[transition.Source]; !ok {

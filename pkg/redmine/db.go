@@ -90,7 +90,7 @@ func (c *Model) DbProjectTrackers(projectID int) ([]int, error) {
 }
 
 func (c *Model) DbUpdateApiToken(userId int, tokenValue string) error {
-	result, err := c.db.Exec(queryUpdateTokens, tokenValue, "api", userId)
+	result, err := c.execDML(queryUpdateTokens, tokenValue, "api", userId)
 	if err != nil {
 		return fmt.Errorf("update settings token db err: %v", err)
 	}
@@ -105,7 +105,7 @@ func (c *Model) DbUpdateApiToken(userId int, tokenValue string) error {
 }
 
 func (c *Model) DbCreateApiToken(userId int, tokenValue string) error {
-	result, err := c.db.Exec(queryInsertTokens, tokenValue, "api", userId)
+	result, err := c.execDML(queryInsertTokens, tokenValue, "api", userId)
 	if err != nil {
 		return fmt.Errorf("insert settings token db err: %v", err)
 	}
@@ -122,30 +122,29 @@ func (c *Model) DbCreateApiToken(userId int, tokenValue string) error {
 func (c *Model) DbGetToken(userId int) (models.Token, error) {
 	results, err := c.queryRows(queryGetToken, "api", userId)
 	if err != nil {
-		return models.Token{}, err
+		return models.Token{}, fmt.Errorf("failed to retrieve token for user %d: %w", userId, err)
 	}
 	defer results.Close()
 
-	var rows []models.Token
+	var tokens []models.Token
 	for results.Next() {
-		var row models.Token
-		if err := results.Scan(&row.ID, &row.Action, &row.Value); err != nil {
-			return models.Token{}, err
+		var token models.Token
+		if err := results.Scan(&token.ID, &token.Action, &token.Value); err != nil {
+			return models.Token{}, fmt.Errorf("failed to scan token row: %w", err)
 		}
-		rows = append(rows, row)
+		tokens = append(tokens, token)
 	}
-	err = results.Err()
-	if err != nil && !errors.As(err, &sql.ErrNoRows) {
-		return models.Token{}, err
+	if err = results.Err(); err != nil && !errors.As(err, &sql.ErrNoRows) {
+		return models.Token{}, fmt.Errorf("error scanning token rows: %w", err)
 	}
-	for _, row := range rows {
-		return row, nil
+	if len(tokens) > 0 {
+		return tokens[0], nil
 	}
 	return models.Token{}, nil
 }
 
 func (c *Model) DbSettingsAdminMustNotChangePassword() error {
-	result, err := c.db.Exec(queryUpdateAdminNoChangePass, "admin")
+	result, err := c.execDML(queryUpdateAdminNoChangePass, "admin")
 	if err != nil {
 		return fmt.Errorf("update users db err: %v", err)
 	}
@@ -187,7 +186,7 @@ func (c *Model) DbGetSettings(settingName string) ([]models.Settings, error) {
 }
 
 func (c *Model) DbSettingsInsert(settingName, value string) error {
-	result, err := c.db.Exec(queryInsertSettings, settingName, value)
+	result, err := c.execDML(queryInsertSettings, settingName, value)
 	if err != nil {
 		return fmt.Errorf("update settings db err: %v", err)
 	}
@@ -202,7 +201,7 @@ func (c *Model) DbSettingsInsert(settingName, value string) error {
 }
 
 func (c *Model) DbSettingsUpdate(settingName, value string) error {
-	result, err := c.db.Exec(queryUpdateSettingsValue, value, settingName)
+	result, err := c.execDML(queryUpdateSettingsValue, value, settingName)
 	if err != nil {
 		return fmt.Errorf("update settings db err: %v", err)
 	}
@@ -347,7 +346,7 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 			return nil
 		}
 		log.Println("Mismatch Repository root_url")
-		result, err := c.db.Exec(queryUpdateRepository, newUrl, repository.ID)
+		result, err := c.execDML(queryUpdateRepository, newUrl, repository.ID)
 		if err != nil {
 			return fmt.Errorf("update repository db err: %v", err)
 		}
@@ -362,7 +361,7 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 		return nil
 	}
 
-	result, err := c.db.Exec(queryInsertRepository, project.Id, newUrl, "---\nextra_report_last_commit: '0'\n", project.Identifier)
+	result, err := c.execDML(queryInsertRepository, project.Id, newUrl, "---\nextra_report_last_commit: '0'\n", project.Identifier)
 	if err != nil {
 		return fmt.Errorf("error redmine git save: %v", err)
 	}
@@ -379,7 +378,7 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 }
 
 func (c *Model) DBInsertProjectTracker(projectID, trackerID int) error {
-	result, err := c.db.Exec(queryInsertProjectTracker, projectID, trackerID)
+	result, err := c.execDML(queryInsertProjectTracker, projectID, trackerID)
 	if err != nil {
 		return fmt.Errorf("error redmine project tracker insert: %v", err)
 	}
@@ -396,7 +395,7 @@ func (c *Model) DBInsertProjectTracker(projectID, trackerID int) error {
 }
 
 func (c *Model) DBInsertTracker(issueType workflow.IssueType, position, defaultState int) error {
-	result, err := c.db.Exec(queryInsertTracker, issueType.Name, issueType.Description, position, defaultState)
+	result, err := c.execDML(queryInsertTracker, issueType.Name, issueType.Description, position, defaultState)
 	if err != nil {
 		return fmt.Errorf("redmine tracker err: %v", err)
 	}
@@ -436,7 +435,7 @@ func (c *Model) GetDefaultNormalPriority() (int, error) {
 }
 
 func (c *Model) DBInsertDefaultNormalPriority() error {
-	result, err := c.db.Exec(queryInsertIssuePriority, ISSUE_PRIORITY)
+	result, err := c.execDML(queryInsertIssuePriority, ISSUE_PRIORITY)
 	if err != nil {
 		return fmt.Errorf("redmine issue priority err: %v", err)
 	}
@@ -482,7 +481,7 @@ func (c *Model) DBSaveIssueStatuses(statuses []redmine.IssueStatus, current []re
 }
 
 func (c *Model) DBInsertIssueStatus(status redmine.IssueStatus, position int) error {
-	result, err := c.db.Exec(queryInsertIssueStatus, status.Name, status.IsClosed, position)
+	result, err := c.execDML(queryInsertIssueStatus, status.Name, status.IsClosed, position)
 	if err != nil {
 		return fmt.Errorf("error redmine issue status insert: %v", err)
 	}
@@ -621,7 +620,16 @@ func (c *Model) DBCreateWorkerRole() error {
 	permissionsRaw := strings.Join(permissions, "\n")
 	settingsRaw := strings.Join(settings, "\n")
 
-	result, err := c.db.Exec(queryInsertRole, ROLE_WORKER, permissionsRaw, settingsRaw)
+	exists, err := c.checkIfExists(queryGetRole, ROLE_WORKER)
+	if err != nil {
+		return fmt.Errorf("failed to check if role exists: %w", err)
+	}
+	if exists {
+		log.Println("Worker Role already exists")
+		return nil
+	}
+
+	result, err := c.execDML(queryInsertRole, ROLE_WORKER, permissionsRaw, settingsRaw)
 	if err != nil {
 		return fmt.Errorf("insert role err: %v", err)
 	}
@@ -636,7 +644,7 @@ func (c *Model) DBCreateWorkerRole() error {
 }
 
 func (c *Model) DBInsertWorkflow(trackerID, oldStatusID, newStatusID, roleID int) error {
-	result, err := c.db.Exec(queryInsertWorkflow, trackerID, oldStatusID, newStatusID, roleID)
+	result, err := c.execDML(queryInsertWorkflow, trackerID, oldStatusID, newStatusID, roleID)
 	if err != nil {
 		return fmt.Errorf("insert workflow err: %v", err)
 	}

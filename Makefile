@@ -138,6 +138,6 @@ configure: build
 	$(BUILD_PATH)/andai setup settings
 	$(BUILD_PATH)/andai setup token
 	$(BUILD_PATH)/andai ping api
-	$(BUILD_PATH)/andai setup project
+	$(BUILD_PATH)/andai setup projects
 	$(BUILD_PATH)/andai setup workflow
 
