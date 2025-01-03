@@ -65,6 +65,32 @@ func (_m *Api) CreateWikiPage(projectId int, wikiPage redmine.WikiPage) (*redmin
 	return r0, r1
 }
 
+// IssueStatuses provides a mock function with given fields:
+func (_m *Api) IssueStatuses() ([]redmine.IssueStatus, error) {
+	ret := _m.Called()
+
+	var r0 []redmine.IssueStatus
+	var r1 error
+	if rf, ok := ret.Get(0).(func() ([]redmine.IssueStatus, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() []redmine.IssueStatus); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]redmine.IssueStatus)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Projects provides a mock function with given fields:
 func (_m *Api) Projects() ([]redmine.Project, error) {
 	ret := _m.Called()
@@ -79,6 +105,32 @@ func (_m *Api) Projects() ([]redmine.Project, error) {
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]redmine.Project)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Trackers provides a mock function with given fields:
+func (_m *Api) Trackers() ([]redmine.IdName, error) {
+	ret := _m.Called()
+
+	var r0 []redmine.IdName
+	var r1 error
+	if rf, ok := ret.Get(0).(func() ([]redmine.IdName, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() []redmine.IdName); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]redmine.IdName)
 		}
 	}
 

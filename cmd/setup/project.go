@@ -44,9 +44,8 @@ func newProjectsCommand(model *model.Model, projectsConf models.Projects) *cobra
 					fmt.Println("Redmine Git Save Fail")
 					return fmt.Errorf("error redmine git save: %v", err)
 				}
-
 			}
-			//fmt.Println("Project repository OK")
+			fmt.Println("Project repository OK")
 
 			return nil
 		},

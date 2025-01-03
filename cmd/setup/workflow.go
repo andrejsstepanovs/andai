@@ -160,7 +160,7 @@ func saveTransitions(model *model.Model, tracker redmine.IdName, statuses []redm
 			fmt.Printf("Failed to save transitions for Tracker: %s", tracker.Name)
 			return fmt.Errorf("redmine err: %v", err)
 		}
-		fmt.Printf("Saved transition %s -> %s for Tracker: %s and Role : %d\n", l.fromID, l.toID, tracker.Name, l.roleID)
+		fmt.Printf("Saved transition %d -> %d for Tracker: %s and Role : %d\n", l.fromID, l.toID, tracker.Name, l.roleID)
 	}
 
 	return nil

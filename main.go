@@ -38,7 +38,7 @@ func main() {
 
 	rootCmd.AddCommand(
 		ping.SetupPingCmd(dependencies),
-		setup.SetupCmd(dependencies, settings),
+		setup.Cmd(dependencies, settings),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
@@ -80,7 +80,7 @@ func initConfig() (string, error) {
 
 func loadSettings(filePath string) (models.Settings, error) {
 	fmt.Println("Using config file to load workflow:", filePath)
-	content, err := os.ReadFile(filePath)
+	content, err := os.ReadFile(filePath) // nolint:gosec
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 		return models.Settings{}, err
