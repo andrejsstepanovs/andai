@@ -10,6 +10,8 @@ import (
 	"github.com/mattn/go-redmine"
 )
 
+const AdminLogin = "admin"
+
 func (c *Model) ApiGetUsers() ([]redmine.User, error) {
 	users, err := c.Api().Users()
 	if err != nil {
@@ -24,7 +26,7 @@ func (c *Model) ApiAdmin() (redmine.User, error) {
 		return redmine.User{}, fmt.Errorf("error redmine db get users: %v", err)
 	}
 	for _, user := range users {
-		if user.Login == ADMIN_LOGIN {
+		if user.Login == AdminLogin {
 			return user, nil
 		}
 	}

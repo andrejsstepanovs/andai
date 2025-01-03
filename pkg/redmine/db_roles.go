@@ -15,6 +15,8 @@ const (
 	queryInsertRole = "INSERT INTO roles (name, position, assignable, builtin, permissions, issues_visibility, users_visibility, time_entries_visibility, all_roles_managed, settings) VALUES (?, 1, 1, 0, ?, 'all', 'all', 'all', 1, ?)"
 )
 
+const RoleWorker = "Worker"
+
 func (c *Model) DBGetWorkerRole() (int, error) {
 	var ids []int
 	err := c.queryAndScan(queryGetRole, func(rows *sql.Rows) error {
@@ -24,7 +26,7 @@ func (c *Model) DBGetWorkerRole() (int, error) {
 		}
 		ids = append(ids, row)
 		return nil
-	}, ROLE_WORKER)
+	}, RoleWorker)
 
 	if err != nil && !errors.As(err, &sql.ErrNoRows) {
 		return 0, err
@@ -37,7 +39,7 @@ func (c *Model) DBGetWorkerRole() (int, error) {
 }
 
 func (c *Model) DBCreateWorkerRole() error {
-	exists, err := c.checkIfExists(queryGetRole, ROLE_WORKER)
+	exists, err := c.checkIfExists(queryGetRole, RoleWorker)
 	if err != nil {
 		return fmt.Errorf("failed to check if role exists: %w", err)
 	}
@@ -47,7 +49,7 @@ func (c *Model) DBCreateWorkerRole() error {
 	}
 
 	permissionsRaw, settingsRaw := c.getAllPermissionsAndSettings()
-	result, err := c.execDML(queryInsertRole, ROLE_WORKER, permissionsRaw, settingsRaw)
+	result, err := c.execDML(queryInsertRole, RoleWorker, permissionsRaw, settingsRaw)
 	if err != nil {
 		return fmt.Errorf("insert role err: %v", err)
 	}

@@ -7,9 +7,6 @@ import (
 	"github.com/mattn/go-redmine"
 )
 
-const ROLE_WORKER = "Worker"
-const ADMIN_LOGIN = "admin"
-
 type database interface {
 	Query(query string, args ...any) (*sql.Rows, error)
 	Exec(query string, args ...any) (sql.Result, error)
