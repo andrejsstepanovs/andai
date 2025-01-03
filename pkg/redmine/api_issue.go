@@ -3,6 +3,8 @@ package redmine
 import (
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
 
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	_ "github.com/go-sql-driver/mysql"
@@ -43,17 +45,17 @@ func (c *Model) APIGetWorkableIssue(priorities models.Priorities) (redmine.Issue
 		//}
 
 		cleanedDependencies := c.removeClosedDependencies(dependencies, projectIssues)
-		//for issueID, blockedByIDs := range cleanedDependencies {
-		//	if len(blockedByIDs) == 0 {
-		//		log.Printf("Issue (%d) is not blocked at all\n", issueID)
-		//		continue
-		//	}
-		//	blocked := make([]string, 0)
-		//	for _, blockedBy := range blockedByIDs {
-		//		blocked = append(blocked, strconv.Itoa(blockedBy))
-		//	}
-		//	log.Printf("Issue (%d) BLOCKED BY: %v\n", issueID, strings.Join(blocked, ", "))
-		//}
+		for issueID, blockedByIDs := range cleanedDependencies {
+			if len(blockedByIDs) == 0 {
+				log.Printf("Issue (%d) is not blocked at all\n", issueID)
+				continue
+			}
+			blocked := make([]string, 0)
+			for _, blockedBy := range blockedByIDs {
+				blocked = append(blocked, strconv.Itoa(blockedBy))
+			}
+			log.Printf("Issue (%d) BLOCKED BY: %v\n", issueID, strings.Join(blocked, ", "))
+		}
 
 		unblockedIDs := make([]int, 0)
 		for issueID, depIDs := range cleanedDependencies {
@@ -66,6 +68,11 @@ func (c *Model) APIGetWorkableIssue(priorities models.Priorities) (redmine.Issue
 			log.Println("No workable issues")
 			return redmine.Issue{}, nil
 		}
+		ids := make([]string, 0)
+		for _, id := range unblockedIDs {
+			ids = append(ids, fmt.Sprintf("%d", id))
+		}
+		fmt.Printf("UNBLOCKED ISSUES (%d) %s\n", len(unblockedIDs), strings.Join(ids, ", "))
 
 		validIssues := make([]redmine.Issue, 0)
 		for _, okIssueID := range unblockedIDs {
@@ -75,6 +82,11 @@ func (c *Model) APIGetWorkableIssue(priorities models.Priorities) (redmine.Issue
 					break
 				}
 			}
+		}
+
+		fmt.Printf("VALID ISSUES TO CHECK PRIORITIES AGAINST (%d)\n", len(validIssues))
+		for _, issue := range validIssues {
+			fmt.Println("ISSUE:", issue.Tracker.Name, issue.Id)
 		}
 
 		issues := c.getCorrectIssue(validIssues, priorities)
@@ -94,6 +106,7 @@ func (c *Model) removeClosedDependencies(dependencies map[int][]int, issues []re
 			cleaned[issueID] = blockedByIDs
 			continue
 		}
+		cleaned[issueID] = make([]int, 0)
 
 		for _, blockedBy := range blockedByIDs {
 			// if dont exist then its closed
@@ -122,12 +135,12 @@ func (c *Model) issueDependencies(projectIssues []redmine.Issue) (map[int][]int,
 		if err != nil && err.Error() != "Not Found" {
 			return dependencies, err
 		}
-		//fmt.Println("RELATIONS:", len(relations))
+		fmt.Printf("Issue (%d) Relations: %d\n", issue.Id, len(relations))
 		for _, relation := range relations {
 			if relation.RelationType != RelationBlocks {
 				continue
 			}
-			//fmt.Printf("ISSUE (%d) - %d IS BLOCKED BY %d <- needs to be done first\n", issue.Id, relation.IssueToId, relation.IssueId)
+			fmt.Printf("Issue (%d) - %d is blocked by %d <- needs to be done first\n", issue.Id, relation.IssueToId, relation.IssueId)
 			dependencies[relation.IssueToId] = append(dependencies[relation.IssueId], relation.IssueId)
 		}
 	}
@@ -138,17 +151,18 @@ func (c *Model) issueDependencies(projectIssues []redmine.Issue) (map[int][]int,
 func (c *Model) getCorrectIssue(issues []redmine.Issue, priorities models.Priorities) []redmine.Issue {
 	valid := make([]redmine.Issue, 0)
 	for _, priority := range priorities {
-		//fmt.Printf("PRIORITY: %q @ %q\n", priority.Type, priority.State)
+		fmt.Printf("PRIORITY: %q @ %q\n", priority.Type, priority.State)
 		for _, issue := range issues {
+			fmt.Printf("ISSUE: %q (%d) - %q\n", issue.Tracker.Name, issue.Id, issue.Status.Name)
 			if issue.Tracker.Name != priority.Type {
-				//fmt.Printf("SKIP %q (%d) - not %q\n", issue.Tracker.Name, issue.Id, priority.Type)
+				fmt.Printf("SKIP %q (%d) - not %q\n", issue.Tracker.Name, issue.Id, priority.Type)
 				continue
 			}
 			if issue.Status.Name != priority.State {
-				//fmt.Printf("SKIP %q (%d) - %q != %q\n", issue.Tracker.Name, issue.Id, issue.Status.Name, priority.State)
+				fmt.Printf("SKIP %q (%d) - %q != %q\n", issue.Tracker.Name, issue.Id, issue.Status.Name, priority.State)
 				continue
 			}
-			//fmt.Println("ISSUE:", issue.Tracker.Name, issue.Id)
+			fmt.Println("ISSUE:", issue.Tracker.Name, issue.Id)
 			valid = append(valid, issue)
 		}
 	}

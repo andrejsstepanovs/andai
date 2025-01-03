@@ -47,6 +47,7 @@ func newNextCommand(model *model.Model, llm *llm.LLM, workflow models.Workflow) 
 				return nil
 			}
 
+			log.Printf("FOUND WORKABLE ISSUES (%d)", 1)
 			log.Printf("Issue %d: %s", issue.Id, issue.Subject)
 			return nil
 		},
