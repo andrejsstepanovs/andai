@@ -254,33 +254,6 @@ func (c *Model) DBSaveTrackers(trackers workflow.IssueTypes, defaultStatus redmi
 	return nil
 }
 
-func (c *Model) DbSaveWiki(project redmine.Project, content string) error {
-	const TITLE = "Wiki"
-	content = strings.TrimSpace(content)
-
-	page, err := c.api.WikiPage(project.Id, TITLE)
-	if err != nil {
-		if err.Error() != "Not Found" {
-			return fmt.Errorf("error redmine wiki page: %v", err)
-		}
-
-		page = &redmine.WikiPage{Title: TITLE, Text: content}
-		_, err = c.api.CreateWikiPage(project.Id, *page)
-		if err != nil {
-			return fmt.Errorf("error redmine wiki page create: %v", err)
-		}
-		return nil
-	}
-
-	page.Text = content
-	err = c.api.UpdateWikiPage(project.Id, *page)
-	if err != nil && err.Error() != "EOF" {
-		return fmt.Errorf("error redmine wiki page update: %v", err)
-	}
-
-	return nil
-}
-
 func (c *Model) DbGetRepository(project redmine.Project) (models.Repository, error) {
 	results, err := c.db.Query("SELECT id, project_id, root_url FROM repositories WHERE identifier = ?", project.Identifier)
 	if err != nil {

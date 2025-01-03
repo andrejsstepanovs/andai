@@ -77,7 +77,7 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 }
 
 func projectTrackers(model *model.Model) error {
-	projects, err := model.GetProjects()
+	projects, err := model.ApiGetProjects()
 	fmt.Println("Projects:", len(projects))
 	if err != nil {
 		fmt.Println("Failed to get projects")

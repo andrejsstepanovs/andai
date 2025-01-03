@@ -3,13 +3,14 @@ package redmine
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/mattn/go-redmine"
 )
 
 func (c *Model) ApiGetUsers() ([]redmine.User, error) {
-	users, err := c.api.Users()
+	users, err := c.Api().Users()
 	if err != nil {
 		return nil, fmt.Errorf("error redmine API get users: %v", err)
 	}
@@ -29,16 +30,43 @@ func (c *Model) ApiAdmin() (redmine.User, error) {
 	return redmine.User{}, errors.New("admin not found")
 }
 
-func (c *Model) GetProjects() ([]redmine.Project, error) {
-	projects, err := c.api.Projects()
+func (c *Model) ApiGetProjects() ([]redmine.Project, error) {
+	projects, err := c.Api().Projects()
 	if err != nil {
 		return nil, fmt.Errorf("error redmine projects: %v", err)
 	}
 	return projects, nil
 }
 
-func (c *Model) SaveProject(project redmine.Project) (error, redmine.Project) {
-	current, err := c.api.Projects()
+func (c *Model) ApiSaveWiki(project redmine.Project, content string) error {
+	const TITLE = "Wiki"
+	content = strings.TrimSpace(content)
+
+	page, err := c.api.WikiPage(project.Id, TITLE)
+	if err != nil {
+		if err.Error() != "Not Found" {
+			return fmt.Errorf("error redmine wiki page: %v", err)
+		}
+
+		page = &redmine.WikiPage{Title: TITLE, Text: content}
+		_, err = c.api.CreateWikiPage(project.Id, *page)
+		if err != nil {
+			return fmt.Errorf("error redmine wiki page create: %v", err)
+		}
+		return nil
+	}
+
+	page.Text = content
+	err = c.api.UpdateWikiPage(project.Id, *page)
+	if err != nil && err.Error() != "EOF" {
+		return fmt.Errorf("error redmine wiki page update: %v", err)
+	}
+
+	return nil
+}
+
+func (c *Model) ApiSaveProject(project redmine.Project) (error, redmine.Project) {
+	current, err := c.Api().Projects()
 	if err != nil {
 		return fmt.Errorf("redmine api projects err: %v", err), redmine.Project{}
 	}
@@ -48,7 +76,7 @@ func (c *Model) SaveProject(project redmine.Project) (error, redmine.Project) {
 		if p.Identifier == project.Identifier {
 			fmt.Printf("Project already exists: %s\n", p.Name)
 			project.Id = p.Id
-			err = c.api.UpdateProject(project)
+			err = c.Api().UpdateProject(project)
 			if err != nil && err.Error() != "EOF" {
 				fmt.Println("Redmine Update Project Failed")
 				return fmt.Errorf("error redmine update project: %v", err.Error()), redmine.Project{}
@@ -58,7 +86,7 @@ func (c *Model) SaveProject(project redmine.Project) (error, redmine.Project) {
 		}
 	}
 
-	response, err := c.api.CreateProject(project)
+	response, err := c.Api().CreateProject(project)
 	if err != nil {
 		return fmt.Errorf("error redmine create project: '%s'", err.Error()), redmine.Project{}
 	}
@@ -67,7 +95,7 @@ func (c *Model) SaveProject(project redmine.Project) (error, redmine.Project) {
 }
 
 func (c *Model) APIGetIssueStatusByName(name string) (redmine.IssueStatus, error) {
-	statuses, err := c.api.IssueStatuses()
+	statuses, err := c.Api().IssueStatuses()
 	if err != nil {
 		return redmine.IssueStatus{}, fmt.Errorf("error redmine issue status: %v", err)
 	}
