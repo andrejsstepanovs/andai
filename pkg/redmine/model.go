@@ -22,6 +22,9 @@ type api interface {
 	CreateProject(project redmine.Project) (*redmine.Project, error)
 	IssueStatuses() ([]redmine.IssueStatus, error)
 	Trackers() ([]redmine.IdName, error)
+	IssueRelations(issueId int) ([]redmine.IssueRelation, error)
+	IssuesOf(projectId int) ([]redmine.Issue, error)
+	Issue(id int) (*redmine.Issue, error)
 }
 
 type Model struct {

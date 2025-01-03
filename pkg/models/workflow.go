@@ -51,6 +51,13 @@ func (t *Transition) GetIDs(statuses []redmine.IssueStatus) (from int, to int) {
 	return
 }
 
+type Priorities []Priority
+
+type Priority struct {
+	Type  string `yaml:"type"`
+	State string `yaml:"state"`
+}
+
 type LlmModels []LlmModel
 
 type LlmModel struct {
@@ -74,6 +81,7 @@ type Workflow struct {
 	States      States      `yaml:"states"`
 	IssueTypes  IssueTypes  `yaml:"issue_types"`
 	Transitions Transitions `yaml:"transitions"`
+	Priorities  Priorities  `yaml:"priorities"`
 }
 
 type Job struct {
@@ -113,6 +121,7 @@ func (w *Workflow) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		States      map[StateName]State         `yaml:"states"`
 		IssueTypes  map[IssueTypeName]IssueType `yaml:"issue_types"`
 		Transitions Transitions                 `yaml:"transitions"`
+		Priorities  Priorities                  `yaml:"priorities"`
 	}
 
 	var raw rawWorkflow
@@ -121,6 +130,7 @@ func (w *Workflow) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	w.Transitions = raw.Transitions
+	w.Priorities = raw.Priorities
 
 	// map States
 	cleanStates := make(map[StateName]State)
@@ -184,7 +194,10 @@ func (s *Settings) Validate() error {
 		return fmt.Errorf("at least one state must be marked as is_closed")
 	}
 
+	issueTypeNames := make(map[StateName]bool)
+
 	for issueTypeName, issueType := range s.Workflow.IssueTypes {
+		issueTypeNames[StateName(issueTypeName)] = true
 		for stateName := range issueType.Jobs {
 			if _, ok := stateNames[stateName]; !ok {
 				return fmt.Errorf("job %s does not have valid state %s", issueTypeName, stateName)
@@ -199,6 +212,16 @@ func (s *Settings) Validate() error {
 		}
 		if _, ok := stateNames[transition.Target]; !ok {
 			return fmt.Errorf("transition target %s does not exist", transition.Target)
+		}
+	}
+
+	// validate priorities
+	for _, priority := range s.Workflow.Priorities {
+		if _, ok := stateNames[StateName(priority.State)]; !ok {
+			return fmt.Errorf("priority state %s does not exist", priority.State)
+		}
+		if _, ok := issueTypeNames[StateName(priority.Type)]; !ok {
+			return fmt.Errorf("priority issue type %s does not exist", priority.Type)
 		}
 	}
 
