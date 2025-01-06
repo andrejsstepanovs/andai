@@ -63,8 +63,8 @@ func (t *Transition) GetIDs(statuses []redmine.IssueStatus) (from int, to int) {
 type Priorities []Priority
 
 type Priority struct {
-	Type  string `yaml:"type"`
-	State string `yaml:"state"`
+	Type  string    `yaml:"type"`
+	State StateName `yaml:"state"`
 }
 
 type LlmModels []LlmModel

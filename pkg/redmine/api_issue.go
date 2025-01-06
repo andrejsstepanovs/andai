@@ -15,7 +15,7 @@ const (
 	RelationBlocks = "blocks"
 )
 
-func (c *Model) APIGetWorkableIssues(priorities models.Priorities) ([]redmine.Issue, error) {
+func (c *Model) APIGetWorkableIssues(workflow models.Workflow) ([]redmine.Issue, error) {
 	projects, err := c.ApiGetProjects()
 	if err != nil {
 		return nil, fmt.Errorf("error redmine issue status: %v", err)
@@ -89,7 +89,7 @@ func (c *Model) APIGetWorkableIssues(priorities models.Priorities) ([]redmine.Is
 			fmt.Println("ISSUE:", issue.Tracker.Name, issue.Id)
 		}
 
-		issues := c.getCorrectIssue(validIssues, priorities)
+		issues := c.getCorrectIssue(validIssues, workflow.Priorities, workflow.States)
 
 		return issues, nil
 	}
@@ -146,17 +146,24 @@ func (c *Model) issueDependencies(projectIssues []redmine.Issue) (map[int][]int,
 	return dependencies, nil
 }
 
-func (c *Model) getCorrectIssue(issues []redmine.Issue, priorities models.Priorities) []redmine.Issue {
+func (c *Model) getCorrectIssue(issues []redmine.Issue, priorities models.Priorities, states models.States) []redmine.Issue {
 	valid := make([]redmine.Issue, 0)
 	for _, priority := range priorities {
 		fmt.Printf("PRIORITY: %q @ %q\n", priority.Type, priority.State)
+
+		state := states.Get(priority.State)
+		if !state.AI {
+			fmt.Printf("SKIP %q @ %q - NOT FOR AI\n", priority.Type, priority.State)
+			continue
+		}
+
 		for _, issue := range issues {
 			fmt.Printf("ISSUE: %q (%d) - %q\n", issue.Tracker.Name, issue.Id, issue.Status.Name)
 			if issue.Tracker.Name != priority.Type {
 				fmt.Printf("SKIP %q (%d) - not %q\n", issue.Tracker.Name, issue.Id, priority.Type)
 				continue
 			}
-			if issue.Status.Name != priority.State {
+			if issue.Status.Name != string(priority.State) {
 				fmt.Printf("SKIP %q (%d) - %q != %q\n", issue.Tracker.Name, issue.Id, issue.Status.Name, priority.State)
 				continue
 			}
