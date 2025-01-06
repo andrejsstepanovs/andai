@@ -1,0 +1,82 @@
+package models
+
+import (
+	"fmt"
+)
+
+type Settings struct {
+	Workflow  Workflow  `yaml:"workflow"`
+	Projects  Projects  `yaml:"projects"`
+	LlmModels LlmModels `yaml:"llm_models"`
+}
+
+func (s *Settings) Validate() error {
+	if len(s.Workflow.States) == 0 {
+		return fmt.Errorf("workflow states are required")
+	}
+
+	if s.Workflow.States.GetFirst().Name == "" {
+		return fmt.Errorf("at least one state must be marked as is_first")
+	}
+
+	stateNames := make(map[StateName]bool)
+
+	defaultExists := false
+	closedExists := false
+	firstExists := false
+	for _, state := range s.Workflow.States {
+		stateNames[state.Name] = true
+		if state.IsFirst {
+			firstExists = true
+		}
+		if state.IsDefault {
+			defaultExists = true
+		}
+		if state.IsClosed {
+			closedExists = true
+		}
+	}
+
+	if !defaultExists {
+		return fmt.Errorf("at least one state must be marked as default")
+	}
+	if !firstExists {
+		return fmt.Errorf("at least one state must be marked as is_first")
+	}
+	if !closedExists {
+		return fmt.Errorf("at least one state must be marked as is_closed")
+	}
+
+	issueTypeNames := make(map[StateName]bool)
+
+	for issueTypeName, issueType := range s.Workflow.IssueTypes {
+		issueTypeNames[StateName(issueTypeName)] = true
+		for stateName := range issueType.Jobs {
+			if _, ok := stateNames[stateName]; !ok {
+				return fmt.Errorf("job %s does not have valid state %s", issueTypeName, stateName)
+			}
+		}
+	}
+
+	// validate transitions
+	for _, transition := range s.Workflow.Transitions {
+		if _, ok := stateNames[transition.Source]; !ok {
+			return fmt.Errorf("transition source %s does not exist", transition.Source)
+		}
+		if _, ok := stateNames[transition.Target]; !ok {
+			return fmt.Errorf("transition target %s does not exist", transition.Target)
+		}
+	}
+
+	// validate priorities
+	for _, priority := range s.Workflow.Priorities {
+		if _, ok := stateNames[StateName(priority.State)]; !ok {
+			return fmt.Errorf("priority state %s does not exist", priority.State)
+		}
+		if _, ok := issueTypeNames[StateName(priority.Type)]; !ok {
+			return fmt.Errorf("priority issue type %s does not exist", priority.Type)
+		}
+	}
+
+	return nil
+}

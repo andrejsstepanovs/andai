@@ -1,9 +1,10 @@
 package work
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/andrejsstepanovs/andai/pkg/deps"
 	"github.com/andrejsstepanovs/andai/pkg/models"
-	"github.com/spf13/cobra"
 )
 
 func Cmd(deps *deps.AppDependencies, settings models.Settings) *cobra.Command {

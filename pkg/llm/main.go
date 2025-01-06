@@ -4,8 +4,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/andrejsstepanovs/andai/pkg/models"
 	"github.com/teilomillet/gollm"
+
+	"github.com/andrejsstepanovs/andai/pkg/models"
 )
 
 type LLM struct {

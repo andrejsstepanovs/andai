@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newWorkCommand(model *model.Model, llm *llm.LLM, models models.LlmModels) *cobra.Command {
+func newWorkCommand(_ *model.Model, llm *llm.LLM, models models.LlmModels) *cobra.Command {
 	return &cobra.Command{
 		Use:   "once",
 		Short: "Work with redmine",
@@ -32,7 +32,7 @@ func newWorkCommand(model *model.Model, llm *llm.LLM, models models.LlmModels) *
 	}
 }
 
-func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, workflow models.Workflow) *cobra.Command {
+func newNextCommand(model *model.Model, _ *llm.LLM, projects models.Projects, workflow models.Workflow) *cobra.Command {
 	return &cobra.Command{
 		Use:   "next",
 		Short: "Work with redmine",
@@ -77,6 +77,11 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 				if err != nil {
 					return fmt.Errorf("failed to checkout branch err: %v", err)
 				}
+
+				// WORK ON ISSUE
+				//availableTransitions := make([]string, 0)
+				//workflow.Transitions
+				//success := true
 			}
 
 			return nil
