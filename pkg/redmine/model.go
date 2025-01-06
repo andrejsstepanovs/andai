@@ -26,6 +26,7 @@ type api interface {
 	IssuesOf(projectId int) ([]redmine.Issue, error)
 	Issue(id int) (*redmine.Issue, error)
 	Project(id int) (*redmine.Project, error)
+	UpdateIssue(issue redmine.Issue) error
 }
 
 type Model struct {

@@ -30,7 +30,6 @@ func NewAppDependencies(models models.LlmModels) (*AppDependencies, error) {
 
 	llm := llm.NewLLM(models)
 
-	//api.Project()
 	Container = &AppDependencies{
 		Model: redmine.NewModel(db, api),
 		LLM:   llm,

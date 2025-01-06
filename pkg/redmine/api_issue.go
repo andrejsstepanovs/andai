@@ -174,3 +174,12 @@ func (c *Model) getCorrectIssue(issues []redmine.Issue, priorities models.Priori
 
 	return valid
 }
+
+func (c *Model) Comment(issue redmine.Issue, text string) error {
+	issue.Notes = text
+	err := c.Api().UpdateIssue(issue)
+	if err != nil {
+		return fmt.Errorf("error redmine issue comment: %v", err)
+	}
+	return nil
+}

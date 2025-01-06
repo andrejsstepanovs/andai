@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/andrejsstepanovs/andai/pkg/llm"
 	"github.com/andrejsstepanovs/andai/pkg/models"
@@ -81,6 +82,18 @@ func newNextCommand(model *model.Model, _ *llm.LLM, projects models.Projects, wo
 				nextTransition := workflow.Transitions.GetNextTransition(models.StateName(issue.Status.Name))
 				nextTransition.LogPrint()
 
+				log.Printf("Comments: %s", issue.Notes)
+				comments, err := model.DBGetComments(issue.Id + 10)
+				if err != nil {
+					return fmt.Errorf("failed to get comments err: %v", err)
+				}
+				fmt.Printf("Comments: %d\n", len(comments))
+				fmt.Printf("%s\n", strings.Join(comments, "\n"))
+
+				err = model.Comment(issue, "OOOOOO")
+				if err != nil {
+					return fmt.Errorf("failed to comment issue err: %v", err)
+				}
 				// WORK ON ISSUE
 				//availableTransitions := make([]string, 0)
 				//workflow.Transitions
