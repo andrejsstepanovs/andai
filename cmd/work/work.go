@@ -83,17 +83,30 @@ func newNextCommand(model *model.Model, _ *llm.LLM, projects models.Projects, wo
 				nextTransition.LogPrint()
 
 				log.Printf("Comments: %s", issue.Notes)
-				comments, err := model.DBGetComments(issue.Id + 10)
+				comments, err := model.DBGetComments(issue.Id)
 				if err != nil {
 					return fmt.Errorf("failed to get comments err: %v", err)
 				}
 				fmt.Printf("Comments: %d\n", len(comments))
 				fmt.Printf("%s\n", strings.Join(comments, "\n"))
 
-				err = model.Comment(issue, "OOOOOO")
+				err = model.Comment(issue, "AI WORKER COMMENT")
 				if err != nil {
 					return fmt.Errorf("failed to comment issue err: %v", err)
 				}
+
+				nextIssueStatus, err := model.APIGetIssueStatus(string(nextTransition.Success.Target))
+				if err != nil {
+					return fmt.Errorf("failed to get next issue status err: %v", err)
+				}
+				fmt.Printf("Next status: %d - %s\n", nextIssueStatus.Id, nextIssueStatus.Name)
+
+				err = model.Transition(issue, nextIssueStatus)
+				if err != nil {
+					return fmt.Errorf("failed to transition issue err: %v", err)
+				}
+				fmt.Printf("Successfully moved to: %d - %s\n", nextIssueStatus.Id, nextIssueStatus.Name)
+
 				// WORK ON ISSUE
 				//availableTransitions := make([]string, 0)
 				//workflow.Transitions

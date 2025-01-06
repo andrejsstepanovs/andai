@@ -183,3 +183,13 @@ func (c *Model) Comment(issue redmine.Issue, text string) error {
 	}
 	return nil
 }
+
+func (c *Model) Transition(issue redmine.Issue, nextStatus redmine.IssueStatus) error {
+	issue.StatusId = nextStatus.Id
+
+	err := c.Api().UpdateIssue(issue)
+	if err != nil {
+		return fmt.Errorf("error redmine issue comment: %v", err)
+	}
+	return nil
+}
