@@ -15,21 +15,21 @@ const (
 	RelationBlocks = "blocks"
 )
 
-func (c *Model) APIGetWorkableIssue(priorities models.Priorities) (redmine.Issue, error) {
+func (c *Model) APIGetWorkableIssues(priorities models.Priorities) ([]redmine.Issue, error) {
 	projects, err := c.ApiGetProjects()
 	if err != nil {
-		return redmine.Issue{}, fmt.Errorf("error redmine issue status: %v", err)
+		return nil, fmt.Errorf("error redmine issue status: %v", err)
 	}
 
 	for _, project := range projects {
 		projectIssues, err := c.Api().IssuesOf(project.Id)
 		if err != nil {
-			return redmine.Issue{}, fmt.Errorf("error redmine issues of project: %v", err)
+			return nil, fmt.Errorf("error redmine issues of project: %v", err)
 		}
 
 		dependencies, err := c.issueDependencies(projectIssues)
 		if err != nil {
-			return redmine.Issue{}, fmt.Errorf("error redmine issue dependencies: %v", err)
+			return nil, fmt.Errorf("error redmine issue dependencies: %v", err)
 		}
 
 		//for issueID, blockedByIDs := range dependencies {
@@ -66,7 +66,7 @@ func (c *Model) APIGetWorkableIssue(priorities models.Priorities) (redmine.Issue
 
 		if len(unblockedIDs) == 0 {
 			log.Println("No workable issues")
-			return redmine.Issue{}, nil
+			return nil, nil
 		}
 		ids := make([]string, 0)
 		for _, id := range unblockedIDs {
@@ -91,12 +91,10 @@ func (c *Model) APIGetWorkableIssue(priorities models.Priorities) (redmine.Issue
 
 		issues := c.getCorrectIssue(validIssues, priorities)
 
-		for _, issue := range issues {
-			return issue, nil
-		}
+		return issues, nil
 	}
 
-	return redmine.Issue{}, nil
+	return nil, nil
 }
 
 func (c *Model) removeClosedDependencies(dependencies map[int][]int, issues []redmine.Issue) map[int][]int {

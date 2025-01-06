@@ -36,19 +36,22 @@ func newNextCommand(model *model.Model, llm *llm.LLM, workflow models.Workflow) 
 		RunE: func(_ *cobra.Command, _ []string) error {
 			log.Println("Searching for next issue")
 
-			issue, err := model.APIGetWorkableIssue(workflow.Priorities)
+			issues, err := model.APIGetWorkableIssues(workflow.Priorities)
 			if err != nil {
 				log.Println("Failed to get workable issue")
 				return err
 			}
 
-			if issue.Id == 0 {
+			if len(issues) == 0 {
 				log.Println("No workable issues found")
 				return nil
 			}
 
-			log.Printf("FOUND WORKABLE ISSUES (%d)", 1)
-			log.Printf("Issue %d: %s", issue.Id, issue.Subject)
+			log.Printf("FOUND WORKABLE ISSUES (%d)", len(issues))
+			for _, issue := range issues {
+				log.Printf("Issue %d: %s", issue.Id, issue.Subject)
+			}
+
 			return nil
 		},
 	}
