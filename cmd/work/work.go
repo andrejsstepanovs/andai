@@ -3,9 +3,6 @@ package work
 import (
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
-	"runtime"
 	"strconv"
 
 	"github.com/andrejsstepanovs/andai/pkg/llm"
@@ -68,58 +65,17 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 				}
 				log.Printf("Repository %d: %s", projectRepo.ID, projectRepo.RootUrl)
 
-				var projectConfig models.Project
-				for _, p := range projects {
-					if p.Identifier == project.Identifier {
-						projectConfig = p
-						log.Printf("Project %d: %s", p.Identifier, p.Name)
-						break
-					}
-				}
-
-				var git *worker.Git
-				currentDir, err := os.Getwd()
+				projectConfig := projects.Find(project.Identifier)
+				git, err := worker.FindProjectGit(projectConfig, projectRepo)
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to find project git err: %v", err)
 				}
 
-				_, mainGoPath, _, ok := runtime.Caller(0)
-				if !ok {
-					fmt.Println("Failed to get the current file path")
-					return err
-				}
-
-				paths := []string{
-					projectRepo.RootUrl,
-					projectConfig.GitPath,
-					filepath.Join(currentDir, projectConfig.GitPath),
-					filepath.Join(currentDir, "repositories", projectConfig.GitPath),
-					filepath.Join(mainGoPath, projectConfig.GitPath),
-					filepath.Join(mainGoPath, "repositories", projectConfig.GitPath),
-				}
-				fmt.Println(paths)
-				for _, path := range paths {
-					log.Printf("Trying to open git repository in %q", path)
-					git = worker.NewGit(path)
-					err = git.Open()
-					if err != nil {
-						log.Printf("failed to open git err: %v", err)
-						continue
-					}
-					break
-				}
-
-				if !git.Opened {
-					log.Printf("failed to open git repository %s", projectRepo.RootUrl)
-					return nil
-				}
-
-				log.Println("Project Repository Opened")
+				log.Printf("Project Repository Opened %s", git.Path)
 
 				err = git.CheckoutBranch(strconv.Itoa(issue.Id))
 				if err != nil {
-					log.Printf("failed to checkout branch err: %v", err)
-					return nil
+					return fmt.Errorf("failed to checkout branch err: %v", err)
 				}
 			}
 

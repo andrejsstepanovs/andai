@@ -9,3 +9,12 @@ type Project struct {
 	GitPath     string `yaml:"git_path"`
 	Wiki        string `yaml:"wiki"`
 }
+
+func (p Projects) Find(identifier string) Project {
+	for _, project := range p {
+		if project.Identifier == identifier {
+			return project
+		}
+	}
+	return Project{}
+}

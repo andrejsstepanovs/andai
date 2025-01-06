@@ -3,7 +3,13 @@ package worker
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+	"runtime"
 
+	"github.com/andrejsstepanovs/andai/pkg/models"
+	redminemodels "github.com/andrejsstepanovs/andai/pkg/redmine/models"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 )
@@ -74,4 +80,45 @@ func (g *Git) CheckoutBranch(name string) error {
 	fmt.Printf("Successfully checked out branch: %s\n", branchName)
 
 	return err
+}
+
+func FindProjectGit(projectConfig models.Project, projectRepo redminemodels.Repository) (*Git, error) {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+
+	_, mainGoPath, _, ok := runtime.Caller(0)
+	if !ok {
+		fmt.Println("Failed to get the current file path")
+		return nil, err
+	}
+
+	paths := []string{
+		projectRepo.RootUrl,
+		projectConfig.GitPath,
+		filepath.Join(currentDir, projectConfig.GitPath),
+		filepath.Join(currentDir, "repositories", projectConfig.GitPath),
+		filepath.Join(mainGoPath, projectConfig.GitPath),
+		filepath.Join(mainGoPath, "repositories", projectConfig.GitPath),
+	}
+	var gitRet *Git
+	for _, path := range paths {
+		//log.Printf("Trying to open git repository in %q", path)
+		gitRet = NewGit(path)
+		err = gitRet.Open()
+		if err != nil {
+			//log.Printf("failed to open git err: %v", err)
+			continue
+		}
+		gitRet.Path = path
+		break
+	}
+
+	if !gitRet.Opened {
+		log.Printf("failed to open git repository %s", projectRepo.RootUrl)
+		return nil, errors.New("failed to open git repository")
+	}
+
+	return gitRet, nil
 }
