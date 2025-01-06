@@ -10,6 +10,7 @@ import (
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	model "github.com/andrejsstepanovs/andai/pkg/redmine"
 	"github.com/andrejsstepanovs/andai/pkg/worker"
+	"github.com/mattn/go-redmine"
 	"github.com/spf13/cobra"
 )
 
@@ -95,7 +96,15 @@ func newNextCommand(model *model.Model, _ *llm.LLM, projects models.Projects, wo
 					return fmt.Errorf("failed to comment issue err: %v", err)
 				}
 
-				nextIssueStatus, err := model.APIGetIssueStatus(string(nextTransition.Success.Target))
+				// WORK ON ISSUE
+				success := workOnIssue(issue)
+
+				err = model.Comment(issue, "AI finished Work - Success: "+strconv.FormatBool(success))
+				if err != nil {
+					return fmt.Errorf("failed to comment issue err: %v", err)
+				}
+
+				nextIssueStatus, err := model.APIGetIssueStatus(string(nextTransition.GetTarget(success)))
 				if err != nil {
 					return fmt.Errorf("failed to get next issue status err: %v", err)
 				}
@@ -107,7 +116,6 @@ func newNextCommand(model *model.Model, _ *llm.LLM, projects models.Projects, wo
 				}
 				fmt.Printf("Successfully moved to: %d - %s\n", nextIssueStatus.Id, nextIssueStatus.Name)
 
-				// WORK ON ISSUE
 				//availableTransitions := make([]string, 0)
 				//workflow.Transitions
 				//success := true
@@ -116,4 +124,9 @@ func newNextCommand(model *model.Model, _ *llm.LLM, projects models.Projects, wo
 			return nil
 		},
 	}
+}
+
+func workOnIssue(issue redmine.Issue) bool {
+	log.Printf("Working on issue %d", issue.Id)
+	return true
 }

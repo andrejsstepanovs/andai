@@ -49,6 +49,13 @@ func (n *NextTransition) LogPrint() {
 	}
 }
 
+func (n *NextTransition) GetTarget(success bool) StateName {
+	if success {
+		return n.Success.Target
+	}
+	return n.Failure.Target
+}
+
 func (t *Transitions) GetNextTransition(source StateName) NextTransition {
 	transitions := t.GetTransitions(source)
 	if len(transitions) == 0 {
