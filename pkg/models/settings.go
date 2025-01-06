@@ -68,6 +68,30 @@ func (s *Settings) Validate() error {
 		}
 	}
 
+	// check for multiple transitions if there are no more than 1 Success or Fail transitions
+	for _, state := range s.Workflow.States {
+		transitions := s.Workflow.Transitions.GetTransitions(state.Name)
+		if len(transitions) <= 1 {
+			continue
+		}
+		success := 0
+		fail := 0
+		for _, transition := range transitions {
+			if transition.Success {
+				success++
+			}
+			if transition.Fail {
+				fail++
+			}
+		}
+		if success > 1 {
+			return fmt.Errorf("state %s has more than one success transition", state.Name)
+		}
+		if fail > 1 {
+			return fmt.Errorf("state %s has more than one fail transition", state.Name)
+		}
+	}
+
 	// validate priorities
 	for _, priority := range s.Workflow.Priorities {
 		if _, ok := stateNames[StateName(priority.State)]; !ok {

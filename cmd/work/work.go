@@ -78,6 +78,9 @@ func newNextCommand(model *model.Model, _ *llm.LLM, projects models.Projects, wo
 					return fmt.Errorf("failed to checkout branch err: %v", err)
 				}
 
+				nextTransition := workflow.Transitions.GetNextTransition(models.StateName(issue.Status.Name))
+				nextTransition.LogPrint()
+
 				// WORK ON ISSUE
 				//availableTransitions := make([]string, 0)
 				//workflow.Transitions
