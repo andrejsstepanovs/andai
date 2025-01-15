@@ -21,6 +21,7 @@ type WorkOnIssue struct {
 	git        *worker.Git
 	state      models.State
 	issueType  models.IssueType
+	job        models.Job
 }
 
 func NewWorkOnIssue(
@@ -42,6 +43,7 @@ func NewWorkOnIssue(
 		git:        git,
 		state:      state,
 		issueType:  issueType,
+		job:        issueType.Jobs.Get(models.StateName(issue.Status.Name)),
 	}
 }
 
@@ -52,6 +54,13 @@ func (i *WorkOnIssue) Work() bool {
 	if err != nil {
 		log.Printf("Failed to checkout branch: %v", err)
 		return false
+	}
+
+	fmt.Printf("%v\n", i.issueType)
+	fmt.Printf("%d\n", len(i.job.Steps))
+
+	for _, step := range i.job.Steps {
+		fmt.Printf("Step: %s\n", step.Prompt)
 	}
 
 	return true

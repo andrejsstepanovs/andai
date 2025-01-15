@@ -102,5 +102,29 @@ func (s *Settings) Validate() error {
 		}
 	}
 
-	return nil
+	// validate issueType steps if it is AI=true
+	var errs error
+	for _, state := range s.Workflow.States {
+		if !state.AI {
+			continue
+		}
+		for _, issueType := range s.Workflow.IssueTypes {
+			haveSteps := false
+			for stateName, job := range issueType.Jobs {
+				if state.Name != stateName {
+					continue
+				}
+				haveSteps = len(job.Steps) > 0
+			}
+			if !haveSteps {
+				if errs == nil {
+					errs = fmt.Errorf("issue type %q does not have steps defined for state %q (in issue_types)", issueType.Name, state.Name)
+				} else {
+					errs = fmt.Errorf("%v\nissue type %q does not have steps defined for state %q (in issue_types)", errs, issueType.Name, state.Name)
+				}
+			}
+		}
+	}
+
+	return errs
 }

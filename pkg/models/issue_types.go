@@ -5,18 +5,26 @@ type IssueTypeName string
 type IssueTypes map[IssueTypeName]IssueType
 
 type IssueType struct {
-	Name        IssueTypeName     `yaml:"-"` // Exclude from YAML unmarshalling
-	Jobs        map[StateName]Job `yaml:"jobs"`
-	Description string            `yaml:"description"`
+	Name        IssueTypeName `yaml:"-"` // Exclude from YAML unmarshalling
+	Jobs        Jobs          `yaml:"jobs"`
+	Description string        `yaml:"description"`
 }
 
+type Jobs map[StateName]Job
+
+type Steps []Step
+
 type Job struct {
-	Steps []Step `yaml:"steps"`
+	Steps Steps `yaml:"steps"`
 }
 
 type Step struct {
 	Aider  string `yaml:"aider"`
 	Prompt string `yaml:"prompt"`
+}
+
+func (j *Jobs) Get(name StateName) Job {
+	return (*j)[name]
 }
 
 func (s *IssueTypes) Get(name IssueTypeName) IssueType {
