@@ -3,6 +3,8 @@ package work
 import (
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/andrejsstepanovs/andai/pkg/llm"
@@ -22,6 +24,7 @@ type WorkOnIssue struct {
 	state      models.State
 	issueType  models.IssueType
 	job        models.Job
+	workingDir string
 }
 
 func NewWorkOnIssue(
@@ -44,15 +47,16 @@ func NewWorkOnIssue(
 		state:      state,
 		issueType:  issueType,
 		job:        issueType.Jobs.Get(models.StateName(issue.Status.Name)),
+		workingDir: string,
 	}
 }
 
 func (i *WorkOnIssue) Work() bool {
 	log.Printf("Working on %q %q (ID: %d)", i.state.Name, i.issueType.Name, i.issue.Id)
 
-	err := i.CheckoutBranch()
+	err := i.PrepareWorkplace()
 	if err != nil {
-		log.Printf("Failed to checkout branch: %v", err)
+		log.Printf("Failed to prepare workplace: %v", err)
 		return false
 	}
 
@@ -68,6 +72,14 @@ func (i *WorkOnIssue) Work() bool {
 	}
 
 	return true
+}
+
+func (i *WorkOnIssue) AddComment(text string) error {
+	err := i.model.Comment(i.issue, text)
+	if err != nil {
+		return fmt.Errorf("failed to comment issue err: %v", err)
+	}
+	return nil
 }
 
 func (i *WorkOnIssue) action(step models.Step) error {
@@ -91,7 +103,46 @@ func (i *WorkOnIssue) coderAction(prompt string) error {
 	return nil
 }
 
-func (i *WorkOnIssue) CheckoutBranch() error {
+func (i *WorkOnIssue) PrepareWorkplace() error {
+	err := i.changeDirectory()
+	if err != nil {
+		log.Printf("Failed to change directory: %v", err)
+		return err
+	}
+	err = i.checkoutBranch()
+	if err != nil {
+		log.Printf("Failed to checkout branch: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (i *WorkOnIssue) changeDirectory() error {
+	targetPath := i.git.Path
+	if filepath.Base(targetPath) == ".git" {
+		targetPath = filepath.Dir(targetPath)
+	}
+
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current directory err: %v", err)
+	}
+	if currentDir != targetPath {
+		log.Printf("Changing directory from %s to %s\n", currentDir, targetPath)
+	}
+
+	err = os.Chdir(targetPath)
+	if err != nil {
+		return fmt.Errorf("failed to change directory err: %v", err)
+	}
+
+	log.Printf("Active in project directory %s\n", targetPath)
+	i.workingDir = targetPath
+
+	return nil
+}
+
+func (i *WorkOnIssue) checkoutBranch() error {
 	err := i.git.CheckoutBranch(strconv.Itoa(i.issue.Id))
 	if err != nil {
 		return fmt.Errorf("failed to checkout branch err: %v", err)
@@ -99,7 +150,7 @@ func (i *WorkOnIssue) CheckoutBranch() error {
 	return nil
 }
 
-func (i *WorkOnIssue) GetComments() ([]string, error) {
+func (i *WorkOnIssue) getComments() ([]string, error) {
 	comments, err := i.model.DBGetComments(i.issue.Id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get comments err: %v", err)
@@ -110,12 +161,4 @@ func (i *WorkOnIssue) GetComments() ([]string, error) {
 	//fmt.Printf("%s\n", strings.Join(comments, "\n"))
 
 	return comments, nil
-}
-
-func (i *WorkOnIssue) AddComment(text string) error {
-	err := i.model.Comment(i.issue, text)
-	if err != nil {
-		return fmt.Errorf("failed to comment issue err: %v", err)
-	}
-	return nil
 }
