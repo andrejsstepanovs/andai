@@ -19,8 +19,8 @@ type Job struct {
 }
 
 type Step struct {
-	Aider  string `yaml:"aider"`
-	Prompt string `yaml:"prompt"`
+	Command string `yaml:"command"`
+	Args    string `yaml:"args"`
 }
 
 func (j *Jobs) Get(name StateName) Job {

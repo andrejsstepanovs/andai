@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/andrejsstepanovs/andai/pkg/exec"
 	"github.com/andrejsstepanovs/andai/pkg/llm"
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	model "github.com/andrejsstepanovs/andai/pkg/redmine"
@@ -47,7 +48,6 @@ func NewWorkOnIssue(
 		state:      state,
 		issueType:  issueType,
 		job:        issueType.Jobs.Get(models.StateName(issue.Status.Name)),
-		workingDir: string,
 	}
 }
 
@@ -71,6 +71,15 @@ func (i *WorkOnIssue) Work() bool {
 		fmt.Println("Success")
 	}
 
+	stdout, stderr, err := exec.Exec("bobik", "once quiet llm", "hi!")
+	//stdout, stderr, err := exec.Exec("bobik", "once quiet llm", "hi!")
+	if err != nil {
+		log.Printf("Failed to execute command: %v", err)
+		return false
+	}
+	fmt.Printf("stdout: %s", stdout)
+	fmt.Printf("stdERR: %s", stderr)
+
 	return true
 }
 
@@ -83,13 +92,17 @@ func (i *WorkOnIssue) AddComment(text string) error {
 }
 
 func (i *WorkOnIssue) action(step models.Step) error {
-	switch step.Aider {
+	switch step.Command {
 	case "architect":
-		return i.architectAction(step.Prompt)
+		return i.architectAction(step.Args)
 	case "coder":
-		return i.coderAction(step.Prompt)
+		return i.coderAction(step.Args)
+	case "aid":
+		return i.coderAction(step.Args)
+	case "aider":
+		return i.coderAction(step.Args)
 	default:
-		return fmt.Errorf("unknown aider: %q", step.Aider)
+		return fmt.Errorf("unknown aider: %q", step.Command)
 	}
 }
 
