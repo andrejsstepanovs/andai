@@ -56,13 +56,15 @@ func (i *WorkOnIssue) Work() bool {
 		return false
 	}
 
-	for _, step := range i.job.Steps {
-		fmt.Printf("Step: %s\n", step.Prompt)
+	fmt.Printf("Total steps: %d\n", len(i.job.Steps))
+	for j, step := range i.job.Steps {
+		fmt.Printf("Step: %d\n", j+1)
 		err = i.action(step)
 		if err != nil {
 			log.Printf("Failed to action step: %v", err)
 			return false
 		}
+		fmt.Println("Success")
 	}
 
 	return true
