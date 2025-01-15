@@ -56,14 +56,37 @@ func (i *WorkOnIssue) Work() bool {
 		return false
 	}
 
-	fmt.Printf("%v\n", i.issueType)
-	fmt.Printf("%d\n", len(i.job.Steps))
-
 	for _, step := range i.job.Steps {
 		fmt.Printf("Step: %s\n", step.Prompt)
+		err = i.action(step)
+		if err != nil {
+			log.Printf("Failed to action step: %v", err)
+			return false
+		}
 	}
 
 	return true
+}
+
+func (i *WorkOnIssue) action(step models.Step) error {
+	switch step.Aider {
+	case "architect":
+		return i.architectAction(step.Prompt)
+	case "coder":
+		return i.coderAction(step.Prompt)
+	default:
+		return fmt.Errorf("unknown aider: %q", step.Aider)
+	}
+}
+
+func (i *WorkOnIssue) architectAction(prompt string) error {
+	fmt.Println(prompt)
+	return nil
+}
+
+func (i *WorkOnIssue) coderAction(prompt string) error {
+	fmt.Println(prompt)
+	return nil
 }
 
 func (i *WorkOnIssue) CheckoutBranch() error {
