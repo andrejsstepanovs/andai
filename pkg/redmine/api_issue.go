@@ -152,14 +152,14 @@ func (c *Model) getCorrectIssue(issues []redmine.Issue, priorities models.Priori
 		fmt.Printf("PRIORITY: %q @ %q\n", priority.Type, priority.State)
 
 		state := states.Get(priority.State)
-		if !state.AI {
-			fmt.Printf("SKIP %q @ %q - NOT FOR AI\n", priority.Type, priority.State)
+		if !state.UseAI.Yes(priority.Type) {
+			fmt.Printf("SKIP %q @ %q - NOT FOR UseAI\n", priority.Type, priority.State)
 			continue
 		}
 
 		for _, issue := range issues {
 			fmt.Printf("ISSUE: %q (%d) - %q\n", issue.Tracker.Name, issue.Id, issue.Status.Name)
-			if issue.Tracker.Name != priority.Type {
+			if issue.Tracker.Name != string(priority.Type) {
 				fmt.Printf("SKIP %q (%d) - not %q\n", issue.Tracker.Name, issue.Id, priority.Type)
 				continue
 			}

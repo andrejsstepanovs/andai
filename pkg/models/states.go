@@ -22,18 +22,28 @@ func (s *States) GetClosed() State {
 	return State{}
 }
 
+type UseAI []IssueTypeName
+
 // State represents a single state within the workflow.
 type State struct {
 	Name        StateName `yaml:"-"` // Exclude from YAML unmarshalling
 	Description string    `yaml:"description"`
-	AI          bool      `yaml:"ai"`
+	UseAI       UseAI     `yaml:"ai"`
 	Prompt      string    `yaml:"prompt,omitempty"`
 	IsDefault   bool      `yaml:"is_default"`
 	IsFirst     bool      `yaml:"is_first"`
 	IsClosed    bool      `yaml:"is_closed"`
 }
 
-// Get find State by name
 func (s *States) Get(name StateName) State {
 	return (*s)[name]
+}
+
+func (a *UseAI) Yes(name IssueTypeName) bool {
+	for _, issueTypeName := range *a {
+		if issueTypeName == name {
+			return true
+		}
+	}
+	return false
 }

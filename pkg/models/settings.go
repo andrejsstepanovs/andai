@@ -102,15 +102,16 @@ func (s *Settings) Validate() error {
 		}
 	}
 
-	// validate issueType steps if it is AI=true
+	// validate issueType steps if it is UseAI=true
 	var errs error
 	for _, state := range s.Workflow.States {
-		if !state.AI {
-			continue
-		}
-		for _, issueType := range s.Workflow.IssueTypes {
+		for issueTypeName, issueType := range s.Workflow.IssueTypes {
+			if !state.UseAI.Yes(issueTypeName) {
+				continue
+			}
 			haveSteps := false
 			for stateName, job := range issueType.Jobs {
+
 				if state.Name != stateName {
 					continue
 				}
