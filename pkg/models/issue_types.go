@@ -18,3 +18,7 @@ type Step struct {
 	Aider  string `yaml:"aider"`
 	Prompt string `yaml:"prompt"`
 }
+
+func (s *IssueTypes) Get(name IssueTypeName) IssueType {
+	return (*s)[name]
+}

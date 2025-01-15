@@ -3,8 +3,6 @@ package work
 import (
 	"fmt"
 	"log"
-	"strconv"
-	"strings"
 
 	"github.com/andrejsstepanovs/andai/pkg/llm"
 	"github.com/andrejsstepanovs/andai/pkg/models"
@@ -34,7 +32,7 @@ func newWorkCommand(_ *model.Model, llm *llm.LLM, models models.LlmModels) *cobr
 	}
 }
 
-func newNextCommand(model *model.Model, _ *llm.LLM, projects models.Projects, workflow models.Workflow) *cobra.Command {
+func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, workflow models.Workflow) *cobra.Command {
 	return &cobra.Command{
 		Use:   "next",
 		Short: "Work with redmine",
@@ -75,50 +73,28 @@ func newNextCommand(model *model.Model, _ *llm.LLM, projects models.Projects, wo
 
 				log.Printf("Project Repository Opened %s", git.Path)
 
-				err = git.CheckoutBranch(strconv.Itoa(issue.Id))
-				if err != nil {
-					return fmt.Errorf("failed to checkout branch err: %v", err)
-				}
+				work := NewWorkOnIssue(
+					model,
+					llm,
+					issue,
+					*project,
+					projectConfig,
+					git,
+					workflow.States.Get(models.StateName(issue.Status.Name)),
+					workflow.IssueTypes.Get(models.IssueTypeName(issue.Tracker.Name)),
+				)
+				success := work.Work()
 
-				nextTransition := workflow.Transitions.GetNextTransition(models.StateName(issue.Status.Name))
-				nextTransition.LogPrint()
-
-				log.Printf("Comments: %s", issue.Notes)
-				comments, err := model.DBGetComments(issue.Id)
-				if err != nil {
-					return fmt.Errorf("failed to get comments err: %v", err)
-				}
-				fmt.Printf("Comments: %d\n", len(comments))
-				fmt.Printf("%s\n", strings.Join(comments, "\n"))
-
-				err = model.Comment(issue, "AI WORKER COMMENT")
-				if err != nil {
-					return fmt.Errorf("failed to comment issue err: %v", err)
-				}
-
-				// WORK ON ISSUE
-				success := workOnIssue(issue)
-
-				err = model.Comment(issue, "AI finished Work - Success: "+strconv.FormatBool(success))
-				if err != nil {
-					return fmt.Errorf("failed to comment issue err: %v", err)
-				}
-
-				nextIssueStatus, err := model.APIGetIssueStatus(string(nextTransition.GetTarget(success)))
-				if err != nil {
-					return fmt.Errorf("failed to get next issue status err: %v", err)
-				}
-				fmt.Printf("Next status: %d - %s\n", nextIssueStatus.Id, nextIssueStatus.Name)
-
-				err = model.Transition(issue, nextIssueStatus)
-				if err != nil {
-					return fmt.Errorf("failed to transition issue err: %v", err)
-				}
-				fmt.Printf("Successfully moved to: %d - %s\n", nextIssueStatus.Id, nextIssueStatus.Name)
-
-				//availableTransitions := make([]string, 0)
-				//workflow.Transitions
-				//success := true
+				_ = success
+				//err = model.Comment(issue, "AI finished Work - Success: "+strconv.FormatBool(success))
+				//if err != nil {
+				//	return fmt.Errorf("failed to comment issue err: %v", err)
+				//}
+				//
+				//err = transitionToNextStatus(workflow, model, issue, success)
+				//if err != nil {
+				//	return fmt.Errorf("failed to comment issue err: %v", err)
+				//}
 			}
 
 			return nil
@@ -126,7 +102,19 @@ func newNextCommand(model *model.Model, _ *llm.LLM, projects models.Projects, wo
 	}
 }
 
-func workOnIssue(issue redmine.Issue) bool {
-	log.Printf("Working on issue %d", issue.Id)
-	return true
+func transitionToNextStatus(workflow models.Workflow, model *model.Model, issue redmine.Issue, success bool) error {
+	nextTransition := workflow.Transitions.GetNextTransition(models.StateName(issue.Status.Name))
+	nextTransition.LogPrint()
+	nextIssueStatus, err := model.APIGetIssueStatus(string(nextTransition.GetTarget(success)))
+	if err != nil {
+		return fmt.Errorf("failed to get next issue status err: %v", err)
+	}
+	fmt.Printf("Next status: %d - %s\n", nextIssueStatus.Id, nextIssueStatus.Name)
+
+	err = model.Transition(issue, nextIssueStatus)
+	if err != nil {
+		return fmt.Errorf("failed to transition issue err: %v", err)
+	}
+	fmt.Printf("Successfully moved to: %d - %s\n", nextIssueStatus.Id, nextIssueStatus.Name)
+	return nil
 }
