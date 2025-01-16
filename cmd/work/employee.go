@@ -61,7 +61,7 @@ var (
 	}
 )
 
-type WorkOnIssue struct {
+type Employee struct {
 	model      *model.Model
 	llm        *llm.LLM
 	issue      redmine.Issue
@@ -83,8 +83,8 @@ func NewWorkOnIssue(
 	git *worker.Git,
 	state models.State,
 	issueType models.IssueType,
-) *WorkOnIssue {
-	return &WorkOnIssue{
+) *Employee {
+	return &Employee{
 		model:      model,
 		llm:        llm,
 		issue:      issue,
@@ -97,7 +97,7 @@ func NewWorkOnIssue(
 	}
 }
 
-func (i *WorkOnIssue) Work() bool {
+func (i *Employee) Work() bool {
 	log.Printf("Working on %q %q (ID: %d)", i.state.Name, i.issueType.Name, i.issue.Id)
 
 	err := i.PrepareWorkplace()
@@ -120,7 +120,7 @@ func (i *WorkOnIssue) Work() bool {
 	return true
 }
 
-func (i *WorkOnIssue) AddComment(text string) error {
+func (i *Employee) AddComment(text string) error {
 	err := i.model.Comment(i.issue, text)
 	if err != nil {
 		return fmt.Errorf("failed to comment issue err: %v", err)
@@ -128,7 +128,7 @@ func (i *WorkOnIssue) AddComment(text string) error {
 	return nil
 }
 
-func (i *WorkOnIssue) action(step models.Step) error {
+func (i *Employee) action(step models.Step) error {
 	fmt.Println(step.Command, step.Action)
 	switch step.Command {
 	case "aider", "aid":
@@ -143,7 +143,7 @@ func (i *WorkOnIssue) action(step models.Step) error {
 	}
 }
 
-func (i *WorkOnIssue) aiderExecute(step models.Step) error {
+func (i *Employee) aiderExecute(step models.Step) error {
 	contextFile, err := i.buildIssueTmpFile(step)
 	if err != nil {
 		log.Printf("Failed to build issue tmp file: %v", err)
@@ -178,7 +178,7 @@ func (i *WorkOnIssue) aiderExecute(step models.Step) error {
 	return nil
 }
 
-func (i *WorkOnIssue) aiderCommand(contextFile string, step models.Step) string {
+func (i *Employee) aiderCommand(contextFile string, step models.Step) string {
 	var (
 		params map[string]string
 		args   []string
@@ -212,7 +212,7 @@ func (i *WorkOnIssue) aiderCommand(contextFile string, step models.Step) string 
 	)
 }
 
-func (i *WorkOnIssue) buildIssueTmpFile(step models.Step) (string, error) {
+func (i *Employee) buildIssueTmpFile(step models.Step) (string, error) {
 	comments, err := i.getComments()
 	if err != nil {
 		log.Printf("Failed to get comments: %v", err)
@@ -263,7 +263,7 @@ func (i *WorkOnIssue) buildIssueTmpFile(step models.Step) (string, error) {
 	return tempFile.Name(), nil
 }
 
-func (i *WorkOnIssue) PrepareWorkplace() error {
+func (i *Employee) PrepareWorkplace() error {
 	err := i.changeDirectory()
 	if err != nil {
 		log.Printf("Failed to change directory: %v", err)
@@ -277,7 +277,7 @@ func (i *WorkOnIssue) PrepareWorkplace() error {
 	return nil
 }
 
-func (i *WorkOnIssue) changeDirectory() error {
+func (i *Employee) changeDirectory() error {
 	targetPath := i.git.Path
 	if filepath.Base(targetPath) == ".git" {
 		targetPath = filepath.Dir(targetPath)
@@ -302,7 +302,7 @@ func (i *WorkOnIssue) changeDirectory() error {
 	return nil
 }
 
-func (i *WorkOnIssue) checkoutBranch() error {
+func (i *Employee) checkoutBranch() error {
 	err := i.git.CheckoutBranch(strconv.Itoa(i.issue.Id))
 	if err != nil {
 		return fmt.Errorf("failed to checkout branch err: %v", err)
@@ -310,7 +310,7 @@ func (i *WorkOnIssue) checkoutBranch() error {
 	return nil
 }
 
-func (i *WorkOnIssue) getComments() (redminemodels.Comments, error) {
+func (i *Employee) getComments() (redminemodels.Comments, error) {
 	comments, err := i.model.DBGetComments(i.issue.Id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get comments err: %v", err)

@@ -84,16 +84,10 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 				)
 				success := work.Work()
 
-				_ = success
-				//err = model.Comment(issue, "UseAI finished Work - Success: "+strconv.FormatBool(success))
-				//if err != nil {
-				//	return fmt.Errorf("failed to comment issue err: %v", err)
-				//}
-				//
-				//err = transitionToNextStatus(workflow, model, issue, success)
-				//if err != nil {
-				//	return fmt.Errorf("failed to comment issue err: %v", err)
-				//}
+				err = transitionToNextStatus(workflow, model, issue, success)
+				if err != nil {
+					return fmt.Errorf("failed to comment issue err: %v", err)
+				}
 			}
 
 			return nil
