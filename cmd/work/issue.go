@@ -19,7 +19,47 @@ import (
 	"github.com/mattn/go-redmine"
 )
 
-const tmpFile = "andai-%d-*.md"
+const (
+	tmpFile = "andai-%d-*.md"
+)
+
+var (
+	aiderArgs = []string{
+		"--no-stream",
+		"--yes",
+		"--no-pretty",
+		"--yes-always",
+		"--no-gitignore",
+		"--no-analytics",
+		"--no-watch-files",
+		"--no-suggest-shell-commands",
+		"--no-fancy-input",
+		"--no-show-release-notes",
+		"--no-check-update",
+		"--analytics-disable",
+		"--no-detect-urls",
+		"--no-show-model-warnings",
+	}
+	aiderCodeArgs = []string{
+		"--git",
+		"--no-auto-lint",
+		"--no-auto-test",
+	}
+	aiderArchitectArgs = []string{
+		"--architect",
+		"--no-git",
+		"--no-auto-commits",
+		"--no-auto-lint",
+		"--no-auto-test",
+	}
+
+	aiderArchitectParams = map[string]string{
+		"--map-refresh": "auto", // auto,always,files,manual
+	}
+	aiderCodeParams = map[string]string{
+		"--map-refresh": "auto", // auto,always,files,manual
+	}
+)
 
 type WorkOnIssue struct {
 	model      *model.Model
@@ -89,13 +129,12 @@ func (i *WorkOnIssue) AddComment(text string) error {
 }
 
 func (i *WorkOnIssue) action(step models.Step) error {
+	fmt.Println(step.Command, step.Action)
 	switch step.Command {
 	case "aider", "aid":
 		switch step.Action {
-		case "architect":
-			return i.aiderArchitect(step)
-		case "code":
-			return i.aiderCode(step)
+		case "architect", "code":
+			return i.aiderExecute(step)
 		default:
 			return fmt.Errorf("unknown %q action: %q", step.Command, step.Action)
 		}
@@ -104,76 +143,76 @@ func (i *WorkOnIssue) action(step models.Step) error {
 	}
 }
 
-func (i *WorkOnIssue) aiderCode(step models.Step) error {
-	fmt.Println(step.Command, step.Action)
-
-	//stdout, stderr, err := exec.Exec("", "once quiet llm", "hi!")
-	//stdout, stderr, err := exec.Exec("bobik", "once quiet llm", "hi!")
-
-	return nil
-}
-
-func (i *WorkOnIssue) aiderArchitect(step models.Step) error {
-	fmt.Println(step.Command, step.Action)
-
-	contextFile, err := i.buildIssueTmpFile()
+func (i *WorkOnIssue) aiderExecute(step models.Step) error {
+	contextFile, err := i.buildIssueTmpFile(step)
 	if err != nil {
 		log.Printf("Failed to build issue tmp file: %v", err)
 	}
-	defer os.Remove(contextFile)
+	log.Printf("Context file: %q\n", contextFile)
+	//defer os.Remove(contextFile)
 
-	args := []string{
-		"--architect",
-		"--no-pretty",
-		"--no-stream",
-		"--yes",
-		"--no-git",
-		"--no-gitignore",
-		"--subtree-only",
-		"--no-auto-commits",
-		"--no-watch-files",
-		"--no-auto-lint",
-		"--no-auto-test",
-		"--no-analytics",
-		"--analytics-disable",
-		"--yes-always",
-		"--no-suggest-shell-commands",
-		"--no-fancy-input",
-	}
-	params := map[string]string{
-		"--map-refresh": "auto", // auto,always,files,manual
-		"--message":     step.Prompt,
-	}
-	if contextFile != "" {
-		params["--message-file"] = contextFile
-	}
-
-	paramsCli := ""
-	for k, v := range params {
-		paramsCli += fmt.Sprintf("%s=%q", k, v)
-	}
-
-	options := fmt.Sprintf("%s %s", strings.Join(args, " "), paramsCli)
-
+	options := i.aiderCommand(contextFile, step)
 	stdout, stderr, err := exec.Exec(step.Command, options)
 	if err != nil {
 		log.Printf("Failed to execute command: %v", err)
 		return err
 	}
-	fmt.Printf("stdout: %s", stdout)
-	fmt.Printf("stdERR: %s", stderr)
 
 	if stdout != "" {
+		fmt.Printf("stdout: %s\n", stdout)
 		err = i.AddComment(fmt.Sprintf("<result>%s</result>", stdout))
+		if err != nil {
+			log.Printf("Failed to add stdout comment: %v", err)
+			return err
+		}
 	}
 	if stderr != "" {
+		log.Printf("stderr: %s\n", stderr)
 		err = i.AddComment(fmt.Sprintf("<error>%s</error>", stderr))
+		if err != nil {
+			log.Printf("Failed to add stderr comment: %v", err)
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (i *WorkOnIssue) buildIssueTmpFile() (string, error) {
+func (i *WorkOnIssue) aiderCommand(contextFile string, step models.Step) string {
+	var (
+		params map[string]string
+		args   []string
+	)
+	switch step.Action {
+	case "architect":
+		params = aiderArchitectParams
+		args = aiderArchitectArgs
+	case "code":
+		params = aiderCodeParams
+		args = aiderCodeArgs
+	default:
+		panic("unknown step action")
+	}
+	//params["--message"] = step.Prompt
+	if contextFile != "" {
+		params["--message-file"] = contextFile
+	}
+
+	paramsCli := make([]string, 0, len(params))
+	for k, v := range params {
+		paramsCli = append(paramsCli, fmt.Sprintf("%s=%q", k, v))
+	}
+
+	args = append(args, aiderArgs...)
+
+	return fmt.Sprintf(
+		"%s %s",
+		strings.Join(args, " "),
+		strings.Join(paramsCli, " "),
+	)
+}
+
+func (i *WorkOnIssue) buildIssueTmpFile(step models.Step) (string, error) {
 	comments, err := i.getComments()
 	if err != nil {
 		log.Printf("Failed to get comments: %v", err)
@@ -187,13 +226,15 @@ func (i *WorkOnIssue) buildIssueTmpFile() (string, error) {
 		"{{ range .Comments }}\n" +
 		"### Comment {{.Number}} (Created: {{.CreatedAt}})\n" +
 		"{{.Text}}\n" +
-		"{{ end }}"
+		"{{ end }}\n\n" +
+		"# Your Task:\n{{.Step.Prompt}}"
 
 	data := map[string]interface{}{
 		"Issue":       i.issue,
 		"Title":       i.issue.Subject,
 		"Description": i.issue.Description,
 		"Comments":    comments,
+		"Step":        step,
 	}
 
 	tmpl, err := template.New("JiraIssue").Parse(promptTemplate)
