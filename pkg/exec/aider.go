@@ -27,9 +27,9 @@ var (
 		"--no-gui",
 		"--no-browser",
 		"--no-copy-paste",
+		"--git",
 	}
 	aiderCodeArgs = []string{
-		"--git",
 		"--yes-always",
 		"--auto-commits",
 		"--no-auto-lint",
@@ -37,7 +37,6 @@ var (
 	}
 	aiderArchitectArgs = []string{
 		"--architect",
-		"--no-git",
 		"--no-auto-commits",
 		"--no-auto-lint",
 		"--no-auto-test",
@@ -69,6 +68,8 @@ func AiderCommand(contextFile string, step models.Step) string {
 
 	if contextFile != "" {
 		params["--message-file"] = contextFile
+	} else {
+		params["--message"] = step.Prompt.ForCli()
 	}
 
 	paramsCli := make([]string, 0, len(params))

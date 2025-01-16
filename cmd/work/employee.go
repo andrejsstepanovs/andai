@@ -34,6 +34,7 @@ type Employee struct {
 	issueType  models.IssueType
 	job        models.Job
 	workingDir string
+	history    []exec.Output
 }
 
 func NewWorkOnIssue(
@@ -71,10 +72,15 @@ func (i *Employee) Work() bool {
 	fmt.Printf("Total steps: %d\n", len(i.job.Steps))
 	for j, step := range i.job.Steps {
 		fmt.Printf("Step: %d\n", j+1)
-		err = i.action(step)
+		step.Prompt = i.addHistory(step)
+		output, err := i.processStep(step)
 		if err != nil {
 			log.Printf("Failed to action step: %v", err)
 			return false
+		}
+		i.CommentOutput(step, output)
+		if step.Remember {
+			i.history = append(i.history, output)
 		}
 		fmt.Println("Success")
 	}
@@ -90,27 +96,76 @@ func (i *Employee) AddComment(text string) error {
 	return nil
 }
 
-func (i *Employee) action(step models.Step) error {
-	fmt.Println(step.Command, step.Action)
-	switch step.Command {
-	case "git":
-		_, _, err := exec.Exec(step.Command, step.Action)
-		return err
-	case "aider", "aid":
-		switch step.Action {
-		case "next":
-			return nil
-		case "architect", "code":
-			return i.aiderExecute(step)
-		default:
-			return fmt.Errorf("unknown %q action: %q", step.Command, step.Action)
+func (i *Employee) CommentOutput(step models.Step, output exec.Output) {
+	if !step.Comment {
+		return
+	}
+	logCommand := fmt.Sprintf("%s %s", step.Command, step.Action)
+	if output.Stdout != "" {
+		format := "Command: **%s**\n<result>\n%s\n</result>"
+		msg := fmt.Sprintf(format, logCommand, output.Stdout)
+		err := i.AddComment(msg)
+		if err != nil {
+			log.Printf("Failed to add stdout comment: %v", err)
+			panic(err)
 		}
-	default:
-		return fmt.Errorf("unknown step command: %q", step.Command)
+	}
+	if output.Stderr != "" {
+		log.Printf("stderr: %s\n", output.Stderr)
+		if step.Comment {
+			format := "Command: %s\n<error>\n%s\n</error>"
+			msg := fmt.Sprintf(format, logCommand, output.Stderr)
+			err := i.AddComment(msg)
+			if err != nil {
+				log.Printf("Failed to add stderr comment: %v", err)
+				panic(err)
+			}
+		}
 	}
 }
 
-func (i *Employee) aiderExecute(step models.Step) error {
+func (i *Employee) processStep(step models.Step) (exec.Output, error) {
+	fmt.Println(step.Command, step.Action)
+	switch step.Command {
+	case "git":
+		return exec.Exec(step.Command, step.Action)
+	case "aider", "aid":
+		switch step.Action {
+		case "architect", "code":
+			return i.aiderExecute(step)
+		default:
+			return exec.Output{}, fmt.Errorf("unknown %q action: %q", step.Command, step.Action)
+		}
+	case "bobik":
+		return i.bobikExecute(step)
+	default:
+		return exec.Output{}, fmt.Errorf("unknown step command: %q", step.Command)
+	}
+}
+
+func (i *Employee) addHistory(step models.Step) models.StepPrompt {
+	if len(i.history) == 0 {
+		return step.Prompt
+	}
+	hydratedPrompt := make([]string, 0)
+	for _, o := range i.history {
+		hydratedPrompt = append(hydratedPrompt, o.AsPrompt())
+	}
+	hydratedPrompt = append(hydratedPrompt, string(step.Prompt))
+	return models.StepPrompt(strings.Join(hydratedPrompt, "\n\n----\n\n"))
+}
+
+func (i *Employee) bobikExecute(step models.Step) (exec.Output, error) {
+	promptFile, err := i.buildPromptTmpFile(step)
+	if err != nil {
+		log.Printf("Failed to build prompt tmp file: %v", err)
+	}
+
+	format := "Use this file %s as a question and answer!"
+	return exec.Exec(step.Command, step.Action, fmt.Sprintf(format, promptFile))
+}
+
+func (i *Employee) aiderExecute(step models.Step) (exec.Output, error) {
 	contextFile, err := i.buildIssueTmpFile(step)
 	if err != nil {
 		log.Printf("Failed to build issue tmp file: %v", err)
@@ -119,17 +174,16 @@ func (i *Employee) aiderExecute(step models.Step) error {
 	defer os.Remove(contextFile)
 
 	options := exec.AiderCommand(contextFile, step)
-	stdout, stderr, err := exec.Exec(step.Command, options)
+	output, err := exec.Exec(step.Command, options)
 	if err != nil {
 		log.Printf("Failed to execute command: %v", err)
-		return err
+		return output, err
 	}
 
-	logCommand := fmt.Sprintf("%s %s", step.Command, step.Action)
-	if stdout != "" {
-		fmt.Printf("stdout: %s\n", stdout)
+	if output.Stdout != "" {
+		fmt.Printf("stdout: %s\n", output.Stdout)
 
-		lines := strings.Split(stdout, "\n")
+		lines := strings.Split(output.Stdout, "\n")
 		startPos := 0
 		lastPos := 0
 		for k, line := range lines {
@@ -144,44 +198,95 @@ func (i *Employee) aiderExecute(step models.Step) error {
 				lastPos = k
 			}
 		}
+
 		if startPos > 0 && lastPos > 0 {
-			stdout = strings.Join(lines[startPos+1:lastPos], "\n")
-		}
-
-		err = i.AddComment(fmt.Sprintf("Command: **%s**\n<result>\n%s\n</result>", logCommand, stdout))
-		if err != nil {
-			log.Printf("Failed to add stdout comment: %v", err)
-			return err
-		}
-	}
-	if stderr != "" {
-		log.Printf("stderr: %s\n", stderr)
-		err = i.AddComment(fmt.Sprintf("Command: %s\n<error>\n%s\n</error>", logCommand, stderr))
-		if err != nil {
-			log.Printf("Failed to add stderr comment: %v", err)
-			return err
+			output.Stdout = strings.Join(lines[startPos+1:lastPos], "\n")
 		}
 	}
 
-	return nil
+	return output, nil
+}
+
+func (i *Employee) buildPromptTmpFile(step models.Step) (string, error) {
+	promptTemplate := "{{.Step.Prompt}}"
+
+	data := map[string]interface{}{
+		"Step": step,
+	}
+	tmpl, err := template.New("SimplePrompt").Parse(promptTemplate)
+	if err != nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, data)
+	if err != nil {
+		return "", err
+	}
+	content := buf.String()
+	fmt.Println("\n##############\n", content, "\n##############\n")
+
+	tempFile, err := os.CreateTemp("", fmt.Sprintf(tmpFile, i.issue.Id))
+	if err != nil {
+		return "", err
+	}
+	log.Printf("Created temporary file: %q", tempFile.Name())
+
+	_, err = tempFile.WriteString(content)
+	if err != nil {
+		return "", err
+	}
+	defer tempFile.Close()
+
+	return tempFile.Name(), nil
 }
 
 func (i *Employee) buildIssueTmpFile(step models.Step) (string, error) {
-	comments, err := i.getComments()
-	if err != nil {
-		log.Printf("Failed to get comments: %v", err)
-		return "", err
+	if !step.Context.Has(models.ContextComments) &&
+		!step.Context.Has(models.ContextLastComment) &&
+		!step.Context.Has(models.ContextTicket) {
+		return "", nil
 	}
 
-	promptTemplate := "# {{.Issue.Subject}} (ID: {{.Issue.Id}})\n\n" +
-		"## Description\n" +
-		"{{.Issue.Description}}\n\n" +
-		"## Comments:\n" +
-		"{{ range .Comments }}\n" +
-		"### Comment {{.Number}} (Created: {{.CreatedAt}})\n" +
-		"{{.Text}}\n" +
-		"{{ end }}\n\n" +
-		"# Your Task:\n{{.Step.Prompt}}"
+	comments := redminemodels.Comments{}
+	var err error
+	if step.Context.Has(models.ContextComments) {
+		comments, err = i.getComments()
+		if err != nil {
+			log.Printf("Failed to get comments: %v", err)
+			return "", err
+		}
+	} else if step.Context.Has(models.ContextLastComment) {
+		comments, err = i.getComments()
+		if err != nil {
+			log.Printf("Failed to get last comment: %v", err)
+			return "", err
+		}
+		if len(comments) > 0 {
+			comments = redminemodels.Comments{comments[len(comments)-1]}
+			comments[0].Number = 1
+		}
+	}
+
+	var promptTemplate string
+	if step.Context.Has(models.ContextTicket) {
+		promptTemplate = "# {{.Issue.Subject}} (ID: {{.Issue.Id}})\n\n" +
+			"## Description\n" +
+			"{{.Issue.Description}}\n\n" +
+			"{{ if .Comments }}" +
+			"## Comments:\n" +
+			"{{ range .Comments }}\n" +
+			"### Comment {{.Number}} (Created: {{.CreatedAt}})\n" +
+			"{{.Text}}\n" +
+			"{{ end }}" +
+			"{{ end }}\n\n" +
+			"# Your Task:\n{{.Step.Prompt}}"
+	} else {
+		promptTemplate = "" +
+			"{{ range .Comments }}\n" +
+			"### Comment {{.Number}} (Created: {{.CreatedAt}})\n" +
+			"{{.Text}}" +
+			"{{ end }}"
+	}
 
 	data := map[string]interface{}{
 		"Issue":       i.issue,
@@ -201,6 +306,7 @@ func (i *Employee) buildIssueTmpFile(step models.Step) (string, error) {
 		return "", err
 	}
 	content := buf.String()
+	//fmt.Println("\n##############\n", content, "\n##############\n")
 
 	tempFile, err := os.CreateTemp("", fmt.Sprintf(tmpFile, i.issue.Id))
 	if err != nil {

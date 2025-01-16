@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -18,7 +17,7 @@ const (
 	allowedCommands = "pwd cat git ls grep aider aid bobik"
 )
 
-func Exec(command string, args ...string) (string, string, error) {
+func Exec(command string, args ...string) (Output, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
@@ -30,11 +29,13 @@ func Exec(command string, args ...string) (string, string, error) {
 			break
 		}
 	}
+
+	output := Output{Command: fmt.Sprintf("%s %s", command, strings.Join(args, " "))}
 	if !isAllowed {
-		return "", "", fmt.Errorf("command '%s' is not allowed", command)
+		return output, fmt.Errorf("command '%s' is not allowed", command)
 	}
 
-	fullCommand := fmt.Sprintf("%s %s", command, filepath.Join(args...))
+	fullCommand := fmt.Sprintf("%s %s", command, strings.Join(args, " "))
 
 	cmd := exec.CommandContext(ctx, shell, shellArg, fullCommand)
 	cmd.Env = append(os.Environ(), fmt.Sprintf("SHELL=%s", shellPath))
@@ -45,7 +46,7 @@ func Exec(command string, args ...string) (string, string, error) {
 
 	err := cmd.Run()
 	if err != nil {
-		return "", "", fmt.Errorf("exec failed: %v\nstdout: %s\nstderr: %s", err, stdout.String(), stderr.String())
+		return output, fmt.Errorf("exec failed: %v\nstdout: %s\nstderr: %s", err, stdout.String(), stderr.String())
 	}
 
 	fmt.Printf("stdout: %s", stdout.String())
@@ -60,5 +61,8 @@ func Exec(command string, args ...string) (string, string, error) {
 		retStdErr = ""
 	}
 
-	return strings.TrimSpace(retStdOut), strings.TrimSpace(retStdErr), nil
+	output.Stdout = strings.TrimSpace(retStdOut)
+	output.Stderr = strings.TrimSpace(retStdErr)
+
+	return output, nil
 }
