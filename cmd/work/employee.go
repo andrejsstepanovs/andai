@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"text/template"
 
 	"github.com/andrejsstepanovs/andai/pkg/exec"
@@ -122,7 +123,27 @@ func (i *Employee) aiderExecute(step models.Step) error {
 	logCommand := fmt.Sprintf("%s %s", step.Command, step.Action)
 	if stdout != "" {
 		fmt.Printf("stdout: %s\n", stdout)
-		err = i.AddComment(fmt.Sprintf("Command: %s\n<result>\n%s\n</result>", logCommand, stdout))
+
+		lines := strings.Split(stdout, "\n")
+		startPos := 0
+		lastPos := 0
+		for k, line := range lines {
+			if startPos == 0 && strings.Contains(line, "CONVENTIONS.md") &&
+				strings.Contains(line, "Added") &&
+				strings.Contains(line, "to the chat") {
+				startPos = k
+			}
+			if lastPos == 0 && strings.Contains(line, "Tokens:") &&
+				strings.Contains(line, "sent") &&
+				strings.Contains(line, "received") {
+				lastPos = k
+			}
+		}
+		if startPos > 0 && lastPos > 0 {
+			stdout = strings.Join(lines[startPos+1:lastPos], "\n")
+		}
+
+		err = i.AddComment(fmt.Sprintf("Command: **%s**\n<result>\n%s\n</result>", logCommand, stdout))
 		if err != nil {
 			log.Printf("Failed to add stdout comment: %v", err)
 			return err
