@@ -149,7 +149,7 @@ func (i *Employee) aiderExecute(step models.Step) error {
 		log.Printf("Failed to build issue tmp file: %v", err)
 	}
 	log.Printf("Context file: %q\n", contextFile)
-	//defer os.Remove(contextFile)
+	defer os.Remove(contextFile)
 
 	options := i.aiderCommand(contextFile, step)
 	stdout, stderr, err := exec.Exec(step.Command, options)
@@ -193,7 +193,7 @@ func (i *Employee) aiderCommand(contextFile string, step models.Step) string {
 	default:
 		panic("unknown step action")
 	}
-	//params["--message"] = step.Prompt
+
 	if contextFile != "" {
 		params["--message-file"] = contextFile
 	}
