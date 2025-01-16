@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"text/template"
 
 	"github.com/andrejsstepanovs/andai/pkg/exec"
@@ -21,44 +20,6 @@ import (
 
 const (
 	tmpFile = "andai-%d-*.md"
-)
-
-var (
-	aiderArgs = []string{
-		"--no-stream",
-		"--yes",
-		"--no-pretty",
-		"--yes-always",
-		"--no-gitignore",
-		"--no-analytics",
-		"--no-watch-files",
-		"--no-suggest-shell-commands",
-		"--no-fancy-input",
-		"--no-show-release-notes",
-		"--no-check-update",
-		"--analytics-disable",
-		"--no-detect-urls",
-		"--no-show-model-warnings",
-	}
-	aiderCodeArgs = []string{
-		"--git",
-		"--no-auto-lint",
-		"--no-auto-test",
-	}
-	aiderArchitectArgs = []string{
-		"--architect",
-		"--no-git",
-		"--no-auto-commits",
-		"--no-auto-lint",
-		"--no-auto-test",
-	}
-
-	aiderArchitectParams = map[string]string{
-		"--map-refresh": "auto", // auto,always,files,manual
-	}
-	aiderCodeParams = map[string]string{
-		"--map-refresh": "auto", // auto,always,files,manual
-	}
 )
 
 type Employee struct {
@@ -151,16 +112,17 @@ func (i *Employee) aiderExecute(step models.Step) error {
 	log.Printf("Context file: %q\n", contextFile)
 	defer os.Remove(contextFile)
 
-	options := i.aiderCommand(contextFile, step)
+	options := exec.AiderCommand(contextFile, step)
 	stdout, stderr, err := exec.Exec(step.Command, options)
 	if err != nil {
 		log.Printf("Failed to execute command: %v", err)
 		return err
 	}
 
+	logCommand := fmt.Sprintf("%s %s", step.Command, step.Action)
 	if stdout != "" {
 		fmt.Printf("stdout: %s\n", stdout)
-		err = i.AddComment(fmt.Sprintf("<result>%s</result>", stdout))
+		err = i.AddComment(fmt.Sprintf("Command: %s\n<result>\n%s\n</result>", logCommand, stdout))
 		if err != nil {
 			log.Printf("Failed to add stdout comment: %v", err)
 			return err
@@ -168,7 +130,7 @@ func (i *Employee) aiderExecute(step models.Step) error {
 	}
 	if stderr != "" {
 		log.Printf("stderr: %s\n", stderr)
-		err = i.AddComment(fmt.Sprintf("<error>%s</error>", stderr))
+		err = i.AddComment(fmt.Sprintf("Command: %s\n<error>\n%s\n</error>", logCommand, stderr))
 		if err != nil {
 			log.Printf("Failed to add stderr comment: %v", err)
 			return err
@@ -176,40 +138,6 @@ func (i *Employee) aiderExecute(step models.Step) error {
 	}
 
 	return nil
-}
-
-func (i *Employee) aiderCommand(contextFile string, step models.Step) string {
-	var (
-		params map[string]string
-		args   []string
-	)
-	switch step.Action {
-	case "architect":
-		params = aiderArchitectParams
-		args = aiderArchitectArgs
-	case "code":
-		params = aiderCodeParams
-		args = aiderCodeArgs
-	default:
-		panic("unknown step action")
-	}
-
-	if contextFile != "" {
-		params["--message-file"] = contextFile
-	}
-
-	paramsCli := make([]string, 0, len(params))
-	for k, v := range params {
-		paramsCli = append(paramsCli, fmt.Sprintf("%s=%q", k, v))
-	}
-
-	args = append(args, aiderArgs...)
-
-	return fmt.Sprintf(
-		"%s %s",
-		strings.Join(args, " "),
-		strings.Join(paramsCli, " "),
-	)
 }
 
 func (i *Employee) buildIssueTmpFile(step models.Step) (string, error) {
