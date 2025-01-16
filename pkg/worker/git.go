@@ -50,24 +50,6 @@ func (g *Git) BranchName(name string) string {
 	return fmt.Sprintf("%s-%s", BranchPrefix, name)
 }
 
-func (g *Git) ResetHard() error {
-	w, err := g.repo.Worktree()
-	if err != nil {
-		return fmt.Errorf("failed to get worktree: %v", err)
-	}
-
-	// Discard all uncommitted changes
-	err = w.Reset(&git.ResetOptions{
-		Mode: git.HardReset,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to reset worktree: %v", err)
-	}
-
-	panic("implement me")
-	return nil
-}
-
 func (g *Git) CheckoutBranch(name string) error {
 	branchName := g.BranchName(name)
 	branchRefName := plumbing.NewBranchReferenceName(branchName)

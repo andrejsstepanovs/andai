@@ -93,6 +93,9 @@ func (i *Employee) AddComment(text string) error {
 func (i *Employee) action(step models.Step) error {
 	fmt.Println(step.Command, step.Action)
 	switch step.Command {
+	case "git":
+		_, _, err := exec.Exec(step.Command, step.Action)
+		return err
 	case "aider", "aid":
 		switch step.Action {
 		case "next":
@@ -221,17 +224,12 @@ func (i *Employee) PrepareWorkplace() error {
 		return err
 	}
 
-	err = i.git.ResetHard()
-	if err != nil {
-		log.Printf("Failed to reset uncommited changes: %v", err)
-	}
-
 	err = i.checkoutBranch()
 	if err != nil {
 		log.Printf("Failed to checkout branch: %v", err)
 		return err
 	}
-	panic("implement me")
+
 	return nil
 }
 
