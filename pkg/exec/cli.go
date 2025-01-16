@@ -51,5 +51,14 @@ func Exec(command string, args ...string) (string, string, error) {
 	fmt.Printf("stdout: %s", stdout.String())
 	fmt.Printf("stdERR: %s", stderr.String())
 
-	return stdout.String(), stderr.String(), nil
+	retStdOut := stdout.String()
+	retStdErr := stderr.String()
+	if retStdOut == "<nil>" {
+		retStdOut = ""
+	}
+	if retStdErr == "<nil>" {
+		retStdErr = ""
+	}
+
+	return strings.TrimSpace(retStdOut), strings.TrimSpace(retStdErr), nil
 }

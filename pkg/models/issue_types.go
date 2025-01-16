@@ -20,7 +20,8 @@ type Job struct {
 
 type Step struct {
 	Command string `yaml:"command"`
-	Args    string `yaml:"args"`
+	Action  string `yaml:"action"`
+	Prompt  string `yaml:"prompt"`
 }
 
 func (j *Jobs) Get(name StateName) Job {
