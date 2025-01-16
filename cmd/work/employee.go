@@ -95,6 +95,8 @@ func (i *Employee) action(step models.Step) error {
 	switch step.Command {
 	case "aider", "aid":
 		switch step.Action {
+		case "next":
+			return nil
 		case "architect", "code":
 			return i.aiderExecute(step)
 		default:
@@ -218,11 +220,18 @@ func (i *Employee) PrepareWorkplace() error {
 		log.Printf("Failed to change directory: %v", err)
 		return err
 	}
+
+	err = i.git.ResetHard()
+	if err != nil {
+		log.Printf("Failed to reset uncommited changes: %v", err)
+	}
+
 	err = i.checkoutBranch()
 	if err != nil {
 		log.Printf("Failed to checkout branch: %v", err)
 		return err
 	}
+	panic("implement me")
 	return nil
 }
 

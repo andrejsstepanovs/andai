@@ -10,7 +10,6 @@ import (
 var (
 	aiderArgs = []string{
 		"--no-stream",
-		//"--yes",
 		"--no-pretty",
 		"--no-gitignore",
 		"--no-restore-chat-history",
