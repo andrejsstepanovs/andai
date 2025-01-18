@@ -58,7 +58,7 @@ func main() {
 
 func initConfig(project string) (string, error) {
 	//Step 1: Set the config file name and type
-	viper.SetConfigName(fmt.Sprintf(".%s.andai", project)) // Name of the config file (without extension)
+	viper.SetConfigName(fmt.Sprintf(".andai.%s", project)) // Name of the config file (without extension)
 	viper.SetConfigType("yaml")                            // Type of the config file
 
 	// Step 2: Add search paths for the config file
