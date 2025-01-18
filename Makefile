@@ -142,13 +142,23 @@ configure: build
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping api && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup projects && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup workflow && \
-	echo "Configure Success"
+	@echo "Configure Success"
 
 .PHONY: start
 start: build
 	docker-compose up -d redmine-$(PROJECT)
-	# todo wait until redmine is up and db setup is complete
+	while ! PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping db 2>/dev/null; do sleep 2; done
+	@echo "DB Ready (but probably not yet fully configured)"
+	sleep 10
+	while ! PROJECT=$(PROJECT) $(MAKE) configure; do sleep 2; done
+	@echo "Start Success"
+	@echo "##################################################"
+	@echo "Redmine Project URLs:"
+	@echo "http://localhost:10083/projects/$(PROJECT)"
+	@echo "http://localhost:10083/projects/$(PROJECT)/issues"
 
 .PHONY: rm
 rm:
+	@echo "Stopping and removing volumes."
 	docker-compose down -v --remove-orphans
+	@echo "Done!"

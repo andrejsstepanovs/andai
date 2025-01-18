@@ -14,7 +14,7 @@ func newAPIPingCommand(redmine *redmine.Model) *cobra.Command {
 		Use:   "api",
 		Short: "Ping connection to redmine",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			log.Println("Processing Jira issue")
+			log.Println("Ping API")
 
 			users, err := redmine.ApiGetUsers()
 			if err != nil {
