@@ -41,6 +41,8 @@ GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build $(BUILD_FLAGS) -ldflags="$(LD_FLA
 @echo $(1) for ARM64 complete
 endef
 
+PROJECT ?= test
+
 ## Help:
 
 .PHONY: help
@@ -141,3 +143,11 @@ configure: build
 	$(BUILD_PATH)/andai setup projects && \
 	$(BUILD_PATH)/andai setup workflow && \
 	echo "Configure Success"
+
+.PHONY: start
+start: build
+	docker-compose up -d redmine-$(PROJECT)
+
+.PHONY: rm
+rm:
+	docker-compose down -v --remove-orphans
