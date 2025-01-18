@@ -1,4 +1,4 @@
-.andai.yaml
+*.andai.yaml
 .idea
 data
 .bin

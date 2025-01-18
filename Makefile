@@ -144,6 +144,7 @@ configure: build
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup workflow && \
 	@echo "Configure Success"
 
+# make start PROJECT=lco
 .PHONY: start
 start: build
 	docker-compose up -d redmine-$(PROJECT)
