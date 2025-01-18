@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -15,7 +16,13 @@ import (
 )
 
 func main() {
-	configPath, err := initConfig()
+	project := os.Getenv("PROJECT")
+	if project == "" {
+		log.Println("PROJECT environment variable not set")
+		os.Exit(1)
+	}
+	log.Printf("Project: %q", project)
+	configPath, err := initConfig(project)
 	if err != nil {
 		log.Println("Error initializing config:", err)
 		os.Exit(1)
@@ -49,10 +56,10 @@ func main() {
 	}
 }
 
-func initConfig() (string, error) {
+func initConfig(project string) (string, error) {
 	//Step 1: Set the config file name and type
-	viper.SetConfigName(".andai.yaml") // Name of the config file (without extension)
-	viper.SetConfigType("yaml")        // Type of the config file
+	viper.SetConfigName(fmt.Sprintf(".%s.andai", project)) // Name of the config file (without extension)
+	viper.SetConfigType("yaml")                            // Type of the config file
 
 	// Step 2: Add search paths for the config file
 	// First, look in the current directory

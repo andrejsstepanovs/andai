@@ -135,18 +135,19 @@ docker: build.linux ## Build docker image
 
 .PHONY: configure
 configure: build
-	$(BUILD_PATH)/andai ping db && \
-	$(BUILD_PATH)/andai setup admin && \
-	$(BUILD_PATH)/andai setup settings && \
-	$(BUILD_PATH)/andai setup token && \
-	$(BUILD_PATH)/andai ping api && \
-	$(BUILD_PATH)/andai setup projects && \
-	$(BUILD_PATH)/andai setup workflow && \
+	PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping db && \
+	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup admin && \
+	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup settings && \
+	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup token && \
+	PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping api && \
+	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup projects && \
+	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup workflow && \
 	echo "Configure Success"
 
 .PHONY: start
 start: build
 	docker-compose up -d redmine-$(PROJECT)
+	# todo wait until redmine is up and db setup is complete
 
 .PHONY: rm
 rm:
