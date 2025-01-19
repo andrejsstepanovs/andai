@@ -1,0 +1,340 @@
+redmine:
+  db: redmine:redmine@tcp(0.0.0.0:3306)/redmine # things from docker-compose
+  url: "http://localhost:10083"
+  api_key: "2159cef2fb6c82c4f66981f199798781e161c694"
+  repositories: "/var/repositories/"
+
+llm_models:
+    - name: "coder"
+      model: "gpt-4o-mini"
+      provider: "openai"
+      api_key: ""
+
+projects:
+  - identifier: "test"
+    name: "TEST"
+    description: "Test Project"
+    git_path: "/full-path-to-test-project/.git"
+    wiki: |
+      # My Project
+      Wiki entry about the project.
+
+workflow:
+  states:
+    Initial:
+      description: Issue is not ready to be worked on.
+      ai: []
+      is_first: True
+    Backlog:
+      description: Issue is ready to be worked on.
+      ai: ["Epic", "Story", "Task", "Step"]
+    Analysis:
+      description: Analyze Issue and plan how to work on it.
+      ai: ["Epic", "Story", "Task", "Step"]
+    In Progress:
+      description: Analyze Issue and plan how to work on it.
+      ai: ["Epic", "Story", "Task", "Step"]
+    Testing:
+      description: Self check provided Issue solution.
+      ai: ["Epic", "Story", "Task", "Step"]
+    QA:
+      description: Human checks implemented solution.
+      ai: []
+    Approved:
+      description: |
+        Epic, Story, Task stays here until all children are in state Done.
+        Steps are auto moved to Deployment to be merged into Task.
+      Testing:
+        description: QA passed.
+        ai: ["Step"]
+    Rejected:
+      description: QA or Testing failed.
+      ai: ["Epic", "Story", "Task", "Step"]
+    Deployment:
+      description: |
+        Merge code into to parent Issue branch.
+        Epic is not merged with AI as it will be done by Human.
+      ai: ["Story", "Task", "Step"]
+    Done:
+      description: Issue is completed.
+      ai: []
+      is_closed: True
+
+  transitions:
+    - source: Initial
+      target: Backlog
+    - source: Backlog
+      target: Analysis
+    - source: Analysis
+      target: In Progress
+    - source: In Progress
+      target: Testing
+    - source: Testing
+      success: true
+      target: QA
+    - source: Testing
+      fail: true
+      target: Rejected
+    - source: Rejected
+      target: Analysis
+    - source: QA
+      target: Approved
+    - source: QA
+      target: Rejected
+    - source: Approved
+      target: Deployment
+    - source: Deployment
+      target: Done
+
+  issue_types:
+    Epic:
+      description: |
+        Represents a single feature to be developed. Scope: feature.
+      jobs:
+        Rejected:
+          steps:
+            - command: next
+        Backlog:
+          steps:
+            - command: next
+        Analysis:
+            - command: aid
+              action: architect
+              comment: True
+              context: ["project", "ticket", "comments", "children"]
+              prompt: |
+                Split Epic into Stories where each Story represents 
+                a smaller scope of single component of the Epic.
+                Story Scope: Feature components.
+                Think about proper order of Stories to be implemented.
+                Answer with list of Stories in order and dependencies between each other.
+                Do not go into details of each Story, just propose how the task should be split
+                with short description what needs to be done in each Story. 
+                Do not mention code or code files.
+        In Progress:
+          - command: aid
+            action: architect
+            comment: False
+            context: ["project", "ticket", "comments", "children"]
+            prompt: |
+              Split Epic into Stories.
+          - command: create-issues
+            action: Story
+            comment: True
+        Testing:
+          steps:
+            - command: next
+    Story:
+      description: |
+        A specific functionality or component of an Epic. 
+        Scope: Feature components.
+      jobs:
+        Rejected:
+          steps:
+            - command: next
+        Backlog:
+          steps:
+            - command: next
+        Analysis:
+          - command: aid
+            action: architect
+            comment: True
+            context: ["project", "ticket", "comments", "children", "parent"]
+            prompt: |
+              Split Story into Tasks where each Task represents 
+              a change to a single file required to implement by a Story. 
+              Task Scope: Single code file.
+              Think about proper order of Tasks to be implemented.
+              Answer with list of Tasks in order and dependencies between each other.
+              Do not go into details of each Task, just propose how the task should be split
+              with short description what needs to be done in each Task. 
+              Mention code file that needs to be edited / created / deleted for each Task.
+              Remember that one Task should be a any change to a single file.
+        In Progress:
+          - command: aid
+            action: architect
+            comment: False
+            context: ["project", "ticket", "comments", "children", "parent"]
+            prompt: |
+              Split Story into Tasks.
+          - command: create-issues
+            action: Task
+            comment: True
+        Testing:
+          steps:
+            - command: next
+        Deployment:
+          steps:
+            - command: merge-into-parent
+    Task:
+      description: |
+        A change to a single file required to implement a Story. 
+        Scope: Single code file.
+      jobs:
+        Rejected:
+          steps:
+            - command: next
+        Backlog:
+          steps:
+            - command: next
+        Analysis:
+          - command: aid
+            action: architect
+            comment: True
+            context: ["project", "ticket", "comments", "children", "parent", "parents"]
+            prompt: |
+              Split Task into Steps where each Step represents 
+              a unit of work focused on editing or writing a single function 
+              within a file. 
+              Step Scope: Single method or test code within Task file.
+              Think about proper order of Steps to be implemented.
+              Answer with list of Steps in order and dependencies between each other.
+              Do not go into details of each Step, just propose how the task should be split
+              with short description what needs to be done in each Step. 
+              Mention code file and location of the code that needs to be edited / created / deleted for each Step.
+              Remember that one Step should be a change to a single code file function / method or other small part of it.
+        In Progress:
+          - command: aid
+            action: architect
+            comment: False
+            context: ["project", "ticket", "comments", "children", "parent"]
+            prompt: |
+              Split Task into Steps.
+          - command: create-issues
+            action: Step
+            comment: True
+        Testing:
+          steps:
+            - command: next
+        Deployment:
+          steps:
+            - command: merge-into-parent
+    Step:
+      description: |
+        A unit of work focused on editing or writing a single function within a file. 
+        Scope: Single method or test code within Task file.
+      jobs:
+        Rejected:
+          steps:
+            - command: next
+        Backlog:
+          steps:
+            - command: next
+        Analysis:
+          - command: aid
+            action: architect
+            comment: True
+            context: ["project", "ticket", "comments", "parent", "parents"]
+            prompt: |
+              Scope: Single method or test code within Task file.
+              Analyze carefully given issue (Step).
+              Provide detailed explanation how to approach implementation for asked change.
+              Answer with list of Steps in order and dependencies between each other. 
+              Think about proper order of code changes to be implemented.
+              Code them in order of dependencies. Make sure that code you write
+              is not changing anything else than asked in the Step.
+              Do not refactor or change anything else than asked in the Task.
+              Do not worry about code that is not related to the Task.
+              Rest of the changes required for the bigger picture task is not relevant for you at this time.
+        In Progress:
+          - command: aid
+            action: code
+            comment: False
+            context: ["project", "ticket", "comments"]
+            prompt: |
+              Implement given Step based on last comments and git commit it.
+          - command: create-issues
+            action: Step
+            comment: True
+        Testing:
+          - command: next
+        Deployment:
+          steps:
+            - command: merge-into-parent
+
+  priorities:
+    - type: Epic
+      state: Testing
+    - type: Epic
+      state: In Progress
+    - type: Epic
+      state: Rejected
+    - type: Epic
+      state: Analysis
+    - type: Epic
+      state: Backlog
+
+    - type: Story
+      state: Deployment
+    - type: Story
+      state: Testing
+    - type: Story
+      state: In Progress
+    - type: Story
+      state: Rejected
+    - type: Story
+      state: Analysis
+    - type: Story
+      state: Backlog
+
+    - type: Task
+      state: Deployment
+    - type: Task
+      state: Testing
+    - type: Task
+      state: In Progress
+    - type: Task
+      state: Rejected
+    - type: Task
+      state: Analysis
+    - type: Task
+      state: Backlog
+
+    - type: Step
+      state: Deployment
+    - type: Step
+      state: Testing
+    - type: Step
+      state: In Progress
+    - type: Step
+      state: Rejected
+    - type: Step
+      state: Analysis
+    - type: Step
+      state: Backlog
+
+  triggers:
+    - issue_type: Step
+      moved_to: Done
+      and_all_siblings_status: Done
+      transition_parent:
+        issue_type: Task
+        to: Deployment
+    - issue_type: Task
+      moved_to: Done
+      and_all_siblings_status: Done
+      transition_parent:
+        issue_type: Story
+        to: Deployment
+    - issue_type: Story
+      moved_to: Done
+      and_all_siblings_status: Done
+      transition_parent:
+        issue_type: Epic
+        to: Deployment
+
+    - issue_type: Epic
+      moved_to: Approved
+      transition_children:
+        issue_type: Story
+        to: Backlog
+    - issue_type: Story
+      moved_to: Approved
+      transition_children:
+        issue_type: Task
+        to: Backlog
+    - issue_type: Task
+      moved_to: Approved
+      transition_children:
+        issue_type: Step
+        to: Backlog
