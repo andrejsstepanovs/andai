@@ -8,6 +8,7 @@ import (
 	"github.com/andrejsstepanovs/andai/pkg/llm"
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	model "github.com/andrejsstepanovs/andai/pkg/redmine"
+	"github.com/andrejsstepanovs/andai/pkg/workbench"
 	"github.com/andrejsstepanovs/andai/pkg/worker"
 	"github.com/mattn/go-redmine"
 	"github.com/spf13/cobra"
@@ -73,13 +74,17 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 				}
 				log.Printf("Project Repository Opened %s", git.Path)
 
+				wb := &workbench.Workbench{
+					Git:   git,
+					Issue: issue,
+				}
 				work := employee.NewWorkOnIssue(
 					model,
 					llm,
 					issue,
 					*project,
 					projectConfig,
-					git,
+					wb,
 					workflow.States.Get(models.StateName(issue.Status.Name)),
 					workflow.IssueTypes.Get(models.IssueTypeName(issue.Tracker.Name)),
 				)
