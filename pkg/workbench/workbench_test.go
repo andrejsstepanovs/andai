@@ -5,13 +5,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/andrejsstepanovs/andai/pkg/worker"
 	gitlib "github.com/go-git/go-git/v5"
-	//"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/mattn/go-redmine"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/andrejsstepanovs/andai/pkg/worker"
 )
 
 func TestWorkbench_PrepareWorkplace(t *testing.T) {
@@ -57,7 +57,7 @@ func TestWorkbench_PrepareWorkplace(t *testing.T) {
 					Issue: redmine.Issue{
 						Id: 123,
 					},
-				}, gitDir
+				}, tmpDir
 			},
 			wantErr: false,
 		},
