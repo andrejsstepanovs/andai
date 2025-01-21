@@ -16,7 +16,7 @@ func newDBPingCommand(redmine *redmine.Model) *cobra.Command {
 		RunE: func(_ *cobra.Command, _ []string) error {
 			fmt.Println("Ping DB")
 
-			users, err := redmine.DbGetAllUsers()
+			users, err := redmine.DBGetAllUsers()
 			if err != nil {
 				log.Println("Failed to load users")
 				return fmt.Errorf("error getting users: %v", err)

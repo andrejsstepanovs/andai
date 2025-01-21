@@ -61,7 +61,7 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 				}
 				log.Printf("Project %d: %s", project.Id, project.Name)
 
-				projectRepo, err := model.DbGetRepository(*project)
+				projectRepo, err := model.DBGetRepository(*project)
 				if err != nil {
 					return fmt.Errorf("failed to get redmine repository err: %v", err)
 				}

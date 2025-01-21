@@ -68,7 +68,7 @@ func (c *Model) DBSaveTrackers(trackers workflow.IssueTypes, defaultStatus redmi
 	return nil
 }
 
-func (c *Model) DbSaveProjectTrackers(project redmine.Project, allTrackers []redmine.IdName) error {
+func (c *Model) DBSaveProjectTrackers(project redmine.Project, allTrackers []redmine.IdName) error {
 	existingTrackerIDs, err := c.DbProjectTrackers(project.Id)
 	if err != nil {
 		return fmt.Errorf("get project trackers for project %d err: %v", project.Id, err)

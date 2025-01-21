@@ -21,7 +21,7 @@ func (c *Model) ApiGetUsers() ([]redmine.User, error) {
 }
 
 func (c *Model) ApiAdmin() (redmine.User, error) {
-	users, err := c.DbGetAllUsers()
+	users, err := c.DBGetAllUsers()
 	if err != nil {
 		return redmine.User{}, fmt.Errorf("error redmine db get users: %v", err)
 	}

@@ -94,7 +94,7 @@ func projectTrackers(model *model.Model) error {
 		return fmt.Errorf("error redmine trackers: %v", err)
 	}
 	for _, project := range projects {
-		err = model.DbSaveProjectTrackers(project, allTrackers)
+		err = model.DBSaveProjectTrackers(project, allTrackers)
 		if err != nil {
 			log.Printf("Redmine Project %q Trackers Save Fail\n", project.Name)
 			return fmt.Errorf("error redmine project trackers save: %v", err)

@@ -11,7 +11,7 @@ const (
 	queryGetAllUsers = "SELECT id, login, firstname, lastname FROM users"
 )
 
-func (c *Model) DbGetAllUsers() ([]redmine.User, error) {
+func (c *Model) DBGetAllUsers() ([]redmine.User, error) {
 	var users []redmine.User
 	err := c.queryAndScan(queryGetAllUsers, func(rows *sql.Rows) error {
 		var user redmine.User

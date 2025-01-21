@@ -19,10 +19,10 @@ const (
 	queryUpdateRepository     = "UPDATE repositories SET root_url = ?, created_on = NOW() WHERE id = ?"
 )
 
-func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
+func (c *Model) DBSaveGit(project redmine.Project, gitPath string) error {
 	newUrl := fmt.Sprintf("%s/%s", strings.TrimRight(viper.GetString("redmine.repositories"), "/"), strings.TrimLeft(gitPath, "/"))
 
-	repository, err := c.DbGetRepository(project)
+	repository, err := c.DBGetRepository(project)
 	if err != nil {
 		return fmt.Errorf("redmine get repository err: %v", err)
 	}
@@ -63,7 +63,7 @@ func (c *Model) DbSaveGit(project redmine.Project, gitPath string) error {
 	return nil
 }
 
-func (c *Model) DbGetRepository(project redmine.Project) (models.Repository, error) {
+func (c *Model) DBGetRepository(project redmine.Project) (models.Repository, error) {
 	var repos []models.Repository
 	err := c.queryAndScan(queryGetProjectRepository, func(rows *sql.Rows) error {
 		var row models.Repository

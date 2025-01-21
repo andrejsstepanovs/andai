@@ -45,6 +45,6 @@ func (c *Model) Api() api {
 	return c.api
 }
 
-func (c *Model) Db() database {
+func (c *Model) DB() database {
 	return c.db
 }

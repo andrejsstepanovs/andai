@@ -40,7 +40,7 @@ func newProjectsCommand(model *model.Model, projectsConf models.Projects) *cobra
 				}
 				log.Println("Wiki OK")
 
-				err = model.DbSaveGit(project, p.GitPath)
+				err = model.DBSaveGit(project, p.GitPath)
 				if err != nil {
 					log.Println("Redmine Git Save Fail")
 					return fmt.Errorf("error redmine git save: %v", err)
