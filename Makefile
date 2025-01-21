@@ -11,7 +11,7 @@ BUILD_FLAGS          := -mod=readonly -v
 TEST_FLAGS           := -race -count=1 -mod=readonly -cover -coverprofile $(COVER_FILE) -tags=integration
 LD_FLAGS             := -X main.Version=$(VERSION) -X main.GitHead=$(GIT_HEAD)
 
-PACKAGES             := $(shell find . -path ./data -prune , -name *.go | grep -v -E "vendor|tools|mocks|data" | xargs -n1 dirname | sort -u)
+PACKAGES             := $(shell find . -path ./data -prune -o -name "*.go" | grep -v -E "vendor|tools|mocks|data" | xargs -n1 dirname | sort -u)
 MOCK_PACKAGES        := $(shell find . -path ./data -prune , -name "mocks" | grep -v -E "data")
 
 ENGINE_NAME            := "andai"
