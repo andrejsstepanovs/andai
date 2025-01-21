@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/andrejsstepanovs/andai/pkg/redmine/models"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/mattn/go-redmine"
 	"github.com/spf13/viper"
 )

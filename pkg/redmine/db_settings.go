@@ -19,10 +19,10 @@ const (
 )
 
 const (
-	queryUpdateAdminNoChangePass = "UPDATE users SET must_change_passwd = 0 WHERE login = ?"
-	queryGetSettings             = "SELECT id, name, value FROM settings WHERE name = ?"
-	queryInsertSettings          = "INSERT INTO settings (name, value, updated_on) VALUES (?, ?, NOW())"
-	queryUpdateSettingsValue     = "UPDATE settings SET value = ?, updated_on = NOW() WHERE name = ?"
+	queryUpdateAdminNoChangePass = "UPDATE users SET must_change_passwd = 0 WHERE login = ?"             // nolint:gosec
+	queryGetSettings             = "SELECT id, name, value FROM settings WHERE name = ?"                 // nolint:gosec
+	queryInsertSettings          = "INSERT INTO settings (name, value, updated_on) VALUES (?, ?, NOW())" // nolint:gosec
+	queryUpdateSettingsValue     = "UPDATE settings SET value = ?, updated_on = NOW() WHERE name = ?"    // nolint:gosec
 )
 
 func (c *Model) DBGetSettings(settingName string) ([]models.Settings, error) {

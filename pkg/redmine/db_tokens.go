@@ -16,24 +16,24 @@ const (
 	queryGetToken     = "SELECT id, action, value FROM tokens WHERE action = ? AND user_id = ?"                              // nolint:gosec
 )
 
-func (c *Model) DBUpdateAPIToken(userId int, tokenValue string) error {
-	result, err := c.execDML(queryUpdateTokens, tokenValue, TokenActionAPI, userId)
+func (c *Model) DBUpdateAPIToken(userID int, tokenValue string) error {
+	result, err := c.execDML(queryUpdateTokens, tokenValue, TokenActionAPI, userID)
 	if err != nil {
-		return fmt.Errorf("failed to update API token for user %d: %w", userId, err)
+		return fmt.Errorf("failed to update API token for user %d: %w", userID, err)
 	}
 	affected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 	if affected == 0 {
-		return fmt.Errorf("no rows affected for user %d", userId)
+		return fmt.Errorf("no rows affected for user %d", userID)
 	}
-	log.Printf("API token updated for user %d\n", userId)
+	log.Printf("API token updated for user %d\n", userID)
 	return nil
 }
 
-func (c *Model) DBCreateAPIToken(userId int, tokenValue string) error {
-	result, err := c.execDML(queryInsertTokens, tokenValue, TokenActionAPI, userId)
+func (c *Model) DBCreateAPIToken(userID int, tokenValue string) error {
+	result, err := c.execDML(queryInsertTokens, tokenValue, TokenActionAPI, userID)
 	if err != nil {
 		return fmt.Errorf("insert settings token db err: %v", err)
 	}

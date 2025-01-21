@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/andrejsstepanovs/andai/pkg/redmine/models"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // mysql driver
 )
 
 const (

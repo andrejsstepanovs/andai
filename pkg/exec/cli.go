@@ -37,7 +37,7 @@ func Exec(command string, args ...string) (Output, error) {
 
 	fullCommand := fmt.Sprintf("%s %s", command, strings.Join(args, " "))
 
-	cmd := exec.CommandContext(ctx, shell, shellArg, fullCommand)
+	cmd := exec.CommandContext(ctx, shell, shellArg, fullCommand) // nolint:gosec
 	cmd.Env = append(os.Environ(), fmt.Sprintf("SHELL=%s", shellPath))
 
 	var stdout, stderr bytes.Buffer

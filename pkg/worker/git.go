@@ -14,6 +14,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 )
 
+// BranchPrefix is the prefix for the branch name
 const BranchPrefix = "AI"
 
 type Git struct {
