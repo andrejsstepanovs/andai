@@ -36,7 +36,7 @@ func (c *Model) DBGetSettings(settingName string) ([]models.Settings, error) {
 		return nil
 	}, settingName)
 
-	if err != nil && !errors.As(err, &sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
 	return settings, nil
@@ -73,8 +73,10 @@ func (c *Model) DBSettingsUpdate(settingName, value string) error {
 }
 
 func (c *Model) DBSettingsEnableAPI() error {
-	// fix this linter error: ineffectual assignment to err (ineffassign) AI!
 	rows, err := c.DBGetSettings(SettingRestAPIEnabled)
+	if err != nil {
+		return fmt.Errorf("get settings db err: %v", err)
+	}
 	for _, row := range rows {
 		log.Printf("Setting Identifier: %d, Name: %s, Value: %s\n", row.ID, row.Name, row.Value)
 		if row.Value != settingsValueEnabled {

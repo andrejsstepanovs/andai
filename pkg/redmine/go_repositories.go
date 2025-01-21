@@ -74,7 +74,7 @@ func (c *Model) DBGetRepository(project redmine.Project) (models.Repository, err
 		return nil
 	}, project.Identifier)
 
-	if err != nil && !errors.As(err, &sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return models.Repository{}, err
 	}
 	for _, row := range repos {
