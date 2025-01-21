@@ -10,7 +10,7 @@ type Settings struct {
 	LlmModels LlmModels `yaml:"llm_models"`
 }
 
-func (s *Settings) Validate() error {
+func (s *Settings) validateStates() error {
 	if len(s.Workflow.States) == 0 {
 		return fmt.Errorf("workflow states are required")
 	}
@@ -20,10 +20,10 @@ func (s *Settings) Validate() error {
 	}
 
 	stateNames := make(map[StateName]bool)
-
 	defaultExists := false
 	closedExists := false
 	firstExists := false
+
 	for _, state := range s.Workflow.States {
 		stateNames[state.Name] = true
 		if state.IsFirst {
@@ -45,6 +45,19 @@ func (s *Settings) Validate() error {
 	}
 	if !closedExists {
 		return fmt.Errorf("at least one state must be marked as is_closed")
+	}
+
+	return nil
+}
+
+func (s *Settings) Validate() error {
+	if err := s.validateStates(); err != nil {
+		return err
+	}
+
+	stateNames := make(map[StateName]bool)
+	for _, state := range s.Workflow.States {
+		stateNames[state.Name] = true
 	}
 
 	issueTypeNames := make(map[StateName]bool)
