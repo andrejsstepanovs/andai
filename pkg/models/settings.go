@@ -87,42 +87,17 @@ func (s *Settings) validateTransitions(stateNames map[StateName]bool) error {
 	return nil
 }
 
-// refactor this method because now cyclomatic complexity is too much. Start with mocing only one part out. AI!
-func (s *Settings) Validate() error {
-	if err := s.validateStates(); err != nil {
-		return err
-	}
-
-	stateNames := make(map[StateName]bool)
-	for _, state := range s.Workflow.States {
-		stateNames[state.Name] = true
-	}
-
+func (s *Settings) validateIssueTypes(stateNames map[StateName]bool) (map[StateName]bool, error) {
 	issueTypeNames := make(map[StateName]bool)
 	for issueTypeName, issueType := range s.Workflow.IssueTypes {
 		issueTypeNames[StateName(issueTypeName)] = true
 		for stateName := range issueType.Jobs {
 			if _, ok := stateNames[stateName]; !ok {
-				return fmt.Errorf("job %s does not have valid state %s", issueTypeName, stateName)
+				return nil, fmt.Errorf("job %s does not have valid state %s", issueTypeName, stateName)
 			}
 		}
 	}
 
-	if err := s.validateTransitions(stateNames); err != nil {
-		return err
-	}
-
-	// validate priorities
-	for _, priority := range s.Workflow.Priorities {
-		if _, ok := stateNames[priority.State]; !ok {
-			return fmt.Errorf("priority state %s does not exist", priority.State)
-		}
-		if _, ok := issueTypeNames[StateName(priority.Type)]; !ok {
-			return fmt.Errorf("priority issue type %s does not exist", priority.Type)
-		}
-	}
-
-	// validate issueType steps if it is UseAI=true
 	var errs error
 	for _, state := range s.Workflow.States {
 		for issueTypeName, issueType := range s.Workflow.IssueTypes {
@@ -156,12 +131,47 @@ func (s *Settings) Validate() error {
 					case ContextLastComment:
 					case ContextComments:
 					default:
-						return fmt.Errorf("issue %q state %q job (%d) does not have valid context %s", issueTypeName, stateName, k, context)
+						return nil, fmt.Errorf("issue %q state %q job (%d) does not have valid context %s", issueTypeName, stateName, k, context)
 					}
 				}
 			}
 		}
 	}
 
-	return errs
+	if errs != nil {
+		return nil, errs
+	}
+	return issueTypeNames, nil
+}
+
+func (s *Settings) Validate() error {
+	if err := s.validateStates(); err != nil {
+		return err
+	}
+
+	stateNames := make(map[StateName]bool)
+	for _, state := range s.Workflow.States {
+		stateNames[state.Name] = true
+	}
+
+	issueTypeNames, err := s.validateIssueTypes(stateNames)
+	if err != nil {
+		return err
+	}
+
+	if err := s.validateTransitions(stateNames); err != nil {
+		return err
+	}
+
+	// validate priorities
+	for _, priority := range s.Workflow.Priorities {
+		if _, ok := stateNames[priority.State]; !ok {
+			return fmt.Errorf("priority state %s does not exist", priority.State)
+		}
+		if _, ok := issueTypeNames[StateName(priority.Type)]; !ok {
+			return fmt.Errorf("priority issue type %s does not exist", priority.Type)
+		}
+	}
+
+	return nil
 }
