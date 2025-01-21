@@ -29,7 +29,7 @@ func (c *Model) DBGetWorkerRole() (int, error) {
 		return nil
 	}, RoleWorker)
 
-	if err != nil && !errors.As(err, &sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return 0, err
 	}
 
