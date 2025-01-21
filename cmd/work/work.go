@@ -72,7 +72,7 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 				if err != nil {
 					return fmt.Errorf("failed to find project git err: %v", err)
 				}
-				log.Printf("Project Repository Opened %s", git.Path)
+				log.Printf("Project Repository Opened %s", git.GetPath())
 
 				wb := &workbench.Workbench{
 					Git:   git,

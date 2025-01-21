@@ -12,3 +12,8 @@ packages:
       recursive: True
       all: True
       unroll-variadic: False
+  github.com/andrejsstepanovs/andai/pkg/workbench:
+    config:
+      recursive: True
+      all: True
+      unroll-variadic: False

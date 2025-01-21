@@ -17,6 +17,11 @@ type Workbench struct {
 	WorkingDir string
 }
 
+type git interface {
+	CheckoutBranch(name string) error
+	GetPath() string
+}
+
 func (i *Workbench) PrepareWorkplace() error {
 	err := i.changeDirectory()
 	if err != nil {
@@ -34,7 +39,7 @@ func (i *Workbench) PrepareWorkplace() error {
 }
 
 func (i *Workbench) changeDirectory() error {
-	targetPath := i.Git.Path
+	targetPath := i.Git.GetPath()
 	if filepath.Base(targetPath) == ".git" {
 		targetPath = filepath.Dir(targetPath)
 	}

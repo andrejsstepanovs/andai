@@ -17,7 +17,7 @@ import (
 const BranchPrefix = "AI"
 
 type Git struct {
-	Path    string
+	path    string
 	repo    *git.Repository
 	headRef *plumbing.Reference
 	Opened  bool
@@ -25,16 +25,24 @@ type Git struct {
 
 func NewGit(path string) *Git {
 	return &Git{
-		Path: path,
+		path: path,
 	}
+}
+
+func (g *Git) SetPath(path string) {
+	g.path = path
+}
+
+func (g *Git) GetPath() string {
+	return g.path
 }
 
 func (g *Git) Open() error {
 	var err error
 
-	g.repo, err = git.PlainOpen(g.Path)
+	g.repo, err = git.PlainOpen(g.GetPath())
 	if err != nil {
-		return fmt.Errorf("failed to open git repository %s: %v", g.Path, err)
+		return fmt.Errorf("failed to open git repository %s: %v", g.GetPath(), err)
 	}
 
 	g.headRef, err = g.repo.Head()
@@ -111,7 +119,7 @@ func FindProjectGit(projectConfig models.Project, projectRepo redminemodels.Repo
 			//log.Printf("failed to open git err: %v", err)
 			continue
 		}
-		gitRet.Path = path
+		gitRet.SetPath(path)
 		break
 	}
 
