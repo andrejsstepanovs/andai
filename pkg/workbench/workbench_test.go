@@ -6,6 +6,9 @@ import (
 	"testing"
 
 	"github.com/andrejsstepanovs/andai/pkg/worker"
+	gitlib "github.com/go-git/go-git/v5"
+	//"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/mattn/go-redmine"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,8 +19,25 @@ func TestWorkbench_PrepareWorkplace(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
-	gitDir := filepath.Join(tmpDir, ".git")
-	err = os.MkdirAll(gitDir, 0750)
+	// Initialize git repository
+	repo, err := gitlib.PlainInit(tmpDir, false)
+	require.NoError(t, err)
+
+	// Create an initial commit so we have a HEAD reference
+	wt, err := repo.Worktree()
+	require.NoError(t, err)
+
+	// Create a test file and commit it
+	testFile := filepath.Join(tmpDir, "test.txt")
+	err = os.WriteFile(testFile, []byte("test content"), 0644)
+	require.NoError(t, err)
+
+	_, err = wt.Add("test.txt")
+	require.NoError(t, err)
+
+	co := &gitlib.CommitOptions{Author: &object.Signature{}}
+
+	_, err = wt.Commit("Initial commit", co)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -28,10 +48,12 @@ func TestWorkbench_PrepareWorkplace(t *testing.T) {
 		{
 			name: "successful preparation with .git directory",
 			setup: func() (*Workbench, string) {
+				g := worker.NewGit(tmpDir)
+				err := g.Open()
+				require.NoError(t, err)
+
 				return &Workbench{
-					Git: &worker.Git{
-						Opened: true,
-					},
+					Git: g,
 					Issue: redmine.Issue{
 						Id: 123,
 					},
