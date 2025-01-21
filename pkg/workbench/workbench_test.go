@@ -64,10 +64,12 @@ func TestWorkbench_PrepareWorkplace(t *testing.T) {
 		{
 			name: "successful preparation with project root directory",
 			setup: func() (*Workbench, string) {
+				g := worker.NewGit(tmpDir)
+				err := g.Open()
+				require.NoError(t, err)
+
 				return &Workbench{
-					Git: &worker.Git{
-						Opened: true,
-					},
+					Git: g,
 					Issue: redmine.Issue{
 						Id: 123,
 					},
