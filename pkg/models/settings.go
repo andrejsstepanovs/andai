@@ -50,28 +50,8 @@ func (s *Settings) validateStates() error {
 	return nil
 }
 
-func (s *Settings) Validate() error {
-	if err := s.validateStates(); err != nil {
-		return err
-	}
-
-	stateNames := make(map[StateName]bool)
-	for _, state := range s.Workflow.States {
-		stateNames[state.Name] = true
-	}
-
-	issueTypeNames := make(map[StateName]bool)
-
-	for issueTypeName, issueType := range s.Workflow.IssueTypes {
-		issueTypeNames[StateName(issueTypeName)] = true
-		for stateName := range issueType.Jobs {
-			if _, ok := stateNames[stateName]; !ok {
-				return fmt.Errorf("job %s does not have valid state %s", issueTypeName, stateName)
-			}
-		}
-	}
-
-	// validate transitions
+func (s *Settings) validateTransitions(stateNames map[StateName]bool) error {
+	// validate transitions existence
 	for _, transition := range s.Workflow.Transitions {
 		if _, ok := stateNames[transition.Source]; !ok {
 			return fmt.Errorf("transition source %s does not exist", transition.Source)
@@ -103,6 +83,33 @@ func (s *Settings) Validate() error {
 		if fail > 1 {
 			return fmt.Errorf("state %s has more than one fail transition", state.Name)
 		}
+	}
+	return nil
+}
+
+// refactor this method because now cyclomatic complexity is too much. Start with mocing only one part out. AI!
+func (s *Settings) Validate() error {
+	if err := s.validateStates(); err != nil {
+		return err
+	}
+
+	stateNames := make(map[StateName]bool)
+	for _, state := range s.Workflow.States {
+		stateNames[state.Name] = true
+	}
+
+	issueTypeNames := make(map[StateName]bool)
+	for issueTypeName, issueType := range s.Workflow.IssueTypes {
+		issueTypeNames[StateName(issueTypeName)] = true
+		for stateName := range issueType.Jobs {
+			if _, ok := stateNames[stateName]; !ok {
+				return fmt.Errorf("job %s does not have valid state %s", issueTypeName, stateName)
+			}
+		}
+	}
+
+	if err := s.validateTransitions(stateNames); err != nil {
+		return err
 	}
 
 	// validate priorities
