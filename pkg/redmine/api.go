@@ -6,10 +6,11 @@ import (
 	"log"
 	"strings"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/mattn/go-redmine"
 )
 
+// AdminLogin is the default admin login
 const AdminLogin = "admin"
 
 func (c *Model) APIGetUsers() ([]redmine.User, error) {

@@ -14,6 +14,7 @@ const (
 )
 
 const (
+	// IssuePriority is a constant for issue priority
 	IssuePriority = "Normal"
 )
 

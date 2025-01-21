@@ -47,7 +47,7 @@ func newGetTokenCommand(redmine *redmine.Model) *cobra.Command {
 				}
 
 				log.Println("Token mismatch")
-				err = redmine.DbUpdateApiToken(admin.Id, newToken)
+				err = redmine.DBUpdateAPIToken(admin.Id, newToken)
 				if err != nil {
 					return fmt.Errorf("after updated err: %v", err)
 				}
@@ -59,7 +59,7 @@ func newGetTokenCommand(redmine *redmine.Model) *cobra.Command {
 				return nil
 			}
 
-			err = redmine.DBCreateApiToken(admin.Id, newToken)
+			err = redmine.DBCreateAPIToken(admin.Id, newToken)
 			if err != nil {
 				return fmt.Errorf("after created err: %v", err)
 			}

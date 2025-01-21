@@ -32,7 +32,7 @@ func BuildPromptTmpFile(issue redmine.Issue, step models.Step) (string, error) {
 		return "", err
 	}
 	content := buf.String()
-	fmt.Println("\n##############\n", content, "\n##############\n")
+	fmt.Println("\n##############\n", content, "\n##############")
 
 	tempFile, err := os.CreateTemp("", fmt.Sprintf(tmpFile, issue.Id))
 	if err != nil {

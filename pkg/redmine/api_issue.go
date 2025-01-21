@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	// RelationBlocks is a relation type that blocks the issue
 	RelationBlocks = "blocks"
 )
 

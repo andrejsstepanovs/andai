@@ -94,7 +94,7 @@ func (s *Settings) Validate() error {
 
 	// validate priorities
 	for _, priority := range s.Workflow.Priorities {
-		if _, ok := stateNames[StateName(priority.State)]; !ok {
+		if _, ok := stateNames[priority.State]; !ok {
 			return fmt.Errorf("priority state %s does not exist", priority.State)
 		}
 		if _, ok := issueTypeNames[StateName(priority.Type)]; !ok {
@@ -111,7 +111,6 @@ func (s *Settings) Validate() error {
 			}
 			haveSteps := false
 			for stateName, job := range issueType.Jobs {
-
 				if state.Name != stateName {
 					continue
 				}

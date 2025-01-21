@@ -7,16 +7,16 @@ import (
 	"log"
 
 	"github.com/andrejsstepanovs/andai/pkg/redmine/models"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // mysql driver
 )
 
 const (
-	queryUpdateTokens = "UPDATE tokens SET value = ?, updated_on = NOW() WHERE action = ? AND user_id = ?"
-	queryInsertTokens = "INSERT INTO tokens (value, action, user_id, created_on, updated_on) VALUES (?, ?, ?, NOW(), NOW())"
-	queryGetToken     = "SELECT id, action, value FROM tokens WHERE action = ? AND user_id = ?"
+	queryUpdateTokens = "UPDATE tokens SET value = ?, updated_on = NOW() WHERE action = ? AND user_id = ?"                   // nolint:gosec
+	queryInsertTokens = "INSERT INTO tokens (value, action, user_id, created_on, updated_on) VALUES (?, ?, ?, NOW(), NOW())" // nolint:gosec
+	queryGetToken     = "SELECT id, action, value FROM tokens WHERE action = ? AND user_id = ?"                              // nolint:gosec
 )
 
-func (c *Model) DbUpdateApiToken(userId int, tokenValue string) error {
+func (c *Model) DBUpdateAPIToken(userId int, tokenValue string) error {
 	result, err := c.execDML(queryUpdateTokens, tokenValue, TokenActionAPI, userId)
 	if err != nil {
 		return fmt.Errorf("failed to update API token for user %d: %w", userId, err)
@@ -32,7 +32,7 @@ func (c *Model) DbUpdateApiToken(userId int, tokenValue string) error {
 	return nil
 }
 
-func (c *Model) DBCreateApiToken(userId int, tokenValue string) error {
+func (c *Model) DBCreateAPIToken(userId int, tokenValue string) error {
 	result, err := c.execDML(queryInsertTokens, tokenValue, TokenActionAPI, userId)
 	if err != nil {
 		return fmt.Errorf("insert settings token db err: %v", err)

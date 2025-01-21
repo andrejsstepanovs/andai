@@ -7,7 +7,7 @@ import (
 	"log"
 
 	workflow "github.com/andrejsstepanovs/andai/pkg/models"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/mattn/go-redmine"
 )
 
@@ -90,7 +90,7 @@ func (c *Model) DBSaveProjectTrackers(project redmine.Project, allTrackers []red
 	}
 
 	for _, tracker := range createTrackers {
-		log.Println(fmt.Sprintf("Tracker: %s", tracker.Name))
+		log.Printf("Tracker: %s\n", tracker.Name)
 		err = c.DBInsertProjectTracker(project.Id, tracker.Id)
 		if err != nil {
 			return fmt.Errorf("redmine project tracker insert err: %v", err)

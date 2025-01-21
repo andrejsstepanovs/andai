@@ -11,7 +11,9 @@ import (
 )
 
 const (
-	TokenActionAPI        = "api"
+	// TokenActionAPI is a constant for API token action
+	TokenActionAPI = "api"
+	// SettingRestAPIEnabled is a constant for setting name
 	SettingRestAPIEnabled = "rest_api_enabled"
 	settingsValueEnabled  = "1"
 )

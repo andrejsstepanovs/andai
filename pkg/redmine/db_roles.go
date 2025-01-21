@@ -15,6 +15,7 @@ const (
 	queryInsertRole = "INSERT INTO roles (name, position, assignable, builtin, permissions, issues_visibility, users_visibility, time_entries_visibility, all_roles_managed, settings) VALUES (?, 1, 1, 0, ?, 'all', 'all', 'all', 1, ?)"
 )
 
+// RoleWorker is a constant for Worker role
 const RoleWorker = "Worker"
 
 func (c *Model) DBGetWorkerRole() (int, error) {

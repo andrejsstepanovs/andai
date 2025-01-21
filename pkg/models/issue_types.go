@@ -2,7 +2,7 @@ package models
 
 import "strings"
 
-// StateName is a type for state names
+// ContextTicket is a special context that matches the ticket
 const ContextTicket = "ticket"
 
 // ContextComments is a special context that matches comments
