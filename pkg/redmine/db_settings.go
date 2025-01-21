@@ -77,7 +77,8 @@ func (c *Model) DBSettingsEnableAPI() error {
 	if err != nil {
 		return fmt.Errorf("get settings db err: %v", err)
 	}
-	for _, row := range rows {
+	if len(rows) > 0 {
+		row := rows[0]
 		log.Printf("Setting Identifier: %d, Name: %s, Value: %s\n", row.ID, row.Name, row.Value)
 		if row.Value != settingsValueEnabled {
 			log.Printf("Setting %s is not enabled\n", SettingRestAPIEnabled)
