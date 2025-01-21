@@ -127,5 +127,22 @@ func (s *Settings) Validate() error {
 		}
 	}
 
+	for issueTypeName, issueType := range s.Workflow.IssueTypes {
+		for stateName, job := range issueType.Jobs {
+			for k, step := range job.Steps {
+				for _, context := range step.Context {
+					switch context {
+					case ContextTicket:
+					case ContextAll:
+					case ContextLastComment:
+					case ContextComments:
+					default:
+						return fmt.Errorf("issue %q state %q job (%d) does not have valid context %s", issueTypeName, stateName, k, context)
+					}
+				}
+			}
+		}
+	}
+
 	return errs
 }

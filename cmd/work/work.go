@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/andrejsstepanovs/andai/pkg/employee"
 	"github.com/andrejsstepanovs/andai/pkg/llm"
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	model "github.com/andrejsstepanovs/andai/pkg/redmine"
@@ -72,7 +73,7 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 				}
 				log.Printf("Project Repository Opened %s", git.Path)
 
-				work := NewWorkOnIssue(
+				work := employee.NewWorkOnIssue(
 					model,
 					llm,
 					issue,
