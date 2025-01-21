@@ -16,7 +16,7 @@ func newSettingsCommand(redmine *redmine.Model) *cobra.Command {
 		RunE: func(_ *cobra.Command, _ []string) error {
 			log.Println("Update Redmine settings")
 
-			err := redmine.DbSettingsEnableAPI()
+			err := redmine.DBSettingsEnableAPI()
 			if err != nil {
 				log.Println("Redmine Settings Failed to enable API")
 				return fmt.Errorf("error redmine: %v", err)

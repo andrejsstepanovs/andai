@@ -34,7 +34,7 @@ func (c *Model) DBSaveIssueStatuses(statuses []redmine.IssueStatus, current []re
 	}
 
 	for i, status := range newStatuses {
-		log.Println(fmt.Sprintf("Creating New Issue Status: %s", status.Name))
+		log.Printf("Creating New Issue Status: %s\n\n", status.Name)
 		err := c.DBInsertIssueStatus(status, i+1)
 		if err != nil {
 			return fmt.Errorf("redmine issue status insert err: %v", err)

@@ -23,7 +23,7 @@ const (
 	queryUpdateSettingsValue     = "UPDATE settings SET value = ?, updated_on = NOW() WHERE name = ?"
 )
 
-func (c *Model) DbGetSettings(settingName string) ([]models.Settings, error) {
+func (c *Model) DBGetSettings(settingName string) ([]models.Settings, error) {
 	var settings []models.Settings
 	err := c.queryAndScan(queryGetSettings, func(rows *sql.Rows) error {
 		var row models.Settings
@@ -40,7 +40,7 @@ func (c *Model) DbGetSettings(settingName string) ([]models.Settings, error) {
 	return settings, nil
 }
 
-func (c *Model) DbSettingsInsert(settingName, value string) error {
+func (c *Model) DBSettingsInsert(settingName, value string) error {
 	result, err := c.execDML(queryInsertSettings, settingName, value)
 	if err != nil {
 		return fmt.Errorf("update settings db err: %v", err)
@@ -55,7 +55,7 @@ func (c *Model) DbSettingsInsert(settingName, value string) error {
 	return nil
 }
 
-func (c *Model) DbSettingsUpdate(settingName, value string) error {
+func (c *Model) DBSettingsUpdate(settingName, value string) error {
 	result, err := c.execDML(queryUpdateSettingsValue, value, settingName)
 	if err != nil {
 		return fmt.Errorf("update settings db err: %v", err)
@@ -70,13 +70,13 @@ func (c *Model) DbSettingsUpdate(settingName, value string) error {
 	return nil
 }
 
-func (c *Model) DbSettingsEnableAPI() error {
-	rows, err := c.DbGetSettings(SettingRestAPIEnabled)
+func (c *Model) DBSettingsEnableAPI() error {
+	rows, err := c.DBGetSettings(SettingRestAPIEnabled)
 	for _, row := range rows {
 		log.Printf("Setting Identifier: %d, Name: %s, Value: %s\n", row.ID, row.Name, row.Value)
 		if row.Value != settingsValueEnabled {
 			log.Printf("Setting %s is not enabled\n", SettingRestAPIEnabled)
-			err = c.DbSettingsUpdate(SettingRestAPIEnabled, settingsValueEnabled)
+			err = c.DBSettingsUpdate(SettingRestAPIEnabled, settingsValueEnabled)
 			if err != nil {
 				return fmt.Errorf("update settings db err: %v", err)
 			}
@@ -88,7 +88,7 @@ func (c *Model) DbSettingsEnableAPI() error {
 	}
 
 	log.Printf("Setting %s is not present\n", SettingRestAPIEnabled)
-	err = c.DbSettingsInsert(SettingRestAPIEnabled, settingsValueEnabled)
+	err = c.DBSettingsInsert(SettingRestAPIEnabled, settingsValueEnabled)
 	if err != nil {
 		return fmt.Errorf("insert settings db err: %v", err)
 	}
@@ -96,7 +96,7 @@ func (c *Model) DbSettingsEnableAPI() error {
 	return nil
 }
 
-func (c *Model) DbSettingsAdminMustNotChangePassword() error {
+func (c *Model) DBSettingsAdminMustNotChangePassword() error {
 	result, err := c.execDML(queryUpdateAdminNoChangePass, "admin")
 	if err != nil {
 		return fmt.Errorf("update users db err: %v", err)

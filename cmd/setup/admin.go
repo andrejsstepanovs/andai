@@ -16,7 +16,7 @@ func newAdminCommand(redmine *redmine.Model) *cobra.Command {
 		RunE: func(_ *cobra.Command, _ []string) error {
 			log.Println("Update redmine admin must_change_passwd = 0")
 
-			err := redmine.DbSettingsAdminMustNotChangePassword()
+			err := redmine.DBSettingsAdminMustNotChangePassword()
 			if err != nil {
 				log.Println("Redmine Admin Setting Change Fail")
 				return fmt.Errorf("error db: %v", err)

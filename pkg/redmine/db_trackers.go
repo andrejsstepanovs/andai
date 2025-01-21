@@ -17,7 +17,7 @@ const (
 	queryInsertTracker        = "INSERT INTO trackers (name, description, position, default_status_id) VALUES (?, ?, ?, ?)"
 )
 
-func (c *Model) DbProjectTrackers(projectID int) ([]int, error) {
+func (c *Model) DBProjectTrackers(projectID int) ([]int, error) {
 	var trackerIDs []int
 	err := c.queryAndScan(queryGetProjectTrackers, func(rows *sql.Rows) error {
 		var trackerID int
@@ -47,7 +47,7 @@ func (c *Model) DBSaveTrackers(trackers workflow.IssueTypes, defaultStatus redmi
 			}
 		}
 		if !exists {
-			log.Println(fmt.Sprintf("Tracker: %s", t.Name))
+			log.Printf("Tracker: %s\n", t.Name)
 			newTrackers = append(newTrackers, t)
 		}
 	}
@@ -58,7 +58,7 @@ func (c *Model) DBSaveTrackers(trackers workflow.IssueTypes, defaultStatus redmi
 	}
 
 	for i, tracker := range newTrackers {
-		log.Println(fmt.Sprintf("Creating New Tracker: %s", tracker.Name))
+		log.Printf("Creating New Tracker: %s\n", tracker.Name)
 		err := c.DBInsertTracker(tracker, i+1, defaultStatus.Id)
 		if err != nil {
 			return fmt.Errorf("redmine tracker insert err: %v", err)
@@ -69,7 +69,7 @@ func (c *Model) DBSaveTrackers(trackers workflow.IssueTypes, defaultStatus redmi
 }
 
 func (c *Model) DBSaveProjectTrackers(project redmine.Project, allTrackers []redmine.IdName) error {
-	existingTrackerIDs, err := c.DbProjectTrackers(project.Id)
+	existingTrackerIDs, err := c.DBProjectTrackers(project.Id)
 	if err != nil {
 		return fmt.Errorf("get project trackers for project %d err: %v", project.Id, err)
 	}
