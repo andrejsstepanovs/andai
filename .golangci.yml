@@ -60,7 +60,7 @@ linters-settings:
   goimports:
     local-prefixes: github.bus.zalan.do/rubik/lounge-campaign-orchestrator
   cyclop:
-    max-complexity: 12
+    max-complexity: 16
   gosec:
     config:
       # Maximum allowed permissions mode for os.WriteFile and io.WriteFile

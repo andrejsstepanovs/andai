@@ -87,7 +87,7 @@ func (s *Settings) validateTransitions(stateNames map[StateName]bool) error {
 	return nil
 }
 
-func (s *Settings) validateIssueTypes(stateNames map[StateName]bool) (map[StateName]bool, error) {
+func (s *Settings) validateIssueTypeStates(stateNames map[StateName]bool) (map[StateName]bool, error) {
 	issueTypeNames := make(map[StateName]bool)
 	for issueTypeName, issueType := range s.Workflow.IssueTypes {
 		issueTypeNames[StateName(issueTypeName)] = true
@@ -97,7 +97,10 @@ func (s *Settings) validateIssueTypes(stateNames map[StateName]bool) (map[StateN
 			}
 		}
 	}
+	return issueTypeNames, nil
+}
 
+func (s *Settings) validateAISteps() error {
 	var errs error
 	for _, state := range s.Workflow.States {
 		for issueTypeName, issueType := range s.Workflow.IssueTypes {
@@ -120,7 +123,10 @@ func (s *Settings) validateIssueTypes(stateNames map[StateName]bool) (map[StateN
 			}
 		}
 	}
+	return errs
+}
 
+func (s *Settings) validateStepContexts() error {
 	for issueTypeName, issueType := range s.Workflow.IssueTypes {
 		for stateName, job := range issueType.Jobs {
 			for k, step := range job.Steps {
@@ -131,16 +137,29 @@ func (s *Settings) validateIssueTypes(stateNames map[StateName]bool) (map[StateN
 					case ContextLastComment:
 					case ContextComments:
 					default:
-						return nil, fmt.Errorf("issue %q state %q job (%d) does not have valid context %s", issueTypeName, stateName, k, context)
+						return fmt.Errorf("issue %q state %q job (%d) does not have valid context %s", issueTypeName, stateName, k, context)
 					}
 				}
 			}
 		}
 	}
+	return nil
+}
 
-	if errs != nil {
-		return nil, errs
+func (s *Settings) validateIssueTypes(stateNames map[StateName]bool) (map[StateName]bool, error) {
+	issueTypeNames, err := s.validateIssueTypeStates(stateNames)
+	if err != nil {
+		return nil, err
 	}
+
+	if err := s.validateAISteps(); err != nil {
+		return nil, err
+	}
+
+	if err := s.validateStepContexts(); err != nil {
+		return nil, err
+	}
+
 	return issueTypeNames, nil
 }
 
