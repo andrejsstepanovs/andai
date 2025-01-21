@@ -23,7 +23,7 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 			statuses := convertToStatuses(workflowConfig.States)
 			statuses = sortStatuses(statuses)
 
-			currentIssueStatuses, err := model.Api().IssueStatuses()
+			currentIssueStatuses, err := model.API().IssueStatuses()
 			if err != nil {
 				return fmt.Errorf("error redmine issue status: %v", err)
 			}
@@ -42,7 +42,7 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 
 			log.Println("Trackers:", len(workflowConfig.IssueTypes))
 
-			currentTrackers, err := model.Api().Trackers()
+			currentTrackers, err := model.API().Trackers()
 			if err != nil {
 				return fmt.Errorf("error redmine trackers: %v", err)
 			}
@@ -83,13 +83,13 @@ func newWorkflowCommand(model *model.Model, workflowConfig models.Workflow) *cob
 }
 
 func projectTrackers(model *model.Model) error {
-	projects, err := model.ApiGetProjects()
+	projects, err := model.APIGetProjects()
 	log.Println("Projects:", len(projects))
 	if err != nil {
 		log.Println("Failed to get projects")
 		return fmt.Errorf("redmine err: %v", err)
 	}
-	allTrackers, err := model.Api().Trackers()
+	allTrackers, err := model.API().Trackers()
 	if err != nil {
 		return fmt.Errorf("error redmine trackers: %v", err)
 	}
@@ -106,12 +106,12 @@ func projectTrackers(model *model.Model) error {
 
 func transitions(model *model.Model, workflowConfig models.Workflow, defaultStatus redmine.IssueStatus) error {
 	log.Println("Transitions:", len(workflowConfig.Transitions))
-	trackers, err := model.Api().Trackers()
+	trackers, err := model.API().Trackers()
 	if err != nil {
 		log.Println("Failed to get trackers")
 		return fmt.Errorf("redmine err: %v", err)
 	}
-	statuses, err := model.Api().IssueStatuses()
+	statuses, err := model.API().IssueStatuses()
 	if err != nil {
 		log.Println("Failed to get issue statuses")
 		return fmt.Errorf("redmine err: %v", err)

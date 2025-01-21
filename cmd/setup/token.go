@@ -19,14 +19,14 @@ func newGetTokenCommand(redmine *redmine.Model) *cobra.Command {
 			newToken := viper.GetString("redmine.api_key")
 			log.Println("Get redmine admin token or creates it if missing")
 
-			admin, err := redmine.ApiAdmin()
+			admin, err := redmine.APIAdmin()
 			if err != nil {
 				return fmt.Errorf("error redmine admin: %v", err)
 			}
 			log.Println("Admin Identifier:", admin.Id)
 
 			getToken := func() (models.Token, error) {
-				token, err := redmine.DbGetToken(admin.Id)
+				token, err := redmine.DBGetToken(admin.Id)
 				if err != nil {
 					return models.Token{}, fmt.Errorf("db err: %v", err)
 				}
@@ -59,7 +59,7 @@ func newGetTokenCommand(redmine *redmine.Model) *cobra.Command {
 				return nil
 			}
 
-			err = redmine.DbCreateApiToken(admin.Id, newToken)
+			err = redmine.DBCreateApiToken(admin.Id, newToken)
 			if err != nil {
 				return fmt.Errorf("after created err: %v", err)
 			}

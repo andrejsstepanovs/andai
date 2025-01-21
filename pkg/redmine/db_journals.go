@@ -12,9 +12,10 @@ const (
 	queryGetJournalComments = "SELECT notes, user_id, created_on FROM journals WHERE journalized_type = ? AND notes != ? AND journalized_id = ? ORDER BY created_on ASC"
 )
 
+// JournalIssueType is a constant for the journalized type
 const JournalIssueType = "Issue"
 
-func (c *Model) DBGetComments(issueId int) (models.Comments, error) {
+func (c *Model) DBGetComments(issueID int) (models.Comments, error) {
 	var notes []models.Comment
 	var i = 0
 	err := c.queryAndScan(queryGetJournalComments, func(rows *sql.Rows) error {
@@ -26,13 +27,12 @@ func (c *Model) DBGetComments(issueId int) (models.Comments, error) {
 		i++
 		notes = append(notes, row)
 		return nil
-	}, JournalIssueType, "", issueId)
+	}, JournalIssueType, "", issueID)
 
 	if err != nil && !errors.As(err, &sql.ErrNoRows) {
 		return nil, err
 	}
 
-	var comments models.Comments
-	comments = notes
+	var comments models.Comments = notes
 	return comments, nil
 }

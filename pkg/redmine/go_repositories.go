@@ -20,19 +20,19 @@ const (
 )
 
 func (c *Model) DBSaveGit(project redmine.Project, gitPath string) error {
-	newUrl := fmt.Sprintf("%s/%s", strings.TrimRight(viper.GetString("redmine.repositories"), "/"), strings.TrimLeft(gitPath, "/"))
+	newURL := fmt.Sprintf("%s/%s", strings.TrimRight(viper.GetString("redmine.repositories"), "/"), strings.TrimLeft(gitPath, "/"))
 
 	repository, err := c.DBGetRepository(project)
 	if err != nil {
 		return fmt.Errorf("redmine get repository err: %v", err)
 	}
 	if repository.ID > 0 {
-		log.Printf("Repository ID: %d, ProjectID: %s, Url: %s\n", repository.ID, repository.ProjectID, repository.RootUrl)
-		if repository.RootUrl == newUrl {
+		log.Printf("Repository ID: %d, ProjectID: %s, Url: %s\n", repository.ID, repository.ProjectID, repository.RootURL)
+		if repository.RootURL == newURL {
 			return nil
 		}
 		log.Println("Mismatch Repository root_url")
-		result, err := c.execDML(queryUpdateRepository, newUrl, repository.ID)
+		result, err := c.execDML(queryUpdateRepository, newURL, repository.ID)
 		if err != nil {
 			return fmt.Errorf("update repository db err: %v", err)
 		}
@@ -47,7 +47,7 @@ func (c *Model) DBSaveGit(project redmine.Project, gitPath string) error {
 		return nil
 	}
 
-	result, err := c.execDML(queryInsertRepository, project.Id, newUrl, "---\nextra_report_last_commit: '0'\n", project.Identifier)
+	result, err := c.execDML(queryInsertRepository, project.Id, newURL, "---\nextra_report_last_commit: '0'\n", project.Identifier)
 	if err != nil {
 		return fmt.Errorf("error redmine git save: %v", err)
 	}
@@ -67,7 +67,7 @@ func (c *Model) DBGetRepository(project redmine.Project) (models.Repository, err
 	var repos []models.Repository
 	err := c.queryAndScan(queryGetProjectRepository, func(rows *sql.Rows) error {
 		var row models.Repository
-		if err := rows.Scan(&row.ID, &row.ProjectID, &row.RootUrl); err != nil {
+		if err := rows.Scan(&row.ID, &row.ProjectID, &row.RootURL); err != nil {
 			return err
 		}
 		repos = append(repos, row)

@@ -26,14 +26,14 @@ func newProjectsCommand(model *model.Model, projectsConf models.Projects) *cobra
 					Description: p.Description,
 				}
 
-				err, project := model.ApiSaveProject(project)
+				err, project := model.APISaveProject(project)
 				if err != nil {
 					log.Println("Redmine Project Save Fail")
 					return fmt.Errorf("error redmine project save: %v", err)
 				}
 				log.Println("Project OK")
 
-				err = model.ApiSaveWiki(project, p.Wiki)
+				err = model.APISaveWiki(project, p.Wiki)
 				if err != nil {
 					log.Println("Redmine Project Wiki Save Fail")
 					return fmt.Errorf("error redmine project save: %v", err)

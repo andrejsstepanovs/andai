@@ -16,7 +16,7 @@ func newAPIPingCommand(redmine *redmine.Model) *cobra.Command {
 		RunE: func(_ *cobra.Command, _ []string) error {
 			log.Println("Ping API")
 
-			users, err := redmine.ApiGetUsers()
+			users, err := redmine.APIGetUsers()
 			if err != nil {
 				log.Println("Redmine Ping Fail")
 				return fmt.Errorf("error redmine ping: %v", err)

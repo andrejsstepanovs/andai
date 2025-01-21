@@ -7,12 +7,11 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/andrejsstepanovs/andai/pkg/worker"
 	"github.com/mattn/go-redmine"
 )
 
 type Workbench struct {
-	Git        *worker.Git
+	Git        git
 	Issue      redmine.Issue
 	WorkingDir string
 }
@@ -20,6 +19,7 @@ type Workbench struct {
 type git interface {
 	CheckoutBranch(name string) error
 	GetPath() string
+	SetPath(path string)
 }
 
 func (i *Workbench) PrepareWorkplace() error {

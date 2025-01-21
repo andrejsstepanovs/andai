@@ -12,15 +12,15 @@ import (
 
 const AdminLogin = "admin"
 
-func (c *Model) ApiGetUsers() ([]redmine.User, error) {
-	users, err := c.Api().Users()
+func (c *Model) APIGetUsers() ([]redmine.User, error) {
+	users, err := c.API().Users()
 	if err != nil {
 		return nil, fmt.Errorf("error redmine API get users: %v", err)
 	}
 	return users, nil
 }
 
-func (c *Model) ApiAdmin() (redmine.User, error) {
+func (c *Model) APIAdmin() (redmine.User, error) {
 	users, err := c.DBGetAllUsers()
 	if err != nil {
 		return redmine.User{}, fmt.Errorf("error redmine db get users: %v", err)
@@ -33,15 +33,15 @@ func (c *Model) ApiAdmin() (redmine.User, error) {
 	return redmine.User{}, errors.New("admin not found")
 }
 
-func (c *Model) ApiGetProjects() ([]redmine.Project, error) {
-	projects, err := c.Api().Projects()
+func (c *Model) APIGetProjects() ([]redmine.Project, error) {
+	projects, err := c.API().Projects()
 	if err != nil {
 		return nil, fmt.Errorf("error redmine projects: %v", err)
 	}
 	return projects, nil
 }
 
-func (c *Model) ApiSaveWiki(project redmine.Project, content string) error {
+func (c *Model) APISaveWiki(project redmine.Project, content string) error {
 	const TITLE = "Wiki"
 	content = strings.TrimSpace(content)
 
@@ -68,10 +68,10 @@ func (c *Model) ApiSaveWiki(project redmine.Project, content string) error {
 	return nil
 }
 
-func (c *Model) ApiSaveProject(project redmine.Project) (error, redmine.Project) {
-	current, err := c.Api().Projects()
+func (c *Model) APISaveProject(project redmine.Project) (redmine.Project, error) {
+	current, err := c.API().Projects()
 	if err != nil {
-		return fmt.Errorf("redmine api projects err: %v", err), redmine.Project{}
+		return redmine.Project{}, fmt.Errorf("redmine api projects err: %v", err)
 	}
 
 	for _, p := range current {
@@ -79,26 +79,26 @@ func (c *Model) ApiSaveProject(project redmine.Project) (error, redmine.Project)
 		if p.Identifier == project.Identifier {
 			log.Printf("Project already exists: %s\n", p.Name)
 			project.Id = p.Id
-			err = c.Api().UpdateProject(project)
+			err = c.API().UpdateProject(project)
 			if err != nil && err.Error() != "EOF" {
 				log.Println("Redmine Update Project Failed")
-				return fmt.Errorf("error redmine update project: %v", err.Error()), redmine.Project{}
+				return redmine.Project{}, fmt.Errorf("error redmine update project: %v", err.Error())
 			}
 			log.Printf("Project updated: %s\n", project.Name)
-			return nil, project
+			return project, nil
 		}
 	}
 
-	response, err := c.Api().CreateProject(project)
+	response, err := c.API().CreateProject(project)
 	if err != nil {
-		return fmt.Errorf("error redmine create project: '%s'", err.Error()), redmine.Project{}
+		return redmine.Project{}, fmt.Errorf("error redmine create project: '%s'", err.Error())
 	}
 
-	return nil, *response
+	return *response, nil
 }
 
 func (c *Model) APIGetIssueStatusByName(name string) (redmine.IssueStatus, error) {
-	statuses, err := c.Api().IssueStatuses()
+	statuses, err := c.API().IssueStatuses()
 	if err != nil {
 		return redmine.IssueStatus{}, fmt.Errorf("error redmine issue status: %v", err)
 	}

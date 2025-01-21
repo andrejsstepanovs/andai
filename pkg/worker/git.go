@@ -103,7 +103,7 @@ func FindProjectGit(projectConfig models.Project, projectRepo redminemodels.Repo
 	}
 
 	paths := []string{
-		projectRepo.RootUrl,
+		projectRepo.RootURL,
 		projectConfig.GitPath,
 		filepath.Join(currentDir, projectConfig.GitPath),
 		filepath.Join(currentDir, "repositories", projectConfig.GitPath),
@@ -124,7 +124,7 @@ func FindProjectGit(projectConfig models.Project, projectRepo redminemodels.Repo
 	}
 
 	if !gitRet.Opened {
-		log.Printf("failed to open git repository %s", projectRepo.RootUrl)
+		log.Printf("failed to open git repository %s", projectRepo.RootURL)
 		return nil, errors.New("failed to open git repository")
 	}
 

@@ -16,13 +16,13 @@ const (
 )
 
 func (c *Model) APIGetWorkableIssues(workflow models.Workflow) ([]redmine.Issue, error) {
-	projects, err := c.ApiGetProjects()
+	projects, err := c.APIGetProjects()
 	if err != nil {
 		return nil, fmt.Errorf("error redmine issue status: %v", err)
 	}
 
 	for _, project := range projects {
-		projectIssues, err := c.Api().IssuesOf(project.Id)
+		projectIssues, err := c.API().IssuesOf(project.Id)
 		if err != nil {
 			return nil, fmt.Errorf("error redmine issues of project: %v", err)
 		}
@@ -129,7 +129,7 @@ func (c *Model) issueDependencies(projectIssues []redmine.Issue) (map[int][]int,
 	dependencies := make(map[int][]int)
 	for _, issue := range projectIssues {
 		dependencies[issue.Id] = make([]int, 0)
-		relations, err := c.Api().IssueRelations(issue.Id)
+		relations, err := c.API().IssueRelations(issue.Id)
 		if err != nil && err.Error() != "Not Found" {
 			return dependencies, err
 		}
@@ -177,7 +177,7 @@ func (c *Model) getCorrectIssue(issues []redmine.Issue, priorities models.Priori
 
 func (c *Model) Comment(issue redmine.Issue, text string) error {
 	issue.Notes = text
-	err := c.Api().UpdateIssue(issue)
+	err := c.API().UpdateIssue(issue)
 	if err != nil {
 		return fmt.Errorf("error redmine issue comment: %v", err)
 	}
@@ -187,7 +187,7 @@ func (c *Model) Comment(issue redmine.Issue, text string) error {
 func (c *Model) Transition(issue redmine.Issue, nextStatus redmine.IssueStatus) error {
 	issue.StatusId = nextStatus.Id
 
-	err := c.Api().UpdateIssue(issue)
+	err := c.API().UpdateIssue(issue)
 	if err != nil {
 		return fmt.Errorf("error redmine issue comment: %v", err)
 	}

@@ -2,9 +2,16 @@ package models
 
 import "strings"
 
+// StateName is a type for state names
 const ContextTicket = "ticket"
+
+// ContextComments is a special context that matches comments
 const ContextComments = "comments"
+
+// ContextLastComment is a special context that matches the last comment
 const ContextLastComment = "last-comment"
+
+// ContextAll is a special context that matches all contexts
 const ContextAll = "all"
 
 type IssueTypeName string

@@ -25,7 +25,6 @@ type Employee struct {
 	state      models.State
 	issueType  models.IssueType
 	job        models.Job
-	workingDir string
 	history    []exec.Output
 }
 

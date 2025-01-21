@@ -14,16 +14,16 @@ type database interface {
 
 type api interface {
 	Users() ([]redmine.User, error)
-	WikiPage(projectId int, title string) (*redmine.WikiPage, error)
-	CreateWikiPage(projectId int, wikiPage redmine.WikiPage) (*redmine.WikiPage, error)
-	UpdateWikiPage(projectId int, wikiPage redmine.WikiPage) error
+	WikiPage(projectID int, title string) (*redmine.WikiPage, error)
+	CreateWikiPage(projectID int, wikiPage redmine.WikiPage) (*redmine.WikiPage, error)
+	UpdateWikiPage(projectID int, wikiPage redmine.WikiPage) error
 	Projects() ([]redmine.Project, error)
 	UpdateProject(project redmine.Project) error
 	CreateProject(project redmine.Project) (*redmine.Project, error)
 	IssueStatuses() ([]redmine.IssueStatus, error)
 	Trackers() ([]redmine.IdName, error)
-	IssueRelations(issueId int) ([]redmine.IssueRelation, error)
-	IssuesOf(projectId int) ([]redmine.Issue, error)
+	IssueRelations(issueID int) ([]redmine.IssueRelation, error)
+	IssuesOf(projectID int) ([]redmine.Issue, error)
 	Issue(id int) (*redmine.Issue, error)
 	Project(id int) (*redmine.Project, error)
 	UpdateIssue(issue redmine.Issue) error
@@ -41,7 +41,7 @@ func NewModel(db database, api api) *Model {
 	}
 }
 
-func (c *Model) Api() api {
+func (c *Model) API() api {
 	return c.api
 }
 

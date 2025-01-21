@@ -39,17 +39,17 @@ func (_m *Api) CreateProject(project redmine.Project) (*redmine.Project, error) 
 	return r0, r1
 }
 
-// CreateWikiPage provides a mock function with given fields: projectId, wikiPage
-func (_m *Api) CreateWikiPage(projectId int, wikiPage redmine.WikiPage) (*redmine.WikiPage, error) {
-	ret := _m.Called(projectId, wikiPage)
+// CreateWikiPage provides a mock function with given fields: projectID, wikiPage
+func (_m *Api) CreateWikiPage(projectID int, wikiPage redmine.WikiPage) (*redmine.WikiPage, error) {
+	ret := _m.Called(projectID, wikiPage)
 
 	var r0 *redmine.WikiPage
 	var r1 error
 	if rf, ok := ret.Get(0).(func(int, redmine.WikiPage) (*redmine.WikiPage, error)); ok {
-		return rf(projectId, wikiPage)
+		return rf(projectID, wikiPage)
 	}
 	if rf, ok := ret.Get(0).(func(int, redmine.WikiPage) *redmine.WikiPage); ok {
-		r0 = rf(projectId, wikiPage)
+		r0 = rf(projectID, wikiPage)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*redmine.WikiPage)
@@ -57,7 +57,7 @@ func (_m *Api) CreateWikiPage(projectId int, wikiPage redmine.WikiPage) (*redmin
 	}
 
 	if rf, ok := ret.Get(1).(func(int, redmine.WikiPage) error); ok {
-		r1 = rf(projectId, wikiPage)
+		r1 = rf(projectID, wikiPage)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -91,17 +91,17 @@ func (_m *Api) Issue(id int) (*redmine.Issue, error) {
 	return r0, r1
 }
 
-// IssueRelations provides a mock function with given fields: issueId
-func (_m *Api) IssueRelations(issueId int) ([]redmine.IssueRelation, error) {
-	ret := _m.Called(issueId)
+// IssueRelations provides a mock function with given fields: issueID
+func (_m *Api) IssueRelations(issueID int) ([]redmine.IssueRelation, error) {
+	ret := _m.Called(issueID)
 
 	var r0 []redmine.IssueRelation
 	var r1 error
 	if rf, ok := ret.Get(0).(func(int) ([]redmine.IssueRelation, error)); ok {
-		return rf(issueId)
+		return rf(issueID)
 	}
 	if rf, ok := ret.Get(0).(func(int) []redmine.IssueRelation); ok {
-		r0 = rf(issueId)
+		r0 = rf(issueID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]redmine.IssueRelation)
@@ -109,7 +109,7 @@ func (_m *Api) IssueRelations(issueId int) ([]redmine.IssueRelation, error) {
 	}
 
 	if rf, ok := ret.Get(1).(func(int) error); ok {
-		r1 = rf(issueId)
+		r1 = rf(issueID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -143,17 +143,17 @@ func (_m *Api) IssueStatuses() ([]redmine.IssueStatus, error) {
 	return r0, r1
 }
 
-// IssuesOf provides a mock function with given fields: projectId
-func (_m *Api) IssuesOf(projectId int) ([]redmine.Issue, error) {
-	ret := _m.Called(projectId)
+// IssuesOf provides a mock function with given fields: projectID
+func (_m *Api) IssuesOf(projectID int) ([]redmine.Issue, error) {
+	ret := _m.Called(projectID)
 
 	var r0 []redmine.Issue
 	var r1 error
 	if rf, ok := ret.Get(0).(func(int) ([]redmine.Issue, error)); ok {
-		return rf(projectId)
+		return rf(projectID)
 	}
 	if rf, ok := ret.Get(0).(func(int) []redmine.Issue); ok {
-		r0 = rf(projectId)
+		r0 = rf(projectID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]redmine.Issue)
@@ -161,7 +161,7 @@ func (_m *Api) IssuesOf(projectId int) ([]redmine.Issue, error) {
 	}
 
 	if rf, ok := ret.Get(1).(func(int) error); ok {
-		r1 = rf(projectId)
+		r1 = rf(projectID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -275,13 +275,13 @@ func (_m *Api) UpdateProject(project redmine.Project) error {
 	return r0
 }
 
-// UpdateWikiPage provides a mock function with given fields: projectId, wikiPage
-func (_m *Api) UpdateWikiPage(projectId int, wikiPage redmine.WikiPage) error {
-	ret := _m.Called(projectId, wikiPage)
+// UpdateWikiPage provides a mock function with given fields: projectID, wikiPage
+func (_m *Api) UpdateWikiPage(projectID int, wikiPage redmine.WikiPage) error {
+	ret := _m.Called(projectID, wikiPage)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(int, redmine.WikiPage) error); ok {
-		r0 = rf(projectId, wikiPage)
+		r0 = rf(projectID, wikiPage)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -315,17 +315,17 @@ func (_m *Api) Users() ([]redmine.User, error) {
 	return r0, r1
 }
 
-// WikiPage provides a mock function with given fields: projectId, title
-func (_m *Api) WikiPage(projectId int, title string) (*redmine.WikiPage, error) {
-	ret := _m.Called(projectId, title)
+// WikiPage provides a mock function with given fields: projectID, title
+func (_m *Api) WikiPage(projectID int, title string) (*redmine.WikiPage, error) {
+	ret := _m.Called(projectID, title)
 
 	var r0 *redmine.WikiPage
 	var r1 error
 	if rf, ok := ret.Get(0).(func(int, string) (*redmine.WikiPage, error)); ok {
-		return rf(projectId, title)
+		return rf(projectID, title)
 	}
 	if rf, ok := ret.Get(0).(func(int, string) *redmine.WikiPage); ok {
-		r0 = rf(projectId, title)
+		r0 = rf(projectID, title)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*redmine.WikiPage)
@@ -333,7 +333,7 @@ func (_m *Api) WikiPage(projectId int, title string) (*redmine.WikiPage, error) 
 	}
 
 	if rf, ok := ret.Get(1).(func(int, string) error); ok {
-		r1 = rf(projectId, title)
+		r1 = rf(projectID, title)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 func (c *Model) APIGetIssueStatus(name string) (redmine.IssueStatus, error) {
-	issuesStatuses, err := c.Api().IssueStatuses()
+	issuesStatuses, err := c.API().IssueStatuses()
 	if err != nil {
 		return redmine.IssueStatus{}, fmt.Errorf("error redmine issue status: %v", err)
 	}

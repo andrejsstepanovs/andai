@@ -55,7 +55,7 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 			log.Printf("FOUND WORKABLE ISSUES (%d)", len(issues))
 			for _, issue := range issues {
 				log.Printf("Issue %d: %s", issue.Id, issue.Subject)
-				project, err := model.Api().Project(issue.Project.Id)
+				project, err := model.API().Project(issue.Project.Id)
 				if err != nil {
 					return fmt.Errorf("failed to get redmine project err: %v", err)
 				}
@@ -65,7 +65,7 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 				if err != nil {
 					return fmt.Errorf("failed to get redmine repository err: %v", err)
 				}
-				log.Printf("Repository %d: %s", projectRepo.ID, projectRepo.RootUrl)
+				log.Printf("Repository %d: %s", projectRepo.ID, projectRepo.RootURL)
 
 				projectConfig := projects.Find(project.Identifier)
 				git, err := worker.FindProjectGit(projectConfig, projectRepo)

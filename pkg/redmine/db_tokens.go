@@ -32,7 +32,7 @@ func (c *Model) DbUpdateApiToken(userId int, tokenValue string) error {
 	return nil
 }
 
-func (c *Model) DbCreateApiToken(userId int, tokenValue string) error {
+func (c *Model) DBCreateApiToken(userId int, tokenValue string) error {
 	result, err := c.execDML(queryInsertTokens, tokenValue, TokenActionAPI, userId)
 	if err != nil {
 		return fmt.Errorf("insert settings token db err: %v", err)
@@ -47,7 +47,7 @@ func (c *Model) DbCreateApiToken(userId int, tokenValue string) error {
 	return nil
 }
 
-func (c *Model) DbGetToken(userId int) (models.Token, error) {
+func (c *Model) DBGetToken(userID int) (models.Token, error) {
 	var tokens []models.Token
 	err := c.queryAndScan(queryGetToken, func(rows *sql.Rows) error {
 		var token models.Token
@@ -56,7 +56,7 @@ func (c *Model) DbGetToken(userId int) (models.Token, error) {
 		}
 		tokens = append(tokens, token)
 		return nil
-	}, TokenActionAPI, userId)
+	}, TokenActionAPI, userID)
 
 	if err != nil {
 		return models.Token{}, err
