@@ -29,7 +29,7 @@ func (c *Model) GetDefaultNormalPriority() (int, error) {
 		return nil
 	}, IssuePriority)
 
-	if err != nil && !errors.As(err, &sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return 0, err
 	}
 	for _, id := range ids {

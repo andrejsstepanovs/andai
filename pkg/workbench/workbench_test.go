@@ -12,14 +12,12 @@ import (
 )
 
 func TestWorkbench_PrepareWorkplace(t *testing.T) {
-	// AI: Create temporary directory structure for testing
 	tmpDir, err := os.MkdirTemp("", "workbench-test-*")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
-	// AI: Create a fake git repository structure
 	gitDir := filepath.Join(tmpDir, ".git")
-	err = os.MkdirAll(gitDir, 0755)
+	err = os.MkdirAll(gitDir, 0750)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -59,7 +57,6 @@ func TestWorkbench_PrepareWorkplace(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// AI: Save current working directory
 			originalWd, err := os.Getwd()
 			require.NoError(t, err)
 			defer func() {
@@ -80,7 +77,6 @@ func TestWorkbench_PrepareWorkplace(t *testing.T) {
 			currentDir, err := os.Getwd()
 			require.NoError(t, err)
 
-			// AI: If path ends with .git, compare with parent directory
 			expectedDir := targetPath
 			if filepath.Base(targetPath) == ".git" {
 				expectedDir = filepath.Dir(targetPath)
@@ -92,7 +88,6 @@ func TestWorkbench_PrepareWorkplace(t *testing.T) {
 }
 
 func TestWorkbench_changeDirectory(t *testing.T) {
-	// AI: Create temporary directory structure for testing
 	tmpDir, err := os.MkdirTemp("", "workbench-test-*")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
@@ -124,7 +119,6 @@ func TestWorkbench_changeDirectory(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// AI: Save current working directory
 			originalWd, err := os.Getwd()
 			require.NoError(t, err)
 			defer func() {

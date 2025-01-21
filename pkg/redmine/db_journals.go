@@ -29,7 +29,7 @@ func (c *Model) DBGetComments(issueID int) (models.Comments, error) {
 		return nil
 	}, JournalIssueType, "", issueID)
 
-	if err != nil && !errors.As(err, &sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
 

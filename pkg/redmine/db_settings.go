@@ -7,7 +7,7 @@ import (
 	"log"
 
 	"github.com/andrejsstepanovs/andai/pkg/redmine/models"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // mysql driver
 )
 
 const (
@@ -73,6 +73,7 @@ func (c *Model) DBSettingsUpdate(settingName, value string) error {
 }
 
 func (c *Model) DBSettingsEnableAPI() error {
+	// fix this linter error: ineffectual assignment to err (ineffassign) AI!
 	rows, err := c.DBGetSettings(SettingRestAPIEnabled)
 	for _, row := range rows {
 		log.Printf("Setting Identifier: %d, Name: %s, Value: %s\n", row.ID, row.Name, row.Value)
