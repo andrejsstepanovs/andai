@@ -143,8 +143,9 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			return out, err
 		}
 		for _, issue := range issues {
-			issue.ProjectId = i.issue.Project.Id
-			issue.Project.Id = i.issue.Project.Id
+			projectID := i.issue.Project.Id
+			issue.ProjectId = projectID
+			issue.Project = &redmine.IdName{Id: projectID}
 			issue.ParentId = i.issue.Id
 			issue.Parent = &redmine.Id{Id: i.issue.Id}
 			issue.TrackerId = trackerID
@@ -155,7 +156,6 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 				return out, err
 			}
 			log.Printf("Created issue: %d\n", created.Id)
-			break
 		}
 	case "bobik":
 		promptFile, err := utils.BuildPromptTmpFile(i.issue, step)
