@@ -152,7 +152,8 @@ func BuildIssueTmpFile(
 	}
 
 	content := strings.Join(parts, "\n\n")
-	//fmt.Println("\n##############\n", content, "\n##############\n")
+	fmt.Println("\n##############\n", content, "\n##############\n")
+	panic(1)
 
 	tempFile, err := os.CreateTemp("", fmt.Sprintf(tmpFile, issue.Id))
 	if err != nil {

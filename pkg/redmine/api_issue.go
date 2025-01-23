@@ -18,7 +18,7 @@ const (
 
 // APIGetChildren returns first level children of the issue. Children are not dependencies on each other.
 func (c *Model) APIGetChildren(issue redmine.Issue) ([]redmine.Issue, error) {
-	projectIssues, err := c.API().IssuesOf(issue.ProjectId)
+	projectIssues, err := c.API().IssuesOf(issue.Project.Id)
 	if err != nil {
 		return nil, fmt.Errorf("error redmine issues of project: %v", err)
 	}
