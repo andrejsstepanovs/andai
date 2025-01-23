@@ -146,7 +146,8 @@ configure: build
 
 # make start PROJECT=lco
 .PHONY: start
-start:
+start: build
+	PROJECT=$(PROJECT) $(BUILD_PATH)/andai
 	docker-compose up -d redmine-$(PROJECT)
 	while ! PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping db 2>/dev/null; do sleep 2; done
 	@echo "DB Ready (but probably not yet fully configured)"

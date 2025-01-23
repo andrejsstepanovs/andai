@@ -11,6 +11,18 @@ const ContextComments = "comments"
 // ContextLastComment is a special context that matches the last comment
 const ContextLastComment = "last-comment"
 
+// ContextProject is a special context that matches the project
+const ContextProject = "project"
+
+// ContextChildren is a special context that matches the children
+const ContextChildren = "children"
+
+// ContextParent is a special context that matches the parent
+const ContextParent = "parent"
+
+// ContextParents is a special context that matches the parents
+const ContextParents = "parents"
+
 // ContextAll is a special context that matches all contexts
 const ContextAll = "all"
 

@@ -14,7 +14,8 @@ projects:
   - identifier: "test"
     name: "TEST"
     description: "Test Project"
-    git_path: "/full-path-to-test-project/.git"
+    git_path: "/relative-path-to-mounted-test-project/.git"
+    git_local_dir: "/full-path-using-local-dir-to/project/.git"
     wiki: |
       # My Project
       Wiki entry about the project.

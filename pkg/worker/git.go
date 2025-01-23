@@ -104,6 +104,7 @@ func FindProjectGit(projectConfig models.Project, projectRepo redminemodels.Repo
 	}
 
 	paths := []string{
+		projectConfig.LocalGitPath,
 		projectRepo.RootURL,
 		projectConfig.GitPath,
 		filepath.Join(currentDir, projectConfig.GitPath),
@@ -113,11 +114,14 @@ func FindProjectGit(projectConfig models.Project, projectRepo redminemodels.Repo
 	}
 	var gitRet *Git
 	for _, path := range paths {
+		if path == "" {
+			continue
+		}
 		//log.Printf("Trying to open git repository in %q", path)
 		gitRet = NewGit(path)
 		err = gitRet.Open()
 		if err != nil {
-			//log.Printf("failed to open git err: %v", err)
+			log.Printf("failed to open git err: %v", err)
 			continue
 		}
 		gitRet.SetPath(path)
@@ -125,7 +129,7 @@ func FindProjectGit(projectConfig models.Project, projectRepo redminemodels.Repo
 	}
 
 	if !gitRet.Opened {
-		log.Printf("failed to open git repository %s", projectRepo.RootURL)
+		log.Printf("failed to find git repository location for %q", projectRepo.RootURL)
 		return nil, errors.New("failed to open git repository")
 	}
 

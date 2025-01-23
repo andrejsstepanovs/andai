@@ -136,6 +136,10 @@ func (s *Settings) validateStepContexts() error {
 					case ContextAll:
 					case ContextLastComment:
 					case ContextComments:
+					case ContextProject:
+					case ContextChildren:
+					case ContextParent:
+					case ContextParents:
 					default:
 						return fmt.Errorf("issue %q state %q job (%d) does not have valid context %s", issueTypeName, stateName, k, context)
 					}
