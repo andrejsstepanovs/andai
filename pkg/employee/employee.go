@@ -3,7 +3,6 @@ package employee
 import (
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/andrejsstepanovs/andai/pkg/employee/processor"
@@ -78,6 +77,7 @@ func (i *Employee) Work() bool {
 		fmt.Printf("Step: %d\n", j+1)
 		step.Prompt = i.addHistory(step)
 		output, err := i.processStep(step)
+		panic(err)
 		if err != nil {
 			log.Printf("Failed to action step: %v", err)
 			return false
@@ -117,7 +117,7 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 
 	if contextFile != "" {
 		log.Printf("Context file: %q\n", contextFile)
-		defer os.Remove(contextFile)
+		//defer os.Remove(contextFile)
 	}
 
 	switch step.Command {

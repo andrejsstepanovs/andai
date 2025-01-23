@@ -3,6 +3,7 @@ package processor
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/andrejsstepanovs/andai/pkg/exec"
 	"github.com/andrejsstepanovs/andai/pkg/models"
@@ -13,16 +14,44 @@ func BobikExecute(promptFile string, step models.Step) (exec.Output, error) {
 	return exec.Exec(step.Command, step.Action, fmt.Sprintf(format, promptFile))
 }
 
+type answerIssues struct {
+	ID          int    `json:"number_int"`
+	Subject     string `json:"subject"`
+	Description string `json:"description"`
+	BlockedBy   []int  `json:"blocked_by_numbers" validate:"omitempty"`
+}
+type answer struct {
+	Issues []answerIssues `json:"issues"`
+}
+
 func BobikCreateIssue(parentIssueID int, targetIssueTypeName models.IssueTypeName, promptFile string) (exec.Output, error) {
-	type answerIssues struct {
-		ID          int    `json:"number_int"`
-		Subject     string `json:"subject"`
-		Description string `json:"description"`
-		BlockedBy   []int  `json:"blocked_by_numbers" validate:"omitempty"`
+	promptExtension := ""
+	var createIssues answer
+	tries := 4
+	for {
+		tries--
+		if tries == 0 {
+			return exec.Output{}, fmt.Errorf("failed to get issues from LLM")
+		}
+		var err error
+		createIssues, promptExtension, err = getIssuesFromLLM(promptFile, targetIssueTypeName, promptExtension)
+		if err != nil {
+			return exec.Output{}, err
+		}
+		break
 	}
-	type answer struct {
-		Issues []answerIssues `json:"issues"`
+
+	for _, issue := range createIssues.Issues {
+
 	}
+
+	panic(1)
+	return out, nil
+}
+
+// getIssuesFromLLM returns issues from LLM
+// second string is LLM response json parsing error
+func getIssuesFromLLM(promptFile string, targetIssueTypeName models.IssueTypeName, promptExtension string) (answer, string, error) {
 	example := answer{
 		Issues: []answerIssues{
 			{
@@ -45,29 +74,51 @@ func BobikCreateIssue(parentIssueID int, targetIssueTypeName models.IssueTypeNam
 		},
 	}
 
-	json, err := json.Marshal(example)
+	jsonTxt, err := json.Marshal(example)
 	if err != nil {
-		return exec.Output{}, err
+		return answer{}, "", err
 	}
-	exampleJson := string(json)
+	exampleJson := string(jsonTxt)
 
-	format := "Answer with solution that is stated in the file %s !" +
-		"You need to answer using raw JSON. Expected json format example data: \n```json\n%s\n```\n\n" +
-		"You keep track on task dependencies on other tasks you create. " +
-		"It is super important that tasks do not have cyclomatic dependencies! i.e. no 2 tasks depend on each other." +
+	format := "Answer with solution that is stated in the file %s ! " +
+		"You need to answer using raw JSON. Expected json format example data: ```%s``` " +
+		"Keep track on task dependencies on other tasks you create. " +
+		"It is super important that tasks do not have cyclomatic dependencies! i.e. no 2 tasks depend on each other. " +
 		//"Do not afraid to extend Description field with other necessary information that will help developer to code this solution." +
-		"It is really important that answer contains only raw JSON."
+		"It is really important that answer contains only raw JSON with tags: issues that contains issue type: %s elements. " +
+		"Each element should contain: number_int, subject, " +
+		"description (contains detailed explanation what needs to be achieved. " +
+		"Use \"# Acceptance Criteria\" to define exact points), blocked_by_numbers (array of integers)." +
+		"Do not use any other tags in JSON. " +
+		"Do not create tasks that are out of scope of current issue requirements."
 
-	txt := fmt.Sprintf(format, promptFile, exampleJson)
-	fmt.Println(txt)
-	out, err := exec.Exec("bobik", "zalando", "once", "llm", "quiet", txt)
-	if err != nil {
-		return exec.Output{}, err
+	prompt := fmt.Sprintf(format, promptFile, exampleJson, targetIssueTypeName)
+
+	if promptExtension != "" {
+		format = "%s You failed last time with error: %s. Try again and be more careful this time!"
+		prompt = fmt.Sprintf(format, prompt, promptExtension)
 	}
 
-	resp := out.Stdout
-	fmt.Println(resp)
+	searchReplace := map[string]string{
+		`"`:  `\"`,
+		`''`: `\'`,
+		"\n": ` `,
+	}
+	for search, replace := range searchReplace {
+		prompt = strings.ReplaceAll(prompt, search, replace)
+	}
+	prompt = strings.TrimSpace(prompt)
+	//fmt.Println(prompt)
 
-	panic(1)
-	return out, nil
+	out, err := exec.Exec("bobik", "zalando", "once", "llm", "quiet", "\""+prompt+"\"")
+	if err != nil {
+		return answer{}, "", err
+	}
+
+	result := answer{}
+	err = json.Unmarshal([]byte(out.Stdout), &result)
+	if err != nil {
+		return result, err.Error(), nil
+	}
+	return result, "", nil
 }
