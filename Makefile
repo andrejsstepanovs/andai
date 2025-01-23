@@ -137,6 +137,7 @@ docker: build.linux ## Build docker image
 configure: build
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai validate config && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping db && \
+	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup auto-increments && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup admin && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup settings && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup token && \

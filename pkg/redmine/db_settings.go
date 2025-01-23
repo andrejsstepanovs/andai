@@ -16,13 +16,17 @@ const (
 	// SettingRestAPIEnabled is a constant for setting name
 	SettingRestAPIEnabled = "rest_api_enabled"
 	settingsValueEnabled  = "1"
+
+	autoIncrementDefault = 100
 )
 
 const (
-	queryUpdateAdminNoChangePass = "UPDATE users SET must_change_passwd = 0 WHERE login = ?"             // nolint:gosec
-	queryGetSettings             = "SELECT id, name, value FROM settings WHERE name = ?"                 // nolint:gosec
-	queryInsertSettings          = "INSERT INTO settings (name, value, updated_on) VALUES (?, ?, NOW())" // nolint:gosec
-	queryUpdateSettingsValue     = "UPDATE settings SET value = ?, updated_on = NOW() WHERE name = ?"    // nolint:gosec
+	queryUpdateAdminNoChangePass = "UPDATE users SET must_change_passwd = 0 WHERE login = ?"                   // nolint:gosec
+	queryGetSettings             = "SELECT id, name, value FROM settings WHERE name = ?"                       // nolint:gosec
+	queryInsertSettings          = "INSERT INTO settings (name, value, updated_on) VALUES (?, ?, NOW())"       // nolint:gosec
+	queryUpdateSettingsValue     = "UPDATE settings SET value = ?, updated_on = NOW() WHERE name = ?"          // nolint:gosec
+	queryGetAutoIncrement        = "SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_NAME = ?" // nolint:gosec
+	querySetAutoIncrement        = "ALTER TABLE %s AUTO_INCREMENT = %d"                                        // nolint:gosec
 )
 
 func (c *Model) DBGetSettings(settingName string) ([]models.Settings, error) {
@@ -40,6 +44,38 @@ func (c *Model) DBGetSettings(settingName string) ([]models.Settings, error) {
 		return nil, err
 	}
 	return settings, nil
+}
+
+func (c *Model) DBGetAutoIncrementValue(tableName string) (int, error) {
+	var autoIncrementValue []int
+	err := c.queryAndScan(queryGetAutoIncrement, func(rows *sql.Rows) error {
+		var row int
+		if err := rows.Scan(&row); err != nil {
+			return err
+		}
+		autoIncrementValue = append(autoIncrementValue, row)
+		return nil
+	}, tableName)
+
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return 0, err
+	}
+	return autoIncrementValue[0], nil
+}
+
+func (c *Model) DBSetAutoIncrementValue(tableName string, newValue int) error {
+	if newValue < 0 {
+		return fmt.Errorf("new value %d is less than 0", newValue)
+	}
+	result, err := c.execDML(fmt.Sprintf(querySetAutoIncrement, tableName, newValue))
+	if err != nil {
+		return fmt.Errorf("set auto increment value db err: %v", err)
+	}
+	_, err = result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rows affected err: %v", err)
+	}
+	return nil
 }
 
 func (c *Model) DBSettingsInsert(settingName, value string) error {
@@ -68,6 +104,25 @@ func (c *Model) DBSettingsUpdate(settingName, value string) error {
 	}
 	if affected > 0 {
 		return nil
+	}
+	return nil
+}
+
+func (c *Model) DBSetAutoIncrements() error {
+	for _, table := range []string{"users", "projects", "issues"} {
+		value, err := c.DBGetAutoIncrementValue(table)
+		if err != nil {
+			return fmt.Errorf("get auto increment db err: %v", err)
+		}
+		if value >= autoIncrementDefault {
+			log.Printf("Auto Increment for %s is %d\n", table, value)
+			continue
+		}
+
+		err = c.DBSetAutoIncrementValue(table, autoIncrementDefault)
+		if err != nil {
+			return fmt.Errorf("set auto increment db err: %v", err)
+		}
 	}
 	return nil
 }
