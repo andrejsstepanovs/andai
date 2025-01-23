@@ -133,7 +133,6 @@ func (s *Settings) validateStepContexts() error {
 				for _, context := range step.Context {
 					switch context {
 					case ContextTicket:
-					case ContextAll:
 					case ContextLastComment:
 					case ContextComments:
 					case ContextProject:
@@ -141,6 +140,7 @@ func (s *Settings) validateStepContexts() error {
 					case ContextChildren:
 					case ContextParent:
 					case ContextParents:
+					case ContextIssueTypes:
 					default:
 						return fmt.Errorf("issue %q state %q job (%d) does not have valid context %s", issueTypeName, stateName, k, context)
 					}

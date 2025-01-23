@@ -139,8 +139,8 @@ func BuildIssueTmpFile(
 			}
 			txt := fmt.Sprintf("<children_issues count=\"%d\">\n%s\n</children_issues>", len(childrenContext), strings.Join(childrenContext, "\n"))
 			parts = append(parts, txt)
-		case models.ContextAll:
-			// todo
+		case models.ContextIssueTypes:
+			panic("not implemented")
 		}
 	}
 

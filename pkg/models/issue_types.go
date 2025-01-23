@@ -25,8 +25,8 @@ const ContextParent = "parent"
 // ContextParents is a special context that matches the parents
 const ContextParents = "parents"
 
-// ContextAll is a special context that matches all contexts
-const ContextAll = "all"
+// ContextIssueTypes is a special context that explains what each issue represents
+const ContextIssueTypes = "issue_types"
 
 type IssueTypeName string
 
