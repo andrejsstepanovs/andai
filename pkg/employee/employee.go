@@ -155,7 +155,7 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 				return out, err
 			}
 			log.Printf("Created issue: %d\n", created.Id)
-			//break
+			break
 		}
 	case "bobik":
 		promptFile, err := utils.BuildPromptTmpFile(i.issue, step)
