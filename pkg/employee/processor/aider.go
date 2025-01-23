@@ -10,9 +10,14 @@ import (
 	"github.com/andrejsstepanovs/andai/pkg/models"
 )
 
+// AiderExecute executes the command and returns the output.
+// If contextFile is provided step.Prompt will be ignored. (don't worry, it should be part of contextFile).
+// If you want to use step.Prompt, provide empty string for contextFile.
 func AiderExecute(contextFile string, step models.Step) (exec.Output, error) {
-	log.Printf("Context file: %q\n", contextFile)
-	defer os.Remove(contextFile)
+	if contextFile != "" {
+		log.Printf("Context file: %q\n", contextFile)
+		defer os.Remove(contextFile)
+	}
 
 	options := exec.AiderCommand(contextFile, step)
 	output, err := exec.Exec(step.Command, options)
