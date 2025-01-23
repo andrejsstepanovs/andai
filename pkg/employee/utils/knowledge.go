@@ -56,9 +56,9 @@ func BuildIssueTmpFile(
 	parents []redmine.Issue,
 	children []redmine.Issue,
 	project models.Project,
+	issueTypes models.IssueTypes,
 	comments redminemodels.Comments,
 	step models.Step,
-	issueTypes models.IssueTypes,
 ) (string, error) {
 	parts := make([]string, 0)
 	for _, context := range step.Context {

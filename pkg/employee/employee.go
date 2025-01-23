@@ -106,9 +106,9 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 		i.parents,
 		i.children,
 		i.projectCfg,
+		i.issueTypes,
 		comments,
 		step,
-		issueTypes,
 	)
 	if err != nil {
 		log.Printf("Failed to build issue context tmp file: %v", err)
