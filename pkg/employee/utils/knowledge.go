@@ -171,7 +171,7 @@ func BuildIssueTmpFile(
 }
 
 func getCommentsContext(comments redminemodels.Comments) (string, error) {
-	promptTemplate := "{{ range .Comments }}\n" +
+	promptTemplate := "{{ range .Comments }}" +
 		"### Comment {{.Number}} (Created: {{.CreatedAt}})\n" +
 		"{{.Text}}" +
 		"{{ end }}"
@@ -194,7 +194,7 @@ func getIssueContext(issue redmine.Issue, issueTypes models.IssueTypes) (string,
 		"- ID: {{.Issue.Id}}\n" +
 		"- Issue Type: {{.IssueType.Name}})\n\n" +
 		"## Description\n" +
-		"{{.Issue.Description}}\n"
+		"{{.Issue.Description}}"
 
 	data := map[string]interface{}{
 		"Issue":     issue,
@@ -213,7 +213,7 @@ func getIssueContext(issue redmine.Issue, issueTypes models.IssueTypes) (string,
 func getProjectContext(project models.Project) (string, error) {
 	promptTemplate := "# {{.Project.Name}} (Identifier: {{.Project.Identifier}})\n\n" +
 		"## Description\n" +
-		"{{.Project.Description}}\n"
+		"{{.Project.Description}}"
 
 	data := map[string]interface{}{
 		"Project": project,
@@ -231,7 +231,7 @@ func getProjectContext(project models.Project) (string, error) {
 // todo use wiki content from db or api
 func getProjectWikiContext(project models.Project) (string, error) {
 	promptTemplate := "# Project Wiki page:\n" +
-		"{{.Project.Wiki}}\n"
+		"{{.Project.Wiki}}"
 
 	data := map[string]interface{}{
 		"Project": project,
