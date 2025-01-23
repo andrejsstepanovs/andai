@@ -7,6 +7,7 @@ import (
 
 	"github.com/andrejsstepanovs/andai/pkg/exec"
 	"github.com/andrejsstepanovs/andai/pkg/models"
+	"github.com/mattn/go-redmine"
 )
 
 func BobikExecute(promptFile string, step models.Step) (exec.Output, error) {
@@ -24,34 +25,38 @@ type answer struct {
 	Issues []answerIssues `json:"issues"`
 }
 
-func BobikCreateIssue(parentIssueID int, targetIssueTypeName models.IssueTypeName, promptFile string) (exec.Output, error) {
+func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, promptFile string) (exec.Output, []redmine.Issue, error) {
 	promptExtension := ""
 	var createIssues answer
+	var out exec.Output
 	tries := 4
 	for {
 		tries--
 		if tries == 0 {
-			return exec.Output{}, fmt.Errorf("failed to get issues from LLM")
+			return exec.Output{}, nil, fmt.Errorf("failed to get issues from LLM")
 		}
 		var err error
-		createIssues, promptExtension, err = getIssuesFromLLM(promptFile, targetIssueTypeName, promptExtension)
+		out, createIssues, promptExtension, err = getIssuesFromLLM(promptFile, targetIssueTypeName, promptExtension)
 		if err != nil {
-			return exec.Output{}, err
+			return exec.Output{}, nil, err
 		}
 		break
 	}
 
+	items := make([]redmine.Issue, 0)
 	for _, issue := range createIssues.Issues {
-
+		items = append(items, redmine.Issue{
+			Subject:     issue.Subject,
+			Description: issue.Description,
+		})
 	}
 
-	panic(1)
-	return out, nil
+	return out, items, nil
 }
 
 // getIssuesFromLLM returns issues from LLM
 // second string is LLM response json parsing error
-func getIssuesFromLLM(promptFile string, targetIssueTypeName models.IssueTypeName, promptExtension string) (answer, string, error) {
+func getIssuesFromLLM(promptFile string, targetIssueTypeName models.IssueTypeName, promptExtension string) (exec.Output, answer, string, error) {
 	example := answer{
 		Issues: []answerIssues{
 			{
@@ -76,7 +81,7 @@ func getIssuesFromLLM(promptFile string, targetIssueTypeName models.IssueTypeNam
 
 	jsonTxt, err := json.Marshal(example)
 	if err != nil {
-		return answer{}, "", err
+		return exec.Output{}, answer{}, "", err
 	}
 	exampleJson := string(jsonTxt)
 
@@ -112,13 +117,13 @@ func getIssuesFromLLM(promptFile string, targetIssueTypeName models.IssueTypeNam
 
 	out, err := exec.Exec("bobik", "zalando", "once", "llm", "quiet", "\""+prompt+"\"")
 	if err != nil {
-		return answer{}, "", err
+		return out, answer{}, "", err
 	}
 
 	result := answer{}
 	err = json.Unmarshal([]byte(out.Stdout), &result)
 	if err != nil {
-		return result, err.Error(), nil
+		return out, result, err.Error(), nil
 	}
-	return result, "", nil
+	return out, result, "", nil
 }

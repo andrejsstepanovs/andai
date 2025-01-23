@@ -17,6 +17,19 @@ const (
 	queryInsertTracker        = "INSERT INTO trackers (name, description, position, default_status_id) VALUES (?, ?, ?, ?)"
 )
 
+func (c *Model) DBGetTrackersByName(name string) (int, error) {
+	allTrackers, err := c.API().Trackers()
+	if err != nil {
+		return 0, fmt.Errorf("error redmine trackers: %v", err)
+	}
+	for _, tracker := range allTrackers {
+		if tracker.Name == name {
+			return tracker.Id, nil
+		}
+	}
+	return 0, fmt.Errorf("tracker %q not found", name)
+}
+
 func (c *Model) DBProjectTrackers(projectID int) ([]int, error) {
 	var trackerIDs []int
 	err := c.queryAndScan(queryGetProjectTrackers, func(rows *sql.Rows) error {

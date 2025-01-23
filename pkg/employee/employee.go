@@ -131,7 +131,30 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			return exec.Output{}, fmt.Errorf("unknown %q action: %q", step.Command, step.Action)
 		}
 	case "create-issues":
-		return processor.BobikCreateIssue(i.issue.Id, models.IssueTypeName(step.Action), contextFile)
+		out, issues, err := processor.BobikCreateIssue(models.IssueTypeName(step.Action), contextFile)
+		if err != nil {
+			return out, err
+		}
+		for _, issue := range issues {
+			issue.ProjectId = i.issue.Project.Id
+			issue.Project.Id = i.issue.Project.Id
+			issue.ParentId = i.issue.Id
+			issue.Parent = &redmine.Id{Id: i.issue.Id}
+			trackerID, err := i.model.DBGetTrackersByName(step.Action)
+			if err != nil {
+				log.Printf("Failed to get tracker by name: %v", err)
+				return out, err
+			}
+			issue.TrackerId = trackerID
+
+			created, err := i.model.CreateIssue(issue)
+			if err != nil {
+				log.Printf("Failed to create issue: %v", err)
+				return out, err
+			}
+			log.Printf("Created issue: %d\n", created.Id)
+			//break
+		}
 	case "bobik":
 		promptFile, err := utils.BuildPromptTmpFile(i.issue, step)
 		if err != nil {
@@ -141,6 +164,8 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 	default:
 		return exec.Output{}, fmt.Errorf("unknown step command: %q", step.Command)
 	}
+
+	return exec.Output{}, nil
 }
 
 func (i *Employee) addHistory(step models.Step) models.StepPrompt {

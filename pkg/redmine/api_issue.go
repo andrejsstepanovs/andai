@@ -247,3 +247,11 @@ func (c *Model) Transition(issue redmine.Issue, nextStatus redmine.IssueStatus) 
 	}
 	return nil
 }
+
+func (c *Model) CreateIssue(issue redmine.Issue) (redmine.Issue, error) {
+	created, err := c.API().CreateIssue(issue)
+	if err != nil {
+		return redmine.Issue{}, fmt.Errorf("error redmine issue comment: %v", err)
+	}
+	return *created, nil
+}
