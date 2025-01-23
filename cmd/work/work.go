@@ -59,6 +59,11 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 					return fmt.Errorf("failed to get redmine parent issue err: %v", err)
 				}
 
+				parents, err := model.APIGetAllParents(issue)
+				if err != nil {
+					return fmt.Errorf("failed to get redmine all parent issues err: %v", err)
+				}
+
 				children, err := model.APIGetChildren(issue)
 				if err != nil {
 					return fmt.Errorf("failed to get redmine issue relations err: %v", err)
@@ -93,6 +98,7 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 					llm,
 					issue,
 					parent,
+					parents,
 					children,
 					*project,
 					projectConfig,

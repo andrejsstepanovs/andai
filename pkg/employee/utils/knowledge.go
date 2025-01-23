@@ -53,6 +53,7 @@ func BuildPromptTmpFile(issue redmine.Issue, step models.Step) (string, error) {
 func BuildIssueTmpFile(
 	issue redmine.Issue,
 	parent *redmine.Issue,
+	parents []redmine.Issue,
 	children []redmine.Issue,
 	project models.Project,
 	comments redminemodels.Comments,
@@ -69,6 +70,7 @@ func BuildIssueTmpFile(
 					log.Printf("Failed to get last comment context: %v", err)
 					return "", err
 				}
+				commentsContext = fmt.Sprintf("<comment>\n%s\n</comment>", commentsContext)
 				parts = append(parts, commentsContext)
 			}
 		case models.ContextComments:
@@ -77,6 +79,7 @@ func BuildIssueTmpFile(
 				log.Printf("Failed to get comments context: %v", err)
 				return "", err
 			}
+			commentsContext = fmt.Sprintf("<comments>\n%s\n</comments>", commentsContext)
 			parts = append(parts, commentsContext)
 		case models.ContextTicket:
 			issueContext, err := getIssueContext(issue)
@@ -84,6 +87,7 @@ func BuildIssueTmpFile(
 				log.Printf("Failed to get issue context: %v", err)
 				return "", err
 			}
+			issueContext = fmt.Sprintf("<current_issue>\n%s\n</current_issue>", issueContext)
 			parts = append(parts, issueContext)
 		case models.ContextProject:
 			issueContext, err := getProjectContext(project)
@@ -91,6 +95,7 @@ func BuildIssueTmpFile(
 				log.Printf("Failed to get project context: %v", err)
 				return "", err
 			}
+			issueContext = fmt.Sprintf("<project>\n%s\n</project>", issueContext)
 			parts = append(parts, issueContext)
 		case models.ContextProjectWiki:
 			issueContext, err := getProjectWikiContext(project)
@@ -98,6 +103,7 @@ func BuildIssueTmpFile(
 				log.Printf("Failed to get project wiki context: %v", err)
 				return "", err
 			}
+			issueContext = fmt.Sprintf("<project_wiki>\n%s\n</project_wiki>", issueContext)
 			parts = append(parts, issueContext)
 		case models.ContextParent:
 			if parent != nil && parent.Id != 0 {
@@ -106,11 +112,21 @@ func BuildIssueTmpFile(
 					log.Printf("Failed to get project wiki context: %v", err)
 					return "", err
 				}
-				issueContext = fmt.Sprintf("# Parent Issue\n%s", issueContext)
+				issueContext = fmt.Sprintf("<parent_issue>\n%s\n</parent_issue>", issueContext)
 				parts = append(parts, issueContext)
 			}
 		case models.ContextParents:
-			// todo
+			parentsContext := make([]string, 0)
+			for _, p := range parents {
+				parentIssueContext, err := getIssueContext(p)
+				if err != nil {
+					log.Printf("Failed to get parent issue context: %v", err)
+					return "", err
+				}
+				parentsContext = append(parentsContext, fmt.Sprintf("<parent_issue>\n%s\n</parent_issue>", parentIssueContext))
+			}
+			txt := fmt.Sprintf("<parent_issues count=\"%d\">\n%s\n</parent_issues>", len(parentsContext), strings.Join(parentsContext, "\n"))
+			parts = append(parts, txt)
 		case models.ContextChildren:
 			childrenContext := make([]string, 0)
 			for _, child := range children {
@@ -119,9 +135,9 @@ func BuildIssueTmpFile(
 					log.Printf("Failed to get child issue context: %v", err)
 					return "", err
 				}
-				childrenContext = append(childrenContext, childIssueContext)
+				childrenContext = append(childrenContext, fmt.Sprintf("<child_issue>\n%s\n</child_issue>", childIssueContext))
 			}
-			txt := fmt.Sprintf("# Children Issues (%d)\n%s", len(childrenContext), strings.Join(childrenContext, "\n\n"))
+			txt := fmt.Sprintf("<children_issues count=\"%d\">\n%s\n</children_issues>", len(childrenContext), strings.Join(childrenContext, "\n"))
 			parts = append(parts, txt)
 		case models.ContextAll:
 			// todo
