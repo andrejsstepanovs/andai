@@ -54,15 +54,9 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 
 			log.Printf("FOUND WORKABLE ISSUES (%d)", len(issues))
 			for _, issue := range issues {
-
-				var parent *redmine.Issue
-				if issue.ParentId != 0 {
-					var errGetParent error
-					parent, errGetParent = model.API().Issue(issue.ParentId)
-					if errGetParent != nil {
-						return fmt.Errorf("failed to get redmine parent issue err: %v", errGetParent)
-					}
-					log.Printf("Parent Issue %d: %s", parent.Id, parent.Subject)
+				parent, err := model.APIGetParent(issue)
+				if err != nil {
+					return fmt.Errorf("failed to get redmine parent issue err: %v", err)
 				}
 
 				children, err := model.APIGetChildren(issue)

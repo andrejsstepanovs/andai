@@ -16,20 +16,59 @@ const (
 	RelationBlocks = "blocks"
 )
 
+// APIGetChildren returns first level children of the issue. Children are not dependencies on each other.
 func (c *Model) APIGetChildren(issue redmine.Issue) ([]redmine.Issue, error) {
-	//for _, relation := range relations {
-	//	if relation.RelationType == intredmine.RelationBlocks {
-	//		child, errGetChild := model.API().Issue(relation.IssueId)
-	//		if errGetChild != nil {
-	//			return fmt.Errorf("failed to get redmine child issue err: %v", errGetChild)
-	//		}
-	//		log.Printf("Child Issue %d: %s", child.Id, child.Subject)
-	//		children = append(children, *child)
-	//	}
-	//}
+	projectIssues, err := c.API().IssuesOf(issue.ProjectId)
+	if err != nil {
+		return nil, fmt.Errorf("error redmine issues of project: %v", err)
+	}
+
 	children := make([]redmine.Issue, 0)
+	for _, projectIssue := range projectIssues {
+		if projectIssue.Id == issue.Id {
+			continue
+		}
+		if projectIssue.ParentId == issue.Id {
+			children = append(children, projectIssue)
+		}
+	}
+
 	return children, nil
 }
+
+func (c *Model) APIGetParent(issue redmine.Issue) (parent *redmine.Issue, err error) {
+	if issue.ParentId != 0 {
+		parent, err = c.API().Issue(issue.ParentId)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get redmine parent issue err: %v", err)
+		}
+		log.Printf("Parent Issue %d: %s", parent.Id, parent.Subject)
+	}
+	return parent, nil
+}
+
+func (c *Model) APIGetAllParents(issue redmine.Issue) ([]redmine.Issue, error) {
+	var parents []redmine.Issue
+	maxDeep := 50
+	for {
+		maxDeep--
+		if maxDeep == 0 {
+			return nil, fmt.Errorf("max deep reached")
+		}
+		parent, err := c.APIGetParent(issue)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get redmine parent issue err: %v", err)
+		}
+		if parent == nil {
+			break
+		}
+		parents = append(parents, *parent)
+		issue = *parent
+	}
+
+	return parents, nil
+}
+
 func (c *Model) APIGetWorkableIssues(workflow models.Workflow) ([]redmine.Issue, error) {
 	projects, err := c.APIGetProjects()
 	if err != nil {
