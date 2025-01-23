@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newIdAutoIncrementCommand(redmine *redmine.Model) *cobra.Command {
+func newIDAutoIncrementCommand(redmine *redmine.Model) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "auto-increments",
 		Short: "Changes issue, project, user auto increment number so its easier to identify and work with.",

@@ -19,7 +19,7 @@ func Cmd(deps *deps.AppDependencies, settings models.Settings) *cobra.Command {
 		newGetTokenCommand(deps.Model),
 		newProjectsCommand(deps.Model, settings.Projects),
 		newWorkflowCommand(deps.Model, settings.Workflow),
-		newIdAutoIncrementCommand(deps.Model),
+		newIDAutoIncrementCommand(deps.Model),
 	)
 
 	return cmd
