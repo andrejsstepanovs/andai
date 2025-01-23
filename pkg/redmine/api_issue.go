@@ -16,6 +16,20 @@ const (
 	RelationBlocks = "blocks"
 )
 
+func (c *Model) APIGetChildren(issue redmine.Issue) ([]redmine.Issue, error) {
+	//for _, relation := range relations {
+	//	if relation.RelationType == intredmine.RelationBlocks {
+	//		child, errGetChild := model.API().Issue(relation.IssueId)
+	//		if errGetChild != nil {
+	//			return fmt.Errorf("failed to get redmine child issue err: %v", errGetChild)
+	//		}
+	//		log.Printf("Child Issue %d: %s", child.Id, child.Subject)
+	//		children = append(children, *child)
+	//	}
+	//}
+	children := make([]redmine.Issue, 0)
+	return children, nil
+}
 func (c *Model) APIGetWorkableIssues(workflow models.Workflow) ([]redmine.Issue, error) {
 	projects, err := c.APIGetProjects()
 	if err != nil {

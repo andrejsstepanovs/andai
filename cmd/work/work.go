@@ -65,6 +65,11 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 					log.Printf("Parent Issue %d: %s", parent.Id, parent.Subject)
 				}
 
+				children, err := model.APIGetChildren(issue)
+				if err != nil {
+					return fmt.Errorf("failed to get redmine issue relations err: %v", err)
+				}
+
 				log.Printf("Issue %d: %s", issue.Id, issue.Subject)
 				project, err := model.API().Project(issue.Project.Id)
 				if err != nil {
@@ -94,6 +99,7 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 					llm,
 					issue,
 					parent,
+					children,
 					*project,
 					projectConfig,
 					wb,

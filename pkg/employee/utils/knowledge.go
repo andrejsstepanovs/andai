@@ -50,7 +50,14 @@ func BuildPromptTmpFile(issue redmine.Issue, step models.Step) (string, error) {
 	return tempFile.Name(), nil
 }
 
-func BuildIssueTmpFile(issue redmine.Issue, parent *redmine.Issue, project models.Project, comments redminemodels.Comments, step models.Step) (string, error) {
+func BuildIssueTmpFile(
+	issue redmine.Issue,
+	parent *redmine.Issue,
+	children []redmine.Issue,
+	project models.Project,
+	comments redminemodels.Comments,
+	step models.Step,
+) (string, error) {
 	parts := make([]string, 0)
 	for _, context := range step.Context {
 		switch context {
@@ -105,7 +112,17 @@ func BuildIssueTmpFile(issue redmine.Issue, parent *redmine.Issue, project model
 		case models.ContextParents:
 			// todo
 		case models.ContextChildren:
-			// todo
+			childrenContext := make([]string, 0)
+			for _, child := range children {
+				childIssueContext, err := getIssueContext(child)
+				if err != nil {
+					log.Printf("Failed to get child issue context: %v", err)
+					return "", err
+				}
+				childrenContext = append(childrenContext, childIssueContext)
+			}
+			txt := fmt.Sprintf("# Children Issues (%d)\n%s", len(childrenContext), strings.Join(childrenContext, "\n\n"))
+			parts = append(parts, txt)
 		case models.ContextAll:
 			// todo
 		}
