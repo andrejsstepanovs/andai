@@ -50,7 +50,7 @@ func BuildPromptTmpFile(issue redmine.Issue, step models.Step) (string, error) {
 	return tempFile.Name(), nil
 }
 
-func BuildIssueTmpFile(
+func BuildIssueKnowledgeTmpFile(
 	issue redmine.Issue,
 	parent *redmine.Issue,
 	parents []redmine.Issue,
@@ -160,9 +160,16 @@ func BuildIssueTmpFile(
 		}
 	}
 
+	prompt := step.Prompt.ForCli()
+	if prompt != "" {
+		txt := fmt.Sprintf("# Your task:\n%s", prompt)
+		parts = append(parts, txt)
+	}
+
 	content := strings.Join(parts, "\n\n")
 	fmt.Println("\n##############\n", content, "\n##############\n")
-	panic(1)
+
+	//panic(1)
 
 	tempFile, err := os.CreateTemp("", fmt.Sprintf(tmpFile, issue.Id))
 	if err != nil {

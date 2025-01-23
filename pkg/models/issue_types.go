@@ -77,7 +77,7 @@ func (p *StepPrompt) ForCli() string {
 	for search, replace := range searchReplace {
 		prompt = strings.ReplaceAll(prompt, search, replace)
 	}
-	return prompt
+	return strings.TrimSpace(prompt)
 }
 
 func (c *Contexts) Has(name string) bool {

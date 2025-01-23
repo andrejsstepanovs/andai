@@ -100,7 +100,7 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 		return exec.Output{}, err
 	}
 
-	contextFile, err := utils.BuildIssueTmpFile(
+	contextFile, err := utils.BuildIssueKnowledgeTmpFile(
 		i.issue,
 		i.parent,
 		i.parents,
