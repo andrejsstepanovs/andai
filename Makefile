@@ -135,6 +135,7 @@ docker: build.linux ## Build docker image
 
 .PHONY: configure
 configure: build
+	PROJECT=$(PROJECT) $(BUILD_PATH)/andai validate config && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping db && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup admin && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup settings && \
@@ -147,18 +148,18 @@ configure: build
 # make start PROJECT=lco
 .PHONY: start
 start: build
-	PROJECT=$(PROJECT) $(BUILD_PATH)/andai
-	docker-compose up -d redmine-$(PROJECT)
-	while ! PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping db 2>/dev/null; do sleep 2; done
-	@echo "DB Ready (but probably not yet fully configured)"
-	sleep 10
-	@echo "Configuring... (ignore errors for a while)"
-	sleep 2
-	while ! PROJECT=$(PROJECT) $(MAKE) configure; do sleep 2; done
-	@echo "Start Success"
-	@echo "##################################################"
-	@echo "Redmine Project URLs:"
-	@echo "http://localhost:10083/projects/$(PROJECT)"
+	PROJECT=$(PROJECT) $(BUILD_PATH)/andai validate config && \
+	docker-compose -f docker-compose.yaml -f .andai.lco.yaml up -d redmine-$(PROJECT) && \
+	while ! PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping db 2>/dev/null; do sleep 2; done && \
+	@echo "DB Ready (but probably not yet fully configured)" && \
+	sleep 10 && \
+	@echo "Configuring... (ignore errors for a while)" && \
+	sleep 2 && \
+	while ! PROJECT=$(PROJECT) $(MAKE) configure; do sleep 2; done && \
+	@echo "Start Success" && \
+	@echo "##################################################" && \
+	@echo "Redmine Project URLs:" && \
+	@echo "http://localhost:10083/projects/$(PROJECT)" && \
 	@echo "http://localhost:10083/projects/$(PROJECT)/issues"
 
 .PHONY: rm

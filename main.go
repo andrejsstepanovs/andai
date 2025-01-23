@@ -7,6 +7,7 @@ import (
 
 	"github.com/andrejsstepanovs/andai/cmd/ping"
 	"github.com/andrejsstepanovs/andai/cmd/setup"
+	"github.com/andrejsstepanovs/andai/cmd/validate"
 	"github.com/andrejsstepanovs/andai/cmd/work"
 	"github.com/andrejsstepanovs/andai/pkg/deps"
 	"github.com/andrejsstepanovs/andai/pkg/models"
@@ -45,6 +46,7 @@ func main() {
 	}
 
 	rootCmd.AddCommand(
+		validate.SetupValidateCmd(settings),
 		ping.SetupPingCmd(dependencies),
 		setup.Cmd(dependencies, settings),
 		work.Cmd(dependencies, settings),
@@ -99,12 +101,6 @@ func loadSettings(filePath string) (models.Settings, error) {
 	err = yaml.Unmarshal(content, &settings)
 	if err != nil {
 		log.Println("Error unmarshaling YAML:", err)
-		return models.Settings{}, err
-	}
-
-	err = settings.Validate()
-	if err != nil {
-		log.Println("Error validating settings:", err)
 		return models.Settings{}, err
 	}
 
