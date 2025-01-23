@@ -45,22 +45,22 @@ services:
       #- ./repositories:/var/repositories  # This will be overridden in each instance
     networks:
       - redmine_network
-#
-## LCO project
-#  redmine-lco:
-#    <<: *redmine_base
-#    environment:
-#      - DB_HOST=database-lco
-#    volumes:
-##      - ./data/redmine/data:/home/redmine/data
-#      - /home/astepanovs/rubik/lounge-campaign-orchestrator:/var/repositories/lco
-#    depends_on:
-#      - database-lco
-#
-#  database-lco:
-#    <<: *database_base
-#    volumes:
-#      - database_data_lco:/var/lib/mysql
+
+# LCO project
+  database-lco:
+    <<: *database_base
+    volumes:
+      - database_data_lco:/var/lib/mysql
+
+  redmine-lco:
+    <<: *redmine_base
+    environment:
+      - DB_HOST=database-lco
+    volumes:
+#      - ./data/redmine/data:/home/redmine/data
+      - /home/astepanovs/rubik/lounge-campaign-orchestrator:/var/repositories/lco
+    depends_on:
+      - database-lco
 
 #  dev:
 #    build:
