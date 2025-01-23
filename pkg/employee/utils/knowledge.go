@@ -83,7 +83,7 @@ func BuildIssueTmpFile(
 			commentsContext = fmt.Sprintf("<comments>\n%s\n</comments>", commentsContext)
 			parts = append(parts, commentsContext)
 		case models.ContextTicket:
-			issueContext, err := getIssueContext(issue)
+			issueContext, err := getIssueContext(issue, issueTypes)
 			if err != nil {
 				log.Printf("Failed to get current issue context: %v", err)
 				return "", err
@@ -108,7 +108,7 @@ func BuildIssueTmpFile(
 			parts = append(parts, issueContext)
 		case models.ContextParent:
 			if parent != nil && parent.Id != 0 {
-				issueContext, err := getIssueContext(*parent)
+				issueContext, err := getIssueContext(*parent, issueTypes)
 				if err != nil {
 					log.Printf("Failed to get parent issue context: %v", err)
 					return "", err
@@ -119,7 +119,7 @@ func BuildIssueTmpFile(
 		case models.ContextParents:
 			parentsContext := make([]string, 0)
 			for _, p := range parents {
-				parentIssueContext, err := getIssueContext(p)
+				parentIssueContext, err := getIssueContext(p, issueTypes)
 				if err != nil {
 					log.Printf("Failed to get single parent issue context: %v", err)
 					return "", err
@@ -131,7 +131,7 @@ func BuildIssueTmpFile(
 		case models.ContextChildren:
 			childrenContext := make([]string, 0)
 			for _, child := range children {
-				childIssueContext, err := getIssueContext(child)
+				childIssueContext, err := getIssueContext(child, issueTypes)
 				if err != nil {
 					log.Printf("Failed to get single child issue context: %v", err)
 					return "", err
@@ -188,13 +188,16 @@ func getCommentsContext(comments redminemodels.Comments) (string, error) {
 	return buf.String(), err
 }
 
-func getIssueContext(issue redmine.Issue) (string, error) {
-	promptTemplate := "# {{.Issue.Subject}} (ID: {{.Issue.Id}})\n\n" +
+func getIssueContext(issue redmine.Issue, issueTypes models.IssueTypes) (string, error) {
+	promptTemplate := "# Title: {{.Issue.Subject}}\n" +
+		"- ID: {{.Issue.Id}}\n" +
+		"- Issue Type: {{.IssueType.Name}})\n\n" +
 		"## Description\n" +
 		"{{.Issue.Description}}\n"
 
 	data := map[string]interface{}{
-		"Issue": issue,
+		"Issue":     issue,
+		"IssueType": issueTypes.Get(models.IssueTypeName(issue.Tracker.Name)),
 	}
 
 	tmpl, err := template.New("Issue").Parse(promptTemplate)
