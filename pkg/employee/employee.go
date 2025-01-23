@@ -3,6 +3,7 @@ package employee
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/andrejsstepanovs/andai/pkg/employee/processor"
@@ -112,6 +113,11 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 	)
 	if err != nil {
 		log.Printf("Failed to build issue context tmp file: %v", err)
+	}
+
+	if contextFile != "" {
+		log.Printf("Context file: %q\n", contextFile)
+		defer os.Remove(contextFile)
 	}
 
 	switch step.Command {

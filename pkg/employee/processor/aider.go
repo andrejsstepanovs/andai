@@ -3,7 +3,6 @@ package processor
 import (
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/andrejsstepanovs/andai/pkg/exec"
@@ -16,7 +15,6 @@ import (
 func AiderExecute(contextFile string, step models.Step) (exec.Output, error) {
 	if contextFile != "" {
 		log.Printf("Context file: %q\n", contextFile)
-		defer os.Remove(contextFile)
 	}
 
 	options := exec.AiderCommand(contextFile, step)

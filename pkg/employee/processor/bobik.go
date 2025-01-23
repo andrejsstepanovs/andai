@@ -51,11 +51,16 @@ func BobikCreateIssue(parentIssueID int, targetIssueTypeName models.IssueTypeNam
 	}
 	exampleJson := string(json)
 
-	format := "Use this file %s as a question and answer!" +
-		"You need to answer using raw JSON format \n```json\n%s\n```\n\n" +
+	format := "Answer with solution that is stated in the file %s !" +
+		"You need to answer using raw JSON. Expected json format example data: \n```json\n%s\n```\n\n" +
+		"You keep track on task dependencies on other tasks you create. " +
+		"It is super important that tasks do not have cyclomatic dependencies! i.e. no 2 tasks depend on each other." +
+		//"Do not afraid to extend Description field with other necessary information that will help developer to code this solution." +
 		"It is really important that answer contains only raw JSON."
 
-	out, err := exec.Exec("bobik", "zalando", "once", "llm", "quiet", fmt.Sprintf(format, promptFile, exampleJson))
+	txt := fmt.Sprintf(format, promptFile, exampleJson)
+	fmt.Println(txt)
+	out, err := exec.Exec("bobik", "zalando", "once", "llm", "quiet", txt)
 	if err != nil {
 		return exec.Output{}, err
 	}
