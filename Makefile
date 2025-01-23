@@ -149,7 +149,7 @@ configure: build
 .PHONY: start
 start: build
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai validate config && \
-	docker-compose -f docker-compose.yaml -f docker-compose.lco.yaml up -d redmine-$(PROJECT) && \
+	docker-compose -f docker-compose.yaml up -d redmine-$(PROJECT) && \
 	while ! PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping db 2>/dev/null; do sleep 2; done && \
 	@echo "DB Ready (but probably not yet fully configured)" && \
 	sleep 10 && \
