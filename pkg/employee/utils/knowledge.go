@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"text/template"
 
 	"github.com/andrejsstepanovs/andai/pkg/models"
@@ -50,65 +51,37 @@ func BuildPromptTmpFile(issue redmine.Issue, step models.Step) (string, error) {
 }
 
 func BuildIssueTmpFile(issue redmine.Issue, comments redminemodels.Comments, step models.Step) (string, error) {
-	if !step.Context.Has(models.ContextComments) &&
-		!step.Context.Has(models.ContextLastComment) &&
-		!step.Context.Has(models.ContextTicket) {
-		return "", nil
-	}
-
-	var err error
-	if step.Context.Has(models.ContextLastComment) {
-		if err != nil {
-			log.Printf("Failed to get last comment: %v", err)
-			return "", err
+	parts := make([]string, 0)
+	for _, context := range step.Context {
+		switch context {
+		case models.ContextLastComment:
+			if len(comments) > 0 {
+				c := comments[len(comments)-1]
+				commentsContext, err := getCommentsContext(redminemodels.Comments{c})
+				if err != nil {
+					log.Printf("Failed to get comments context: %v", err)
+					return "", err
+				}
+				parts = append(parts, commentsContext)
+			}
+		case models.ContextComments:
+			commentsContext, err := getCommentsContext(comments)
+			if err != nil {
+				log.Printf("Failed to get comments context: %v", err)
+				return "", err
+			}
+			parts = append(parts, commentsContext)
+		case models.ContextTicket:
+			issueContext, err := getIssueContext(issue)
+			if err != nil {
+				log.Printf("Failed to get issue context: %v", err)
+				return "", err
+			}
+			parts = append(parts, issueContext)
 		}
-		if len(comments) > 0 {
-			comments = redminemodels.Comments{comments[len(comments)-1]}
-			comments[0].Number = 1
-		}
-	} else if !step.Context.Has(models.ContextComments) {
-		comments = nil
 	}
 
-	var promptTemplate string
-	if step.Context.Has(models.ContextTicket) {
-		promptTemplate = "# {{.Issue.Subject}} (ID: {{.Issue.Id}})\n\n" +
-			"## Description\n" +
-			"{{.Issue.Description}}\n\n" +
-			"{{ if .Comments }}" +
-			"## Comments:\n" +
-			"{{ range .Comments }}\n" +
-			"### Comment {{.Number}} (Created: {{.CreatedAt}})\n" +
-			"{{.Text}}\n" +
-			"{{ end }}" +
-			"{{ end }}\n\n" +
-			"# Your Task:\n{{.Step.Prompt}}"
-	} else {
-		promptTemplate = "" +
-			"{{ range .Comments }}\n" +
-			"### Comment {{.Number}} (Created: {{.CreatedAt}})\n" +
-			"{{.Text}}" +
-			"{{ end }}"
-	}
-
-	data := map[string]interface{}{
-		"Issue":       issue,
-		"Title":       issue.Subject,
-		"Description": issue.Description,
-		"Comments":    comments,
-		"Step":        step,
-	}
-
-	tmpl, err := template.New("JiraIssue").Parse(promptTemplate)
-	if err != nil {
-		return "", err
-	}
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, data)
-	if err != nil {
-		return "", err
-	}
-	content := buf.String()
+	content := strings.Join(parts, "\n\n")
 	//fmt.Println("\n##############\n", content, "\n##############\n")
 
 	tempFile, err := os.CreateTemp("", fmt.Sprintf(tmpFile, issue.Id))
@@ -124,4 +97,41 @@ func BuildIssueTmpFile(issue redmine.Issue, comments redminemodels.Comments, ste
 	defer tempFile.Close()
 
 	return tempFile.Name(), nil
+}
+
+func getCommentsContext(comments redminemodels.Comments) (string, error) {
+	promptTemplate := "{{ range .Comments }}\n" +
+		"### Comment {{.Number}} (Created: {{.CreatedAt}})\n" +
+		"{{.Text}}" +
+		"{{ end }}"
+
+	data := map[string]interface{}{
+		"Comments": comments,
+	}
+
+	tmpl, err := template.New("Comments").Parse(promptTemplate)
+	if err != nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, data)
+	return buf.String(), err
+}
+
+func getIssueContext(issue redmine.Issue) (string, error) {
+	promptTemplate := "# {{.Issue.Subject}} (ID: {{.Issue.Id}})\n\n" +
+		"## Description\n" +
+		"{{.Issue.Description}}\n"
+
+	data := map[string]interface{}{
+		"Issue": issue,
+	}
+
+	tmpl, err := template.New("Issue").Parse(promptTemplate)
+	if err != nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, data)
+	return buf.String(), err
 }
