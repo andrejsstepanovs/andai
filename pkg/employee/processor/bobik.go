@@ -3,11 +3,13 @@ package processor
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
+	"log"
 
+	"github.com/andrejsstepanovs/andai/pkg/employee/utils"
 	"github.com/andrejsstepanovs/andai/pkg/exec"
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	"github.com/mattn/go-redmine"
+	"github.com/teilomillet/gollm"
 )
 
 func BobikExecute(promptFile string, step models.Step) (exec.Output, error) {
@@ -25,7 +27,12 @@ type answer struct {
 	Issues []answerIssues `json:"issues"`
 }
 
-func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, promptFile string) (exec.Output, []redmine.Issue, error) {
+func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile string) (exec.Output, []redmine.Issue, error) {
+	taskPrompt, err := getTaskPrompt(targetIssueTypeName)
+	if err != nil {
+		return exec.Output{}, nil, err
+	}
+
 	promptExtension := ""
 	var createIssues answer
 	var out exec.Output
@@ -35,8 +42,12 @@ func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, promptFile strin
 		if tries == 0 {
 			return exec.Output{}, nil, fmt.Errorf("failed to get issues from LLM")
 		}
-		var err error
-		out, createIssues, promptExtension, err = getIssuesFromLLM(promptFile, targetIssueTypeName, promptExtension)
+
+		out, createIssues, promptExtension, err = getIssuesFromLLM(
+			knowledgeFile,
+			taskPrompt,
+			promptExtension,
+		)
 		if err != nil {
 			return exec.Output{}, nil, err
 		}
@@ -55,8 +66,7 @@ func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, promptFile strin
 }
 
 // getIssuesFromLLM returns issues from LLM
-// second string is LLM response json parsing error
-func getIssuesFromLLM(promptFile string, targetIssueTypeName models.IssueTypeName, promptExtension string) (exec.Output, answer, string, error) {
+func getTaskPrompt(targetIssueTypeName models.IssueTypeName) (string, error) {
 	example := answer{
 		Issues: []answerIssues{
 			{
@@ -81,49 +91,56 @@ func getIssuesFromLLM(promptFile string, targetIssueTypeName models.IssueTypeNam
 
 	jsonTxt, err := json.Marshal(example)
 	if err != nil {
-		return exec.Output{}, answer{}, "", err
+		return "", err
 	}
 	exampleJson := string(jsonTxt)
 
-	format := "Answer with solution that is stated in the file %s ! " +
-		"You need to answer using raw JSON. Expected json format example data: ```%s``` " +
-		"Keep track on task dependencies on other tasks you create. " +
-		"It is super important that tasks do not have cyclomatic dependencies! i.e. no 2 tasks depend on each other. " +
-		//"Do not afraid to extend Description field with other necessary information that will help developer to code this solution." +
-		"It is really important that answer contains only raw JSON with tags: issues that contains issue type: %s elements. " +
+	format := "You need to answer using raw JSON. Expected json format example data:\n" +
+		"```json\n%s\n```\n" +
+		"Keep track on task dependencies on other tasks you create.\n" +
+		"It is super important that tasks do not have cyclomatic dependencies! i.e. no 2 tasks depend on each other.\n" +
+		"It is really important that answer contains only raw JSON with tags: " +
+		"issues that contains issue type: **%s** elements.\n" +
 		"Each element should contain: number_int, subject, " +
-		"description (contains detailed explanation what needs to be achieved. " +
-		"Use \"# Acceptance Criteria\" to define exact points), blocked_by_numbers (array of integers)." +
-		"Do not use any other tags in JSON. " +
+		"description (contains detailed explanation what needs to be achieved.\n" +
+		"Use \"# Acceptance Criteria\" to define exact points), blocked_by_numbers (array of integers).\n" +
+		"Do not use any other tags in JSON.\n" +
 		"Do not create tasks that are out of scope of current issue requirements."
 
-	prompt := fmt.Sprintf(format, promptFile, exampleJson, targetIssueTypeName)
+	taskPrompt := fmt.Sprintf(format, exampleJson, targetIssueTypeName)
+	return taskPrompt, err
+}
 
+// second string is LLM response json parsing error
+func getIssuesFromLLM(knowledgeFile string, taskPrompt string, promptExtension string) (exec.Output, answer, string, error) {
 	if promptExtension != "" {
-		format = "%s You failed last time with error: %s. Try again and be more careful this time!"
-		prompt = fmt.Sprintf(format, prompt, promptExtension)
+		format := "%s\n\n\nYou failed last time with error: %s.\n" +
+			"Try again and be more careful this time!"
+		taskPrompt = fmt.Sprintf(format, taskPrompt, promptExtension)
+	}
+	taskFile, err := utils.BuildPromptTextTmpFile(taskPrompt)
+	if err != nil {
+		log.Printf("Failed to build prompt tmp file: %v", err)
+		return exec.Output{}, answer{}, "", err
 	}
 
-	searchReplace := map[string]string{
-		`"`:  `\"`,
-		`''`: `\'`,
-		"\n": ` `,
-	}
-	for search, replace := range searchReplace {
-		prompt = strings.ReplaceAll(prompt, search, replace)
-	}
-	prompt = strings.TrimSpace(prompt)
-	//fmt.Println(prompt)
-
-	out, err := exec.Exec("bobik", "zalando", "once", "llm", "quiet", "\""+prompt+"\"")
+	format := "Use knowledge file %s and your task file %s to form a response. Answer with raws JSON!"
+	prompt := fmt.Sprintf(format, knowledgeFile, taskFile)
+	//prompt = fmt.Sprintf("\"%s\"", prompt)
+	out, err := exec.Exec("bobik", "zalando", "once", "llm", "quiet", prompt)
 	if err != nil {
 		return out, answer{}, "", err
 	}
 
-	result := answer{}
-	err = json.Unmarshal([]byte(out.Stdout), &result)
+	picked := answer{}
+	jojo := out.Stdout
+	err = json.Unmarshal([]byte(jojo), &picked)
 	if err != nil {
-		return out, result, err.Error(), nil
+		jojo = gollm.CleanResponse(jojo)
+		err = json.Unmarshal([]byte(jojo), &picked)
+		if err != nil {
+			return out, picked, err.Error(), nil
+		}
 	}
-	return out, result, "", nil
+	return out, picked, "", nil
 }

@@ -17,6 +17,10 @@ const (
 	tmpFile = "andai-%d-*.md"
 )
 
+func BuildPromptTextTmpFile(content string) (string, error) {
+
+}
+
 func BuildPromptTmpFile(issue redmine.Issue, step models.Step) (string, error) {
 	promptTemplate := "{{.Step.Prompt}}"
 

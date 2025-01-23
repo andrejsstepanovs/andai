@@ -131,6 +131,13 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			return exec.Output{}, fmt.Errorf("unknown %q action: %q", step.Command, step.Action)
 		}
 	case "create-issues":
+		trackerID, err := i.model.DBGetTrackersByName(step.Action)
+		if err != nil {
+			log.Printf("Failed to get tracker by name: %v", err)
+			return exec.Output{}, err
+		}
+		fmt.Printf("Need to create: %q Tracker ID: %d", step.Action, trackerID)
+
 		out, issues, err := processor.BobikCreateIssue(models.IssueTypeName(step.Action), contextFile)
 		if err != nil {
 			return out, err
@@ -140,11 +147,6 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			issue.Project.Id = i.issue.Project.Id
 			issue.ParentId = i.issue.Id
 			issue.Parent = &redmine.Id{Id: i.issue.Id}
-			trackerID, err := i.model.DBGetTrackersByName(step.Action)
-			if err != nil {
-				log.Printf("Failed to get tracker by name: %v", err)
-				return out, err
-			}
 			issue.TrackerId = trackerID
 
 			created, err := i.model.CreateIssue(issue)
