@@ -17,7 +17,7 @@ const JournalIssueType = "Issue"
 
 func (c *Model) DBGetComments(issueID int) (models.Comments, error) {
 	var notes []models.Comment
-	var i = 0
+	var i = 1
 	err := c.queryAndScan(queryGetJournalComments, func(rows *sql.Rows) error {
 		var row models.Comment
 		row.Number = i
