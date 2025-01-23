@@ -81,25 +81,30 @@ func (i *Employee) Work() bool {
 
 func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 	fmt.Println(step.Command, step.Action)
+
+	comments, err := i.getComments()
+	if err != nil {
+		log.Printf("Failed to get comments: %v", err)
+		return exec.Output{}, err
+	}
+
+	contextFile, err := utils.BuildIssueTmpFile(i.issue, comments, step)
+	if err != nil {
+		log.Printf("Failed to build issue context tmp file: %v", err)
+	}
+
 	switch step.Command {
 	case "git":
 		return exec.Exec(step.Command, step.Action)
 	case "aider", "aid":
 		switch step.Action {
 		case "architect", "code":
-			comments, err := i.getComments()
-			if err != nil {
-				log.Printf("Failed to get comments: %v", err)
-				return exec.Output{}, err
-			}
-			contextFile, err := utils.BuildIssueTmpFile(i.issue, comments, step)
-			if err != nil {
-				log.Printf("Failed to build issue tmp file: %v", err)
-			}
 			return processor.AiderExecute(contextFile, step)
 		default:
 			return exec.Output{}, fmt.Errorf("unknown %q action: %q", step.Command, step.Action)
 		}
+	case "create-issues":
+		return processor.BobikCreateIssue(i.issue.Id, models.IssueTypeName(step.Action), contextFile)
 	case "bobik":
 		promptFile, err := utils.BuildPromptTmpFile(i.issue, step)
 		if err != nil {
