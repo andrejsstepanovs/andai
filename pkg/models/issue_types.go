@@ -82,9 +82,6 @@ func (p *StepPrompt) ForCli() string {
 
 func (c *Contexts) Has(name string) bool {
 	for _, context := range *c {
-		if context == ContextAll {
-			return true
-		}
 		if context == name {
 			return true
 		}
