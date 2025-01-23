@@ -137,6 +137,7 @@ func (s *Settings) validateStepContexts() error {
 					case ContextLastComment:
 					case ContextComments:
 					case ContextProject:
+					case ContextProjectWiki:
 					case ContextChildren:
 					case ContextParent:
 					case ContextParents:

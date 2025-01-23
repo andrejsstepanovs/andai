@@ -14,6 +14,8 @@ const ContextLastComment = "last-comment"
 // ContextProject is a special context that matches the project
 const ContextProject = "project"
 
+const ContextProjectWiki = "wiki"
+
 // ContextChildren is a special context that matches the children
 const ContextChildren = "children"
 

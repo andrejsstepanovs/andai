@@ -19,6 +19,7 @@ type Employee struct {
 	model      *model.Model
 	llm        *llm.LLM
 	issue      redmine.Issue
+	parent     *redmine.Issue
 	project    redmine.Project
 	projectCfg models.Project
 	workbench  *workbench.Workbench
@@ -32,6 +33,7 @@ func NewWorkOnIssue(
 	model *model.Model,
 	llm *llm.LLM,
 	issue redmine.Issue,
+	parent *redmine.Issue,
 	project redmine.Project,
 	projectCfg models.Project,
 	workbench *workbench.Workbench,
@@ -42,6 +44,7 @@ func NewWorkOnIssue(
 		model:      model,
 		llm:        llm,
 		issue:      issue,
+		parent:     parent,
 		project:    project,
 		projectCfg: projectCfg,
 		workbench:  workbench,
@@ -88,7 +91,7 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 		return exec.Output{}, err
 	}
 
-	contextFile, err := utils.BuildIssueTmpFile(i.issue, comments, step)
+	contextFile, err := utils.BuildIssueTmpFile(i.issue, i.parent, i.projectCfg, comments, step)
 	if err != nil {
 		log.Printf("Failed to build issue context tmp file: %v", err)
 	}

@@ -50,7 +50,7 @@ func BuildPromptTmpFile(issue redmine.Issue, step models.Step) (string, error) {
 	return tempFile.Name(), nil
 }
 
-func BuildIssueTmpFile(issue redmine.Issue, comments redminemodels.Comments, step models.Step) (string, error) {
+func BuildIssueTmpFile(issue redmine.Issue, parent *redmine.Issue, project models.Project, comments redminemodels.Comments, step models.Step) (string, error) {
 	parts := make([]string, 0)
 	for _, context := range step.Context {
 		switch context {
@@ -59,7 +59,7 @@ func BuildIssueTmpFile(issue redmine.Issue, comments redminemodels.Comments, ste
 				c := comments[len(comments)-1]
 				commentsContext, err := getCommentsContext(redminemodels.Comments{c})
 				if err != nil {
-					log.Printf("Failed to get comments context: %v", err)
+					log.Printf("Failed to get last comment context: %v", err)
 					return "", err
 				}
 				parts = append(parts, commentsContext)
@@ -78,6 +78,36 @@ func BuildIssueTmpFile(issue redmine.Issue, comments redminemodels.Comments, ste
 				return "", err
 			}
 			parts = append(parts, issueContext)
+		case models.ContextProject:
+			issueContext, err := getProjectContext(project)
+			if err != nil {
+				log.Printf("Failed to get project context: %v", err)
+				return "", err
+			}
+			parts = append(parts, issueContext)
+		case models.ContextProjectWiki:
+			issueContext, err := getProjectWikiContext(project)
+			if err != nil {
+				log.Printf("Failed to get project wiki context: %v", err)
+				return "", err
+			}
+			parts = append(parts, issueContext)
+		case models.ContextParent:
+			if parent != nil && parent.Id != 0 {
+				issueContext, err := getIssueContext(*parent)
+				if err != nil {
+					log.Printf("Failed to get project wiki context: %v", err)
+					return "", err
+				}
+				issueContext = fmt.Sprintf("# Parent Issue\n%s", issueContext)
+				parts = append(parts, issueContext)
+			}
+		case models.ContextParents:
+			// todo
+		case models.ContextChildren:
+			// todo
+		case models.ContextAll:
+			// todo
 		}
 	}
 
@@ -128,6 +158,42 @@ func getIssueContext(issue redmine.Issue) (string, error) {
 	}
 
 	tmpl, err := template.New("Issue").Parse(promptTemplate)
+	if err != nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, data)
+	return buf.String(), err
+}
+
+func getProjectContext(project models.Project) (string, error) {
+	promptTemplate := "# {{.Project.Name}} (Identifier: {{.Project.Identifier}})\n\n" +
+		"## Description\n" +
+		"{{.Project.Description}}\n"
+
+	data := map[string]interface{}{
+		"Project": project,
+	}
+
+	tmpl, err := template.New("Project").Parse(promptTemplate)
+	if err != nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, data)
+	return buf.String(), err
+}
+
+// todo use wiki content from db or api
+func getProjectWikiContext(project models.Project) (string, error) {
+	promptTemplate := "# Project Wiki page:\n" +
+		"{{.Project.Wiki}}\n"
+
+	data := map[string]interface{}{
+		"Project": project,
+	}
+
+	tmpl, err := template.New("ProjectWiki").Parse(promptTemplate)
 	if err != nil {
 		return "", err
 	}
