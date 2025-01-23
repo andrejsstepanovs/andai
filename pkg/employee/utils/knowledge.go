@@ -60,7 +60,6 @@ func BuildIssueTmpFile(
 	comments redminemodels.Comments,
 	step models.Step,
 ) (string, error) {
-	const tabs = 1
 	parts := make([]string, 0)
 	for _, context := range step.Context {
 		switch context {
@@ -76,13 +75,15 @@ func BuildIssueTmpFile(
 				parts = append(parts, commentsContext)
 			}
 		case models.ContextComments:
-			commentsContext, err := getCommentsContext(comments)
-			if err != nil {
-				log.Printf("Failed to get comments context: %v", err)
-				return "", err
+			if len(comments) > 0 {
+				commentsContext, err := getCommentsContext(comments)
+				if err != nil {
+					log.Printf("Failed to get comments context: %v", err)
+					return "", err
+				}
+				commentsContext = tagContent("comments", commentsContext, 1)
+				parts = append(parts, commentsContext)
 			}
-			commentsContext = tagContent("comments", commentsContext, 1)
-			parts = append(parts, commentsContext)
 		case models.ContextTicket:
 			issueContext, err := getIssueContext(issue, issueTypes)
 			if err != nil {
@@ -118,38 +119,44 @@ func BuildIssueTmpFile(
 				parts = append(parts, issueContext)
 			}
 		case models.ContextParents:
-			parentsContext := make([]string, 0)
-			for _, p := range parents {
-				parentIssueContext, err := getIssueContext(p, issueTypes)
-				if err != nil {
-					log.Printf("Failed to get single parent issue context: %v", err)
-					return "", err
+			if len(parents) > 0 {
+				parentsContext := make([]string, 0)
+				for _, p := range parents {
+					parentIssueContext, err := getIssueContext(p, issueTypes)
+					if err != nil {
+						log.Printf("Failed to get single parent issue context: %v", err)
+						return "", err
+					}
+					txt := tagContent("parent_issue", parentIssueContext, 2)
+					parentsContext = append(parentsContext, txt)
 				}
-				txt := tagContent("parent_issue", parentIssueContext, 2)
-				parentsContext = append(parentsContext, txt)
+				txt := tagContent("parent_issues", strings.Join(parentsContext, "\n"), 1)
+				parts = append(parts, txt)
 			}
-			txt := tagContent("parent_issues", strings.Join(parentsContext, "\n"), 1)
-			parts = append(parts, txt)
 		case models.ContextChildren:
-			childrenContext := make([]string, 0)
-			for _, child := range children {
-				childIssueContext, err := getIssueContext(child, issueTypes)
+			if len(children) > 0 {
+				childrenContext := make([]string, 0)
+				for _, child := range children {
+					childIssueContext, err := getIssueContext(child, issueTypes)
+					if err != nil {
+						log.Printf("Failed to get single child issue context: %v", err)
+						return "", err
+					}
+					txt := tagContent("child_issue", childIssueContext, 2)
+					childrenContext = append(childrenContext, txt)
+				}
+				txt := tagContent("children_issues", strings.Join(childrenContext, "\n"), 1)
+				parts = append(parts, txt)
+			}
+		case models.ContextIssueTypes:
+			if len(issueTypes) > 0 {
+				issueTypeContext, err := getIssueTypesContext(issueTypes)
 				if err != nil {
-					log.Printf("Failed to get single child issue context: %v", err)
+					log.Printf("Failed to get issue types context: %v", err)
 					return "", err
 				}
-				txt := tagContent("child_issue", childIssueContext, 2)
-				childrenContext = append(childrenContext, txt)
+				parts = append(parts, tagContent("project_issue_types", issueTypeContext, 1))
 			}
-			txt := tagContent("children_issues", strings.Join(childrenContext, "\n"), 1)
-			parts = append(parts, txt)
-		case models.ContextIssueTypes:
-			issueTypeContext, err := getIssueTypesContext(issueTypes)
-			if err != nil {
-				log.Printf("Failed to get issue types context: %v", err)
-				return "", err
-			}
-			parts = append(parts, tagContent("project_issue_types", issueTypeContext, 1))
 		}
 	}
 
@@ -194,8 +201,8 @@ func getCommentsContext(comments redminemodels.Comments) (string, error) {
 func getIssueContext(issue redmine.Issue, issueTypes models.IssueTypes) (string, error) {
 	promptTemplate := "# Title: {{.Issue.Subject}}\n" +
 		"- ID: {{.Issue.Id}}\n" +
-		"- Issue Type: {{.IssueType.Name}})\n\n" +
-		"## Description\n" +
+		"- Issue Type: {{.IssueType.Name}}\n\n" +
+		"# Description\n" +
 		"{{.Issue.Description}}"
 
 	data := map[string]interface{}{
