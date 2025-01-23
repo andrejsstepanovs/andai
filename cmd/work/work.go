@@ -105,6 +105,7 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 					wb,
 					workflow.States.Get(models.StateName(issue.Status.Name)),
 					workflow.IssueTypes.Get(models.IssueTypeName(issue.Tracker.Name)),
+					workflow.IssueTypes,
 				)
 				success := work.Work()
 

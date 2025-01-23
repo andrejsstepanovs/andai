@@ -58,6 +58,7 @@ func BuildIssueTmpFile(
 	project models.Project,
 	comments redminemodels.Comments,
 	step models.Step,
+	issueTypes models.IssueTypes,
 ) (string, error) {
 	parts := make([]string, 0)
 	for _, context := range step.Context {
@@ -84,7 +85,7 @@ func BuildIssueTmpFile(
 		case models.ContextTicket:
 			issueContext, err := getIssueContext(issue)
 			if err != nil {
-				log.Printf("Failed to get issue context: %v", err)
+				log.Printf("Failed to get current issue context: %v", err)
 				return "", err
 			}
 			issueContext = fmt.Sprintf("<current_issue>\n%s\n</current_issue>", issueContext)
@@ -109,7 +110,7 @@ func BuildIssueTmpFile(
 			if parent != nil && parent.Id != 0 {
 				issueContext, err := getIssueContext(*parent)
 				if err != nil {
-					log.Printf("Failed to get project wiki context: %v", err)
+					log.Printf("Failed to get parent issue context: %v", err)
 					return "", err
 				}
 				issueContext = fmt.Sprintf("<parent_issue>\n%s\n</parent_issue>", issueContext)
@@ -120,7 +121,7 @@ func BuildIssueTmpFile(
 			for _, p := range parents {
 				parentIssueContext, err := getIssueContext(p)
 				if err != nil {
-					log.Printf("Failed to get parent issue context: %v", err)
+					log.Printf("Failed to get single parent issue context: %v", err)
 					return "", err
 				}
 				parentsContext = append(parentsContext, fmt.Sprintf("<parent_issue>\n%s\n</parent_issue>", parentIssueContext))
@@ -132,7 +133,7 @@ func BuildIssueTmpFile(
 			for _, child := range children {
 				childIssueContext, err := getIssueContext(child)
 				if err != nil {
-					log.Printf("Failed to get child issue context: %v", err)
+					log.Printf("Failed to get single child issue context: %v", err)
 					return "", err
 				}
 				childrenContext = append(childrenContext, fmt.Sprintf("<child_issue>\n%s\n</child_issue>", childIssueContext))
@@ -140,7 +141,13 @@ func BuildIssueTmpFile(
 			txt := fmt.Sprintf("<children_issues count=\"%d\">\n%s\n</children_issues>", len(childrenContext), strings.Join(childrenContext, "\n"))
 			parts = append(parts, txt)
 		case models.ContextIssueTypes:
-			panic("not implemented")
+			issueTypeContext, err := getIssueTypesContext(issueTypes)
+			if err != nil {
+				log.Printf("Failed to get issue types context: %v", err)
+				return "", err
+			}
+			txt := fmt.Sprintf("<project_issue_types>\n%s\n</project_issue_types>", issueTypeContext)
+			parts = append(parts, txt)
 		}
 	}
 
@@ -227,6 +234,25 @@ func getProjectWikiContext(project models.Project) (string, error) {
 	}
 
 	tmpl, err := template.New("ProjectWiki").Parse(promptTemplate)
+	if err != nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, data)
+	return buf.String(), err
+}
+
+func getIssueTypesContext(issueTypes models.IssueTypes) (string, error) {
+	promptTemplate := "{{ range .IssueTypes }}\n" +
+		"# Issue Type \"{{.Name}}\":\n" +
+		"{{.Description}}" +
+		"{{ end }}"
+
+	data := map[string]interface{}{
+		"IssueTypes": issueTypes,
+	}
+
+	tmpl, err := template.New("IssueTypes").Parse(promptTemplate)
 	if err != nil {
 		return "", err
 	}

@@ -27,6 +27,7 @@ type Employee struct {
 	workbench  *workbench.Workbench
 	state      models.State
 	issueType  models.IssueType
+	issueTypes models.IssueTypes
 	job        models.Job
 	history    []exec.Output
 }
@@ -43,6 +44,7 @@ func NewWorkOnIssue(
 	workbench *workbench.Workbench,
 	state models.State,
 	issueType models.IssueType,
+	issueTypes models.IssueTypes,
 ) *Employee {
 	return &Employee{
 		model:      model,
@@ -56,6 +58,7 @@ func NewWorkOnIssue(
 		workbench:  workbench,
 		state:      state,
 		issueType:  issueType,
+		issueTypes: issueTypes,
 		job:        issueType.Jobs.Get(models.StateName(issue.Status.Name)),
 	}
 }
@@ -105,6 +108,7 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 		i.projectCfg,
 		comments,
 		step,
+		issueTypes,
 	)
 	if err != nil {
 		log.Printf("Failed to build issue context tmp file: %v", err)
