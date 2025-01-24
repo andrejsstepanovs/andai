@@ -77,7 +77,6 @@ func (i *Employee) Work() bool {
 		fmt.Printf("Step: %d\n", j+1)
 		step.Prompt = i.addHistory(step)
 		output, err := i.processStep(step)
-		panic(err)
 		if err != nil {
 			log.Printf("Failed to action step: %v", err)
 			return false
