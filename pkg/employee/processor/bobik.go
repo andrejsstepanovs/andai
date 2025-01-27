@@ -27,10 +27,10 @@ type answer struct {
 	Issues []answerIssues `json:"issues"`
 }
 
-func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile string) (exec.Output, []redmine.Issue, error) {
+func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile string) (exec.Output, []redmine.Issue, map[int][]int, error) {
 	taskPrompt, err := getTaskPrompt(targetIssueTypeName)
 	if err != nil {
-		return exec.Output{}, nil, err
+		return exec.Output{}, nil, nil, err
 	}
 
 	promptExtension := ""
@@ -40,7 +40,7 @@ func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile st
 	for {
 		tries--
 		if tries == 0 {
-			return exec.Output{}, nil, fmt.Errorf("failed to get issues from LLM")
+			return exec.Output{}, nil, nil, fmt.Errorf("failed to get issues from LLM")
 		}
 
 		out, createIssues, promptExtension, err = getIssuesFromLLM(
@@ -49,20 +49,27 @@ func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile st
 			promptExtension,
 		)
 		if err != nil {
-			return exec.Output{}, nil, err
+			return exec.Output{}, nil, nil, err
 		}
 		break
 	}
 
 	items := make([]redmine.Issue, 0)
-	for _, issue := range createIssues.Issues {
+	deps := make(map[int][]int)
+	for i, issue := range createIssues.Issues {
 		items = append(items, redmine.Issue{
 			Subject:     issue.Subject,
 			Description: issue.Description,
 		})
+		if deps[i] == nil {
+			deps[i] = make([]int, 0)
+		}
+		for _, blockedBy := range issue.BlockedBy {
+			deps[i] = append(deps[i], blockedBy)
+		}
 	}
 
-	return out, items, nil
+	return out, items, deps, nil
 }
 
 // getIssuesFromLLM returns issues from LLM

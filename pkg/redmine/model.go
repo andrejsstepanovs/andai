@@ -23,6 +23,7 @@ type api interface {
 	IssueStatuses() ([]redmine.IssueStatus, error)
 	Trackers() ([]redmine.IdName, error)
 	IssueRelations(issueID int) ([]redmine.IssueRelation, error)
+	CreateIssueRelation(issueRelation redmine.IssueRelation) (*redmine.IssueRelation, error)
 	IssuesOf(projectID int) ([]redmine.Issue, error)
 	Issue(id int) (*redmine.Issue, error)
 	Project(id int) (*redmine.Project, error)

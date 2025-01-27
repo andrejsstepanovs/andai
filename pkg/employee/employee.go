@@ -137,11 +137,12 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 		}
 		fmt.Printf("Need to create: %q Tracker ID: %d", step.Action, trackerID)
 
-		out, issues, err := processor.BobikCreateIssue(models.IssueTypeName(step.Action), contextFile)
+		out, issues, deps, err := processor.BobikCreateIssue(models.IssueTypeName(step.Action), contextFile)
 		if err != nil {
 			return out, err
 		}
-		for _, issue := range issues {
+		createdIDs := make(map[int]int)
+		for k, issue := range issues {
 			projectID := i.issue.Project.Id
 			issue.ProjectId = projectID
 			issue.Project = &redmine.IdName{Id: projectID}
@@ -155,7 +156,19 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 				return out, err
 			}
 			log.Printf("Created issue: %d\n", created.Id)
+			createdIDs[k] = created.Id
 		}
+
+		for k, issueID := range createdIDs {
+			for _, depK := range deps[k] {
+				err = i.model.SetBlocksDependency(issueID, createdIDs[depK])
+				if err != nil {
+					log.Printf("Failed to set blocks dependency: %v", err)
+					return out, err
+				}
+			}
+		}
+
 	case "bobik":
 		promptFile, err := utils.BuildPromptTmpFile(i.issue, step)
 		if err != nil {

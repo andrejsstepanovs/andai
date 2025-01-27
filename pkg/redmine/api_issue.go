@@ -179,6 +179,19 @@ func (c *Model) removeClosedDependencies(dependencies map[int][]int, issues []re
 	return cleaned
 }
 
+func (c *Model) SetBlocksDependency(issueID int, dependencyID int) error {
+	issueRelation := redmine.IssueRelation{
+		IssueId:      issueID,
+		IssueToId:    dependencyID,
+		RelationType: RelationBlocks,
+	}
+	_, err := c.API().CreateIssueRelation(issueRelation)
+	if err != nil {
+		return fmt.Errorf("error redmine issue relation: %v", err)
+	}
+	return nil
+}
+
 func (c *Model) issueDependencies(projectIssues []redmine.Issue) (map[int][]int, error) {
 	dependencies := make(map[int][]int)
 	for _, issue := range projectIssues {
