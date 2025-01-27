@@ -120,6 +120,11 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 	}
 
 	switch step.Command {
+	case "next":
+		return exec.Output{
+			Command: "next",
+			Stdout:  "Success, moving to next",
+		}, nil
 	case "git":
 		return exec.Exec(step.Command, step.Action)
 	case "aider", "aid":
