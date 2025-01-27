@@ -6,6 +6,85 @@ import (
 	"github.com/andrejsstepanovs/andai/pkg/employee/processor"
 )
 
+func TestValidateDependentOnSelf(t *testing.T) {
+	tests := []struct {
+		name    string
+		answer  processor.Answer
+		wantErr bool
+	}{
+		{
+			name:    "no issues",
+			answer:  processor.Answer{Issues: []processor.AnswerIssues{}},
+			wantErr: false,
+		},
+		{
+			name: "no dependencies",
+			answer: processor.Answer{Issues: []processor.AnswerIssues{
+				{ID: 1},
+				{ID: 2},
+			}},
+			wantErr: false,
+		},
+		{
+			name: "no self-dependency",
+			answer: processor.Answer{Issues: []processor.AnswerIssues{
+				{ID: 1, BlockedBy: []int{2}},
+				{ID: 2},
+			}},
+			wantErr: false,
+		},
+		{
+			name: "self-dependency",
+			answer: processor.Answer{Issues: []processor.AnswerIssues{
+				{ID: 1, BlockedBy: []int{1}},
+			}},
+			wantErr: true,
+		},
+		{
+			name: "multiple self-dependencies",
+			answer: processor.Answer{Issues: []processor.AnswerIssues{
+				{ID: 1, BlockedBy: []int{1, 2}},
+				{ID: 2, BlockedBy: []int{2}},
+			}},
+			wantErr: true,
+		},
+		{
+			name: "self-dependency with other dependencies",
+			answer: processor.Answer{Issues: []processor.AnswerIssues{
+				{ID: 1, BlockedBy: []int{1, 2}},
+				{ID: 2},
+			}},
+			wantErr: true,
+		},
+		{
+			name: "self-dependency with other dependencies",
+			answer: processor.Answer{Issues: []processor.AnswerIssues{
+				{ID: 1, BlockedBy: []int{1, 2}},
+				{ID: 2},
+			}},
+			wantErr: true,
+		},
+		{
+			name: "self-dependency with multiple dependencies",
+			answer: processor.Answer{Issues: []processor.AnswerIssues{
+				{ID: 1, BlockedBy: []int{1, 2, 3}},
+				{ID: 2},
+				{ID: 3},
+			}},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.answer.ValidateDependentOnSelf()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateDependentOnSelf() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestValidateDependenciesExist(t *testing.T) {
 	tests := []struct {
 		name    string

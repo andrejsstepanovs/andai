@@ -16,12 +16,33 @@ type Answer struct {
 }
 
 func (a Answer) Validate() error {
+	if err := a.ValidateDependentOnSelf(); err != nil {
+		return fmt.Errorf("dependent on self validation failed: %v", err)
+	}
+
 	if err := a.ValidateDependenciesExist(); err != nil {
 		return fmt.Errorf("dependencies validation failed: %v", err)
 	}
 
 	if err := a.ValidateCircularDependency(); err != nil {
 		return fmt.Errorf("circular dependency validation failed: %v", err)
+	}
+
+	return nil
+}
+
+func (a Answer) ValidateDependentOnSelf() error {
+	existingIDs := make(map[int]bool)
+	for _, issue := range a.Issues {
+		existingIDs[issue.ID] = true
+	}
+
+	for _, issue := range a.Issues {
+		for _, dependencyID := range issue.BlockedBy {
+			if dependencyID == issue.ID {
+				return fmt.Errorf("issue %d is dependent on itself", issue.ID)
+			}
+		}
 	}
 
 	return nil
