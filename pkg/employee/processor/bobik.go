@@ -13,18 +13,8 @@ import (
 )
 
 func BobikExecute(promptFile string, step models.Step) (exec.Output, error) {
-	format := "Use this file %s as a question and answer!"
+	format := "Use this file %s as a question and Answer!"
 	return exec.Exec(step.Command, step.Action, fmt.Sprintf(format, promptFile))
-}
-
-type answerIssues struct {
-	ID          int    `json:"number_int"`
-	Subject     string `json:"subject"`
-	Description string `json:"description"`
-	BlockedBy   []int  `json:"blocked_by_numbers" validate:"omitempty"`
-}
-type answer struct {
-	Issues []answerIssues `json:"issues"`
 }
 
 func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile string) (exec.Output, []redmine.Issue, map[int][]int, error) {
@@ -34,7 +24,7 @@ func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile st
 	}
 
 	promptExtension := ""
-	var createIssues answer
+	var createIssues Answer
 	var out exec.Output
 	tries := 4
 	for {
@@ -48,6 +38,9 @@ func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile st
 			taskPrompt,
 			promptExtension,
 		)
+		if promptExtension != "" {
+			continue
+		}
 		if err != nil {
 			return exec.Output{}, nil, nil, err
 		}
@@ -72,10 +65,9 @@ func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile st
 	return out, items, deps, nil
 }
 
-// getIssuesFromLLM returns issues from LLM
 func getTaskPrompt(targetIssueTypeName models.IssueTypeName) (string, error) {
-	example := answer{
-		Issues: []answerIssues{
+	example := Answer{
+		Issues: []AnswerIssues{
 			{
 				ID:          1,
 				Subject:     "Issue Title",
@@ -102,11 +94,11 @@ func getTaskPrompt(targetIssueTypeName models.IssueTypeName) (string, error) {
 	}
 	exampleJson := string(jsonTxt)
 
-	format := "You need to answer using raw JSON. Expected json format example data:\n" +
+	format := "You need to Answer using raw JSON. Expected json format example data:\n" +
 		"```json\n%s\n```\n" +
 		"Keep track on task dependencies on other tasks you create.\n" +
 		"It is super important that tasks do not have cyclomatic dependencies! i.e. no 2 tasks depend on each other.\n" +
-		"It is really important that answer contains only raw JSON with tags: " +
+		"It is really important that Answer contains only raw JSON with tags: " +
 		"issues that contains issue type: **%s** elements.\n" +
 		"Each element should contain: number_int, subject, " +
 		"description (contains detailed explanation what needs to be achieved.\n" +
@@ -119,7 +111,7 @@ func getTaskPrompt(targetIssueTypeName models.IssueTypeName) (string, error) {
 }
 
 // second string is LLM response json parsing error
-func getIssuesFromLLM(knowledgeFile string, taskPrompt string, promptExtension string) (exec.Output, answer, string, error) {
+func getIssuesFromLLM(knowledgeFile string, taskPrompt string, promptExtension string) (exec.Output, Answer, string, error) {
 	if promptExtension != "" {
 		format := "%s\n\n\nYou failed last time with error: %s.\n" +
 			"Try again and be more careful this time!"
@@ -128,7 +120,7 @@ func getIssuesFromLLM(knowledgeFile string, taskPrompt string, promptExtension s
 	taskFile, err := utils.BuildPromptTextTmpFile(taskPrompt)
 	if err != nil {
 		log.Printf("Failed to build prompt tmp file: %v", err)
-		return exec.Output{}, answer{}, "", err
+		return exec.Output{}, Answer{}, "", err
 	}
 
 	format := "Use knowledge file %s and your task file %s to form a response. Answer with raws JSON!"
@@ -136,10 +128,10 @@ func getIssuesFromLLM(knowledgeFile string, taskPrompt string, promptExtension s
 	//prompt = fmt.Sprintf("\"%s\"", prompt)
 	out, err := exec.Exec("bobik", "zalando", "once", "llm", "quiet", prompt)
 	if err != nil {
-		return out, answer{}, "", err
+		return out, Answer{}, "", err
 	}
 
-	picked := answer{}
+	picked := Answer{}
 	jojo := out.Stdout
 	err = json.Unmarshal([]byte(jojo), &picked)
 	if err != nil {
@@ -149,5 +141,11 @@ func getIssuesFromLLM(knowledgeFile string, taskPrompt string, promptExtension s
 			return out, picked, err.Error(), nil
 		}
 	}
+
+	err = picked.Validate()
+	if err != nil {
+		return out, picked, err.Error(), nil
+	}
+
 	return out, picked, "", nil
 }

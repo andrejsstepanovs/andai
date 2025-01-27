@@ -158,10 +158,12 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			log.Printf("Created issue: %d\n", created.Id)
 			createdIDs[k] = created.Id
 		}
-
 		for k, issueID := range createdIDs {
 			for _, depK := range deps[k] {
-				err = i.model.SetBlocksDependency(issueID, createdIDs[depK])
+				if createdIDs[depK] == issueID {
+					continue
+				}
+				err = i.model.DBCreateBlockedByIssueRelation(issueID, createdIDs[depK])
 				if err != nil {
 					log.Printf("Failed to set blocks dependency: %v", err)
 					return out, err
