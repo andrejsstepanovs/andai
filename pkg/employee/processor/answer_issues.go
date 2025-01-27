@@ -2,6 +2,8 @@ package processor
 
 import (
 	"fmt"
+
+	"github.com/mattn/go-redmine"
 )
 
 type AnswerIssues struct {
@@ -15,8 +17,28 @@ type Answer struct {
 	Issues []AnswerIssues `json:"issues"`
 }
 
+func (a Answer) GetDeps() map[int][]int {
+	items := make([]redmine.Issue, 0)
+	deps := make(map[int][]int)
+	for _, issue := range a.Issues {
+		items = append(items, redmine.Issue{
+			Subject:     issue.Subject,
+			Description: issue.Description,
+		})
+
+		if deps[issue.ID] == nil {
+			deps[issue.ID] = make([]int, 0)
+		}
+		for _, blockedBy := range issue.BlockedBy {
+			deps[issue.ID] = append(deps[issue.ID], blockedBy)
+		}
+	}
+
+	return deps
+}
+
 func (a Answer) Validate() error {
-	if err := a.ValidateDependentOnSelf(); err != nil {
+	if err := a.ValidateNoSelfReference(); err != nil {
 		return fmt.Errorf("dependent on self validation failed: %v", err)
 	}
 
@@ -31,20 +53,14 @@ func (a Answer) Validate() error {
 	return nil
 }
 
-func (a Answer) ValidateDependentOnSelf() error {
-	existingIDs := make(map[int]bool)
+func (a *Answer) ValidateNoSelfReference() error {
 	for _, issue := range a.Issues {
-		existingIDs[issue.ID] = true
-	}
-
-	for _, issue := range a.Issues {
-		for _, dependencyID := range issue.BlockedBy {
-			if dependencyID == issue.ID {
-				return fmt.Errorf("issue %d is dependent on itself", issue.ID)
+		for _, blockedByID := range issue.BlockedBy {
+			if blockedByID == issue.ID {
+				return fmt.Errorf("issue %d has a self-reference in its BlockedBy field", issue.ID)
 			}
 		}
 	}
-
 	return nil
 }
 

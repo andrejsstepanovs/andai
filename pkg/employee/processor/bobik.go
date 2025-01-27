@@ -49,16 +49,17 @@ func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile st
 
 	items := make([]redmine.Issue, 0)
 	deps := make(map[int][]int)
-	for i, issue := range createIssues.Issues {
+	for _, issue := range createIssues.Issues {
 		items = append(items, redmine.Issue{
 			Subject:     issue.Subject,
 			Description: issue.Description,
 		})
-		if deps[i] == nil {
-			deps[i] = make([]int, 0)
+
+		if deps[issue.ID] == nil {
+			deps[issue.ID] = make([]int, 0)
 		}
 		for _, blockedBy := range issue.BlockedBy {
-			deps[i] = append(deps[i], blockedBy)
+			deps[issue.ID] = append(deps[issue.ID], blockedBy)
 		}
 	}
 

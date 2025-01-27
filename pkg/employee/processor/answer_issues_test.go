@@ -1,12 +1,84 @@
 package processor_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/andrejsstepanovs/andai/pkg/employee/processor"
 )
 
-func TestValidateDependentOnSelf(t *testing.T) {
+func TestAnswer_GetDeps(t *testing.T) {
+	tests := []struct {
+		name     string
+		answer   processor.Answer
+		expected map[int][]int
+	}{
+		{
+			name:     "empty issues",
+			answer:   processor.Answer{Issues: []processor.AnswerIssues{}},
+			expected: map[int][]int{},
+		},
+		{
+			name: "single issue with no dependencies",
+			answer: processor.Answer{
+				Issues: []processor.AnswerIssues{
+					{ID: 1},
+				},
+			},
+			expected: map[int][]int{
+				1: {},
+			},
+		},
+		{
+			name: "single issue with multiple blocked_by entries",
+			answer: processor.Answer{
+				Issues: []processor.AnswerIssues{
+					{ID: 2, BlockedBy: []int{3, 4}},
+				},
+			},
+			expected: map[int][]int{
+				2: {3, 4},
+			},
+		},
+		{
+			name: "multiple issues with various dependencies",
+			answer: processor.Answer{
+				Issues: []processor.AnswerIssues{
+					{ID: 1, BlockedBy: []int{5}},
+					{ID: 2},
+					{ID: 3, BlockedBy: []int{1, 2}},
+				},
+			},
+			expected: map[int][]int{
+				1: {5},
+				2: {},
+				3: {1, 2},
+			},
+		},
+		{
+			name: "duplicate blocked_by entries",
+			answer: processor.Answer{
+				Issues: []processor.AnswerIssues{
+					{ID: 4, BlockedBy: []int{5, 5}},
+				},
+			},
+			expected: map[int][]int{
+				4: {5, 5},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.answer.GetDeps()
+			if !reflect.DeepEqual(got, tt.expected) {
+				t.Errorf("GetDeps() = %v, want %v", got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestValidateNoSelfReference(t *testing.T) {
 	tests := []struct {
 		name    string
 		answer  processor.Answer
@@ -77,7 +149,7 @@ func TestValidateDependentOnSelf(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.answer.ValidateDependentOnSelf()
+			err := tt.answer.ValidateNoSelfReference()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ValidateDependentOnSelf() error = %v, wantErr %v", err, tt.wantErr)
 			}
