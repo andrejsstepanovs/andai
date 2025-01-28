@@ -28,7 +28,6 @@ func NewAppDependencies(models models.LlmModels) (*AppDependencies, error) {
 	}
 	api := apiredmine.NewClient(viper.GetString("redmine.url"), viper.GetString("redmine.api_key"))
 
-	//api.CreateIssueRelation()
 	llm := llm.NewLLM(models)
 
 	Container = &AppDependencies{

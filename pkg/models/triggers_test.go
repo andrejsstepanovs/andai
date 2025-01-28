@@ -157,12 +157,12 @@ func TestTriggerIf_AllSiblingsCheck(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "all siblings status mismatch with empty sibling statuses",
+			name: "no siblings return true",
 			triggerIf: models.TriggerIf{
 				AllSiblingsStatus: models.StateName("in_progress"),
 			},
 			siblingStatuses: []models.StateName{},
-			expected:        false,
+			expected:        true,
 		},
 	}
 

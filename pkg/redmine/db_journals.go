@@ -9,11 +9,13 @@ import (
 )
 
 const (
-	queryGetJournalComments = "SELECT notes, user_id, created_on FROM journals WHERE journalized_type = ? AND notes != ? AND journalized_id = ? ORDER BY created_on ASC"
+	queryGetJournalComments  = "SELECT notes, user_id, created_on FROM journals WHERE journalized_type = ? AND notes != ? AND journalized_id = ? ORDER BY created_on ASC"                          // nolint:gosec
+	queryGetLastStatusChange = "SELECT B.journalized_id, A.old_value, A.value FROM journal_details A INNER JOIN journals B ON A.id = B.id WHERE A.prop_key = ? ORDER BY B.updated_on DESC LIMIT 1" // nolint:gosec
 )
 
 // JournalIssueType is a constant for the journalized type
 const JournalIssueType = "Issue"
+const JournalStatusID = "status_id"
 
 func (c *Model) DBGetComments(issueID int) (models.Comments, error) {
 	var notes []models.Comment
@@ -35,4 +37,19 @@ func (c *Model) DBGetComments(issueID int) (models.Comments, error) {
 
 	var comments models.Comments = notes
 	return comments, nil
+}
+
+func (c *Model) DBGetLastStatusChange() (issueID int, statusIDFrom int, statusIDTo int, err error) {
+	err = c.queryAndScan(queryGetLastStatusChange, func(rows *sql.Rows) error {
+		if err := rows.Scan(&issueID, &statusIDFrom, &statusIDTo); err != nil {
+			return err
+		}
+		return nil
+	}, JournalStatusID)
+
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return
+	}
+
+	return
 }

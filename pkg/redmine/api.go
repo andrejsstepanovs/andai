@@ -98,6 +98,33 @@ func (c *Model) APISaveProject(project redmine.Project) (redmine.Project, error)
 	return *response, nil
 }
 
+func (c *Model) APIGetIssueSiblings(issue redmine.Issue) ([]redmine.Issue, error) {
+	parent, err := c.APIGetParent(issue)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get redmine parent issue err: %v", err)
+	}
+	if parent == nil {
+		return []redmine.Issue{}, nil
+	}
+
+	return c.APIGetChildren(*parent)
+}
+
+func (c *Model) APIGetIssueStatusByID(statusID int) (redmine.IssueStatus, error) {
+	statuses, err := c.API().IssueStatuses()
+	if err != nil {
+		return redmine.IssueStatus{}, fmt.Errorf("error redmine issue status: %v", err)
+	}
+
+	for _, status := range statuses {
+		if status.Id == statusID {
+			return status, nil
+		}
+	}
+
+	return redmine.IssueStatus{}, errors.New("default status not found")
+}
+
 func (c *Model) APIGetIssueStatusByName(name string) (redmine.IssueStatus, error) {
 	statuses, err := c.API().IssueStatuses()
 	if err != nil {

@@ -50,7 +50,7 @@ func (t TriggerIf) AllSiblingsCheck(siblingStatuses []StateName) bool {
 		return true
 	}
 	if len(siblingStatuses) == 0 {
-		return false
+		return true
 	}
 	for _, status := range siblingStatuses {
 		if status != t.AllSiblingsStatus {
