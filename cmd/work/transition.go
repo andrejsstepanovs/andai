@@ -54,6 +54,7 @@ func newTriggersCommand(model *model.Model, workflow models.Workflow) *cobra.Com
 				log.Println("No triggers found")
 				return nil
 			}
+			log.Printf("Triggers for %q found: %d\n", issue.Tracker.Name, len(triggers))
 
 			for _, trigger := range triggers {
 				action := trigger.GetTriggerIf(models.StateName(statusTo.Name))
