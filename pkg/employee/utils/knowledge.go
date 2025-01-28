@@ -91,7 +91,9 @@ func BuildIssueKnowledgeTmpFile(
 		if err != nil {
 			return "", err
 		}
-		parts = append(parts, newPart)
+		if newPart != "" {
+			parts = append(parts, newPart)
+		}
 	}
 
 	prompt := step.Prompt.ForCli()
@@ -202,24 +204,29 @@ func getContext(
 			return issueContext, nil
 		}
 	case models.ContextChildren:
-		if len(children) > 0 {
-			childrenContext := make([]string, 0)
-			for _, child := range children {
-				childIssueContext, err := getIssueContext(child, issueTypes)
-				if err != nil {
-					log.Printf("Failed to get single child issue context: %v", err)
-					return "", err
-				}
-				txt := tagContent("child_issue", childIssueContext, 2)
-				childrenContext = append(childrenContext, txt)
-			}
-			issueContext := tagContent("children_issues", strings.Join(childrenContext, "\n"), 1)
-			return issueContext, nil
-		}
+		return getChildren(children, issueTypes)
 	case models.ContextIssueTypes:
 		return getIssueTypes(issueTypes)
 	default:
 		return "", fmt.Errorf("unknown context: %q", context)
+	}
+	return "", nil
+}
+
+func getChildren(children []redmine.Issue, issueTypes models.IssueTypes) (string, error) {
+	if len(children) > 0 {
+		childrenContext := make([]string, 0)
+		for _, child := range children {
+			childIssueContext, err := getIssueContext(child, issueTypes)
+			if err != nil {
+				log.Printf("Failed to get single child issue context: %v", err)
+				return "", err
+			}
+			txt := tagContent("child_issue", childIssueContext, 2)
+			childrenContext = append(childrenContext, txt)
+		}
+		issueContext := tagContent("children_issues", strings.Join(childrenContext, "\n"), 1)
+		return issueContext, nil
 	}
 	return "", nil
 }
