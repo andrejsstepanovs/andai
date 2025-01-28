@@ -118,3 +118,58 @@ func TestTrigger_GetTriggerIf(t *testing.T) {
 		})
 	}
 }
+
+func TestTriggerIf_AllSiblingsCheck(t *testing.T) {
+	tests := []struct {
+		name            string
+		triggerIf       models.TriggerIf
+		siblingStatuses []models.StateName
+		expected        bool
+	}{
+		{
+			name: "no all siblings status",
+			triggerIf: models.TriggerIf{
+				AllSiblingsStatus: "",
+			},
+			siblingStatuses: []models.StateName{},
+			expected:        true,
+		},
+		{
+			name: "all siblings status match",
+			triggerIf: models.TriggerIf{
+				AllSiblingsStatus: models.StateName("in_progress"),
+			},
+			siblingStatuses: []models.StateName{
+				models.StateName("in_progress"),
+				models.StateName("in_progress"),
+			},
+			expected: true,
+		},
+		{
+			name: "all siblings status mismatch",
+			triggerIf: models.TriggerIf{
+				AllSiblingsStatus: models.StateName("in_progress"),
+			},
+			siblingStatuses: []models.StateName{
+				models.StateName("in_progress"),
+				models.StateName("done"),
+			},
+			expected: false,
+		},
+		{
+			name: "all siblings status mismatch with empty sibling statuses",
+			triggerIf: models.TriggerIf{
+				AllSiblingsStatus: models.StateName("in_progress"),
+			},
+			siblingStatuses: []models.StateName{},
+			expected:        false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			allSiblingsCheck := tt.triggerIf.AllSiblingsCheck(tt.siblingStatuses)
+			assert.Equal(t, tt.expected, allSiblingsCheck)
+		})
+	}
+}

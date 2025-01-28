@@ -44,3 +44,18 @@ func (t Trigger) GetTriggerIf(movedTo StateName) *TriggerIf {
 	}
 	return nil
 }
+
+func (t TriggerIf) AllSiblingsCheck(siblingStatuses []StateName) bool {
+	if t.AllSiblingsStatus == "" {
+		return true
+	}
+	if len(siblingStatuses) == 0 {
+		return false
+	}
+	for _, status := range siblingStatuses {
+		if status != t.AllSiblingsStatus {
+			return false
+		}
+	}
+	return true
+}
