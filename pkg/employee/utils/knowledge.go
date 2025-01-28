@@ -179,15 +179,7 @@ func getContext(
 		issueContext = tagContent("project_wiki", issueContext, 1)
 		return issueContext, nil
 	case models.ContextParent:
-		if parent != nil && parent.Id != 0 {
-			issueContext, err := getIssueContext(*parent, issueTypes)
-			if err != nil {
-				log.Printf("Failed to get parent issue context: %v", err)
-				return "", err
-			}
-			issueContext = fmt.Sprintf("<parent_issue>\n%s\n</parent_issue>", issueContext)
-			return issueContext, nil
-		}
+		return getParent(parent, issueTypes)
 	case models.ContextParents:
 		return getParents(parents, issueTypes)
 	case models.ContextChildren:
@@ -198,6 +190,19 @@ func getContext(
 		return "", fmt.Errorf("unknown context: %q", context)
 	}
 	return "", nil
+}
+
+func getParent(parent *redmine.Issue, issueTypes models.IssueTypes) (string, error) {
+	if parent == nil || parent.Id == 0 {
+		return "", nil
+	}
+	issueContext, err := getIssueContext(*parent, issueTypes)
+	if err != nil {
+		log.Printf("Failed to get parent issue context: %v", err)
+		return "", err
+	}
+	issueContext = fmt.Sprintf("<parent_issue>\n%s\n</parent_issue>", issueContext)
+	return issueContext, nil
 }
 
 func getParents(parents []redmine.Issue, issueTypes models.IssueTypes) (string, error) {
