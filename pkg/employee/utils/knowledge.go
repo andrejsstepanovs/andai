@@ -17,27 +17,22 @@ const (
 	tmpFile = "andai-%d-*.md"
 )
 
-func BuildPromptTextTmpFile(content string) (string, error) {
-	tempFile, err := os.CreateTemp("", fmt.Sprintf(tmpFile, 1))
-	if err != nil {
-		return "", err
-	}
-	log.Printf("Created temporary file: %q", tempFile.Name())
-
-	_, err = tempFile.WriteString(content)
-	if err != nil {
-		return "", err
-	}
-	defer tempFile.Close()
-
-	return tempFile.Name(), nil
+type Knowledge struct {
+	Issue      redmine.Issue
+	Parent     *redmine.Issue
+	Parents    []redmine.Issue
+	Children   []redmine.Issue
+	Project    models.Project
+	IssueTypes models.IssueTypes
+	Comments   redminemodels.Comments
+	Step       models.Step
 }
 
-func BuildPromptTmpFile(issue redmine.Issue, step models.Step) (string, error) {
+func (k Knowledge) BuildPromptTmpFile() (string, error) {
 	promptTemplate := "{{.Step.Prompt}}"
 
 	data := map[string]interface{}{
-		"Step": step,
+		"Step": k.Step,
 	}
 	tmpl, err := template.New("SimplePrompt").Parse(promptTemplate)
 	if err != nil {
@@ -51,7 +46,7 @@ func BuildPromptTmpFile(issue redmine.Issue, step models.Step) (string, error) {
 	content := buf.String()
 	fmt.Println("\n##############\n", content, "\n##############")
 
-	tempFile, err := os.CreateTemp("", fmt.Sprintf(tmpFile, issue.Id))
+	tempFile, err := os.CreateTemp("", fmt.Sprintf(tmpFile, k.Issue.Id))
 	if err != nil {
 		return "", err
 	}
@@ -66,27 +61,18 @@ func BuildPromptTmpFile(issue redmine.Issue, step models.Step) (string, error) {
 	return tempFile.Name(), nil
 }
 
-func BuildIssueKnowledgeTmpFile(
-	issue redmine.Issue,
-	parent *redmine.Issue,
-	parents []redmine.Issue,
-	children []redmine.Issue,
-	project models.Project,
-	issueTypes models.IssueTypes,
-	comments redminemodels.Comments,
-	step models.Step,
-) (string, error) {
+func (k Knowledge) BuildIssueKnowledgeTmpFile() (string, error) {
 	parts := make([]string, 0)
-	for _, context := range step.Context {
+	for _, context := range k.Step.Context {
 		newPart, err := getContext(
 			context,
-			issue,
-			parent,
-			parents,
-			children,
-			project,
-			issueTypes,
-			comments,
+			k.Issue,
+			k.Parent,
+			k.Parents,
+			k.Children,
+			k.Project,
+			k.IssueTypes,
+			k.Comments,
 		)
 		if err != nil {
 			return "", err
@@ -96,7 +82,7 @@ func BuildIssueKnowledgeTmpFile(
 		}
 	}
 
-	prompt := step.Prompt.ForCli()
+	prompt := k.Step.Prompt.ForCli()
 	if prompt != "" {
 		txt := fmt.Sprintf("# Your task:\n%s", prompt)
 		parts = append(parts, txt)
@@ -107,7 +93,7 @@ func BuildIssueKnowledgeTmpFile(
 
 	//panic(1)
 
-	tempFile, err := os.CreateTemp("", fmt.Sprintf(tmpFile, issue.Id))
+	tempFile, err := os.CreateTemp("", fmt.Sprintf(tmpFile, k.Issue.Id))
 	if err != nil {
 		return "", err
 	}

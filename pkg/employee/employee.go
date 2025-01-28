@@ -100,16 +100,18 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 		return exec.Output{}, err
 	}
 
-	contextFile, err := utils.BuildIssueKnowledgeTmpFile(
-		i.issue,
-		i.parent,
-		i.parents,
-		i.children,
-		i.projectCfg,
-		i.issueTypes,
-		comments,
-		step,
-	)
+	knowledge := utils.Knowledge{
+		Issue:      i.issue,
+		Parent:     i.parent,
+		Parents:    i.parents,
+		Children:   i.children,
+		Project:    i.projectCfg,
+		IssueTypes: i.issueTypes,
+		Comments:   comments,
+		Step:       step,
+	}
+
+	contextFile, err := knowledge.BuildIssueKnowledgeTmpFile()
 	if err != nil {
 		log.Printf("Failed to build issue context tmp file: %v", err)
 	}
@@ -154,7 +156,7 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 		}
 		return exec.Output{}, nil
 	case "bobik":
-		promptFile, err := utils.BuildPromptTmpFile(i.issue, step)
+		promptFile, err := knowledge.BuildPromptTmpFile()
 		if err != nil {
 			log.Printf("Failed to build prompt tmp file: %v", err)
 		}
