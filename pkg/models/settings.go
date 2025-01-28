@@ -50,6 +50,43 @@ func (s *Settings) validateStates() error {
 	return nil
 }
 
+func (s *Settings) validateTriggers(issueTypeNames map[IssueTypeName]bool, stateNames map[StateName]bool) error {
+	for _, trigger := range s.Workflow.Triggers {
+		if _, ok := issueTypeNames[trigger.IssueType]; !ok {
+			return fmt.Errorf("trigger type %s does not exist", trigger.IssueType)
+		}
+
+		for _, triggerIf := range trigger.TriggerIf {
+			if _, ok := stateNames[triggerIf.MovedTo]; !ok {
+				return fmt.Errorf("trigger state %s does not exist", triggerIf.MovedTo)
+			}
+
+			if _, ok := issueTypeNames[triggerIf.TriggerTransition.IssueType]; !ok {
+				return fmt.Errorf("trigger transition issue type %s does not exist", triggerIf.TriggerTransition.IssueType)
+			}
+
+			if _, ok := stateNames[triggerIf.TriggerTransition.To]; !ok {
+				return fmt.Errorf("trigger transition to state %s does not exist", triggerIf.TriggerTransition.To)
+			}
+
+			if triggerIf.AllSiblingsStatus != "" {
+				if _, ok := stateNames[triggerIf.AllSiblingsStatus]; !ok {
+					return fmt.Errorf("trigger all siblings status %s does not exist", triggerIf.AllSiblingsStatus)
+				}
+			}
+
+			switch triggerIf.TriggerTransition.Who {
+			case TriggerTransitionWhoParent:
+			case TriggerTransitionWhoChildren:
+				continue
+			default:
+				return fmt.Errorf("trigger transition 'who': %s is not valid", triggerIf.TriggerTransition.Who)
+			}
+		}
+	}
+	return nil
+}
+
 func (s *Settings) validateTransitions(stateNames map[StateName]bool) error {
 	// validate transitions existence
 	for _, transition := range s.Workflow.Transitions {
@@ -87,10 +124,10 @@ func (s *Settings) validateTransitions(stateNames map[StateName]bool) error {
 	return nil
 }
 
-func (s *Settings) validateIssueTypeStates(stateNames map[StateName]bool) (map[StateName]bool, error) {
-	issueTypeNames := make(map[StateName]bool)
+func (s *Settings) validateIssueTypeStates(stateNames map[StateName]bool) (map[IssueTypeName]bool, error) {
+	issueTypeNames := make(map[IssueTypeName]bool)
 	for issueTypeName, issueType := range s.Workflow.IssueTypes {
-		issueTypeNames[StateName(issueTypeName)] = true
+		issueTypeNames[issueTypeName] = true
 		for stateName := range issueType.Jobs {
 			if _, ok := stateNames[stateName]; !ok {
 				return nil, fmt.Errorf("job %s does not have valid state %s", issueTypeName, stateName)
@@ -151,8 +188,8 @@ func (s *Settings) validateStepContexts() error {
 	return nil
 }
 
-func (s *Settings) validateIssueTypes(stateNames map[StateName]bool) (map[StateName]bool, error) {
-	issueTypeNames, err := s.validateIssueTypeStates(stateNames)
+func (s *Settings) validateIssueTypes(stateNames map[StateName]bool) (map[IssueTypeName]bool, error) {
+	issueStateNames, err := s.validateIssueTypeStates(stateNames)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +202,7 @@ func (s *Settings) validateIssueTypes(stateNames map[StateName]bool) (map[StateN
 		return nil, err
 	}
 
-	return issueTypeNames, nil
+	return issueStateNames, nil
 }
 
 func (s *Settings) Validate() error {
@@ -187,12 +224,16 @@ func (s *Settings) Validate() error {
 		return err
 	}
 
+	if err := s.validateTriggers(issueTypeNames, stateNames); err != nil {
+		return err
+	}
+
 	// validate priorities
 	for _, priority := range s.Workflow.Priorities {
 		if _, ok := stateNames[priority.State]; !ok {
 			return fmt.Errorf("priority state %s does not exist", priority.State)
 		}
-		if _, ok := issueTypeNames[StateName(priority.Type)]; !ok {
+		if _, ok := issueTypeNames[priority.Type]; !ok {
 			return fmt.Errorf("priority issue type %s does not exist", priority.Type)
 		}
 	}

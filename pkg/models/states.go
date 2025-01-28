@@ -1,5 +1,6 @@
 package models
 
+// StateName : Initial, Backlog, In Progress, etc
 type StateName string
 
 type States map[StateName]State
