@@ -136,24 +136,10 @@ func getContext(
 	case models.ContextLastComment:
 		if len(comments) > 0 {
 			c := comments[len(comments)-1]
-			commentsContext, err := getCommentsContext(redminemodels.Comments{c})
-			if err != nil {
-				log.Printf("Failed to get last comment context: %v", err)
-				return "", err
-			}
-			commentsContext = tagContent("comment", commentsContext, 1)
-			return commentsContext, nil
+			return getComments(redminemodels.Comments{c}, "comment")
 		}
 	case models.ContextComments:
-		if len(comments) > 0 {
-			commentsContext, err := getCommentsContext(comments)
-			if err != nil {
-				log.Printf("Failed to get comments context: %v", err)
-				return "", err
-			}
-			commentsContext = tagContent("comments", commentsContext, 1)
-			return commentsContext, nil
-		}
+		return getComments(comments, "comments")
 	case models.ContextTicket:
 		issueContext, err := getIssueContext(issue, issueTypes)
 		if err != nil {
@@ -192,6 +178,19 @@ func getContext(
 	return "", nil
 }
 
+func getComments(comments redminemodels.Comments, tag string) (string, error) {
+	if len(comments) == 0 {
+		return "", nil
+	}
+	commentsContext, err := getCommentsContext(comments)
+	if err != nil {
+		log.Printf("Failed to get comments context: %v", err)
+		return "", err
+	}
+	commentsContext = tagContent(tag, commentsContext, 1)
+	return commentsContext, nil
+}
+
 func getParent(parent *redmine.Issue, issueTypes models.IssueTypes) (string, error) {
 	if parent == nil || parent.Id == 0 {
 		return "", nil
@@ -224,7 +223,7 @@ func getParents(parents []redmine.Issue, issueTypes models.IssueTypes) (string, 
 }
 
 func getChildren(children []redmine.Issue, issueTypes models.IssueTypes) (string, error) {
-	if len(children) > 0 {
+	if len(children) == 0 {
 		return "", nil
 	}
 	childrenContext := make([]string, 0)
@@ -242,16 +241,16 @@ func getChildren(children []redmine.Issue, issueTypes models.IssueTypes) (string
 }
 
 func getIssueTypes(issueTypes models.IssueTypes) (string, error) {
-	if len(issueTypes) > 0 {
-		issueTypeContext, err := getIssueTypesContext(issueTypes)
-		if err != nil {
-			log.Printf("Failed to get issue types context: %v", err)
-			return "", err
-		}
-		issueContext := tagContent("project_issue_types", issueTypeContext, 1)
-		return issueContext, nil
+	if len(issueTypes) == 0 {
+		return "", nil
 	}
-	return "", nil
+	issueTypeContext, err := getIssueTypesContext(issueTypes)
+	if err != nil {
+		log.Printf("Failed to get issue types context: %v", err)
+		return "", err
+	}
+	issueContext := tagContent("project_issue_types", issueTypeContext, 1)
+	return issueContext, nil
 }
 
 func getCommentsContext(comments redminemodels.Comments) (string, error) {
