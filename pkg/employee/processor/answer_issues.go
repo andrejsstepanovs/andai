@@ -2,8 +2,6 @@ package processor
 
 import (
 	"fmt"
-
-	"github.com/mattn/go-redmine"
 )
 
 type AnswerIssues struct {
@@ -18,20 +16,12 @@ type Answer struct {
 }
 
 func (a Answer) GetDeps() map[int][]int {
-	items := make([]redmine.Issue, 0)
 	deps := make(map[int][]int)
 	for _, issue := range a.Issues {
-		items = append(items, redmine.Issue{
-			Subject:     issue.Subject,
-			Description: issue.Description,
-		})
-
 		if deps[issue.ID] == nil {
 			deps[issue.ID] = make([]int, 0)
 		}
-		for _, blockedBy := range issue.BlockedBy {
-			deps[issue.ID] = append(deps[issue.ID], blockedBy)
-		}
+		deps[issue.ID] = append(deps[issue.ID], issue.BlockedBy...)
 	}
 
 	return deps

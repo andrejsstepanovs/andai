@@ -183,7 +183,7 @@ func BuildIssueKnowledgeTmpFile(
 	}
 
 	content := strings.Join(parts, "\n\n")
-	fmt.Println("\n##############\n", content, "\n##############\n")
+	//fmt.Println("\n##############\n", content, "\n##############\n")
 
 	//panic(1)
 

@@ -58,9 +58,7 @@ func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile st
 		if deps[issue.ID] == nil {
 			deps[issue.ID] = make([]int, 0)
 		}
-		for _, blockedBy := range issue.BlockedBy {
-			deps[issue.ID] = append(deps[issue.ID], blockedBy)
-		}
+		deps[issue.ID] = append(deps[issue.ID], issue.BlockedBy...)
 	}
 
 	return out, items, deps, nil
@@ -93,7 +91,7 @@ func getTaskPrompt(targetIssueTypeName models.IssueTypeName) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	exampleJson := string(jsonTxt)
+	exampleJSON := string(jsonTxt)
 
 	format := "You need to Answer using raw JSON. Expected json format example data:\n" +
 		"```json\n%s\n```\n" +
@@ -107,7 +105,7 @@ func getTaskPrompt(targetIssueTypeName models.IssueTypeName) (string, error) {
 		"Do not use any other tags in JSON.\n" +
 		"Do not create tasks that are out of scope of current issue requirements."
 
-	taskPrompt := fmt.Sprintf(format, exampleJson, targetIssueTypeName)
+	taskPrompt := fmt.Sprintf(format, exampleJSON, targetIssueTypeName)
 	return taskPrompt, err
 }
 
