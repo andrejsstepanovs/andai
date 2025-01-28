@@ -149,21 +149,9 @@ func getContext(
 		issueContext = tagContent("current_issue", issueContext, 1)
 		return issueContext, nil
 	case models.ContextProject:
-		issueContext, err := getProjectContext(project)
-		if err != nil {
-			log.Printf("Failed to get project context: %v", err)
-			return "", err
-		}
-		issueContext = tagContent("project", issueContext, 1)
-		return issueContext, nil
+		return getProject(project)
 	case models.ContextProjectWiki:
-		issueContext, err := getProjectWikiContext(project)
-		if err != nil {
-			log.Printf("Failed to get project wiki context: %v", err)
-			return "", err
-		}
-		issueContext = tagContent("project_wiki", issueContext, 1)
-		return issueContext, nil
+		return getProjectWiki(project)
 	case models.ContextParent:
 		return getParent(parent, issueTypes)
 	case models.ContextParents:
@@ -189,6 +177,26 @@ func getComments(comments redminemodels.Comments, tag string) (string, error) {
 	}
 	commentsContext = tagContent(tag, commentsContext, 1)
 	return commentsContext, nil
+}
+
+func getProjectWiki(project models.Project) (string, error) {
+	issueContext, err := getProjectWikiContext(project)
+	if err != nil {
+		log.Printf("Failed to get project wiki context: %v", err)
+		return "", err
+	}
+	issueContext = tagContent("project_wiki", issueContext, 1)
+	return issueContext, nil
+}
+
+func getProject(project models.Project) (string, error) {
+	issueContext, err := getProjectContext(project)
+	if err != nil {
+		log.Printf("Failed to get project context: %v", err)
+		return "", err
+	}
+	issueContext = tagContent("project", issueContext, 1)
+	return issueContext, nil
 }
 
 func getParent(parent *redmine.Issue, issueTypes models.IssueTypes) (string, error) {
