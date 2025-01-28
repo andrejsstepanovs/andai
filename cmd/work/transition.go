@@ -116,6 +116,8 @@ func newTriggersCommand(model *model.Model, workflow models.Workflow) *cobra.Com
 					if parent == nil {
 						return fmt.Errorf("no parent found")
 					}
+					parentState := workflow.States.Get(models.StateName(parent.Status.Name))
+					log.Printf("Transitioning parent %q %d - %q -> %q\n", parent.Tracker.Name, parent.Id, parentState.Name, nextIssueStatus.Name)
 					err = model.Transition(*parent, nextIssueStatus)
 					if err != nil {
 						return fmt.Errorf("failed to transition issue err: %v", err)
