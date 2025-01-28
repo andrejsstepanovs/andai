@@ -107,6 +107,10 @@ func newTriggersCommand(model *model.Model, workflow models.Workflow) *cobra.Com
 				}
 				switch action.TriggerTransition.Who {
 				case models.TriggerTransitionWhoChildren:
+					if len(children) == 0 {
+						log.Printf("Should transition children to %q but no children to work with (%q %d)\n", nextIssueStatus.Name, issue.Tracker.Name, issue.Id)
+						continue
+					}
 					for _, child := range children {
 						childState := workflow.States.Get(models.StateName(child.Status.Name))
 						log.Printf("Transitioning child %q %d - %q -> %q\n", child.Tracker.Name, child.Id, childState.Name, nextIssueStatus.Name)
