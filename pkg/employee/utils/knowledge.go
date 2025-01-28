@@ -78,102 +78,20 @@ func BuildIssueKnowledgeTmpFile(
 ) (string, error) {
 	parts := make([]string, 0)
 	for _, context := range step.Context {
-		switch context {
-		case models.ContextLastComment:
-			if len(comments) > 0 {
-				c := comments[len(comments)-1]
-				commentsContext, err := getCommentsContext(redminemodels.Comments{c})
-				if err != nil {
-					log.Printf("Failed to get last comment context: %v", err)
-					return "", err
-				}
-				commentsContext = tagContent("comment", commentsContext, 1)
-				parts = append(parts, commentsContext)
-			}
-		case models.ContextComments:
-			if len(comments) > 0 {
-				commentsContext, err := getCommentsContext(comments)
-				if err != nil {
-					log.Printf("Failed to get comments context: %v", err)
-					return "", err
-				}
-				commentsContext = tagContent("comments", commentsContext, 1)
-				parts = append(parts, commentsContext)
-			}
-		case models.ContextTicket:
-			issueContext, err := getIssueContext(issue, issueTypes)
-			if err != nil {
-				log.Printf("Failed to get current issue context: %v", err)
-				return "", err
-			}
-			issueContext = tagContent("current_issue", issueContext, 1)
-			parts = append(parts, issueContext)
-		case models.ContextProject:
-			issueContext, err := getProjectContext(project)
-			if err != nil {
-				log.Printf("Failed to get project context: %v", err)
-				return "", err
-			}
-			issueContext = tagContent("project", issueContext, 1)
-			parts = append(parts, issueContext)
-		case models.ContextProjectWiki:
-			issueContext, err := getProjectWikiContext(project)
-			if err != nil {
-				log.Printf("Failed to get project wiki context: %v", err)
-				return "", err
-			}
-			issueContext = tagContent("project_wiki", issueContext, 1)
-			parts = append(parts, issueContext)
-		case models.ContextParent:
-			if parent != nil && parent.Id != 0 {
-				issueContext, err := getIssueContext(*parent, issueTypes)
-				if err != nil {
-					log.Printf("Failed to get parent issue context: %v", err)
-					return "", err
-				}
-				issueContext = fmt.Sprintf("<parent_issue>\n%s\n</parent_issue>", issueContext)
-				parts = append(parts, issueContext)
-			}
-		case models.ContextParents:
-			if len(parents) > 0 {
-				parentsContext := make([]string, 0)
-				for _, p := range parents {
-					parentIssueContext, err := getIssueContext(p, issueTypes)
-					if err != nil {
-						log.Printf("Failed to get single parent issue context: %v", err)
-						return "", err
-					}
-					txt := tagContent("parent_issue", parentIssueContext, 2)
-					parentsContext = append(parentsContext, txt)
-				}
-				txt := tagContent("parent_issues", strings.Join(parentsContext, "\n"), 1)
-				parts = append(parts, txt)
-			}
-		case models.ContextChildren:
-			if len(children) > 0 {
-				childrenContext := make([]string, 0)
-				for _, child := range children {
-					childIssueContext, err := getIssueContext(child, issueTypes)
-					if err != nil {
-						log.Printf("Failed to get single child issue context: %v", err)
-						return "", err
-					}
-					txt := tagContent("child_issue", childIssueContext, 2)
-					childrenContext = append(childrenContext, txt)
-				}
-				txt := tagContent("children_issues", strings.Join(childrenContext, "\n"), 1)
-				parts = append(parts, txt)
-			}
-		case models.ContextIssueTypes:
-			if len(issueTypes) > 0 {
-				issueTypeContext, err := getIssueTypesContext(issueTypes)
-				if err != nil {
-					log.Printf("Failed to get issue types context: %v", err)
-					return "", err
-				}
-				parts = append(parts, tagContent("project_issue_types", issueTypeContext, 1))
-			}
+		newPart, err := getContext(
+			context,
+			issue,
+			parent,
+			parents,
+			children,
+			project,
+			issueTypes,
+			comments,
+		)
+		if err != nil {
+			return "", err
 		}
+		parts = append(parts, newPart)
 	}
 
 	prompt := step.Prompt.ForCli()
@@ -200,6 +118,118 @@ func BuildIssueKnowledgeTmpFile(
 	defer tempFile.Close()
 
 	return tempFile.Name(), nil
+}
+
+func getContext(
+	context string,
+	issue redmine.Issue,
+	parent *redmine.Issue,
+	parents []redmine.Issue,
+	children []redmine.Issue,
+	project models.Project,
+	issueTypes models.IssueTypes,
+	comments redminemodels.Comments,
+) (string, error) {
+	switch context {
+	case models.ContextLastComment:
+		if len(comments) > 0 {
+			c := comments[len(comments)-1]
+			commentsContext, err := getCommentsContext(redminemodels.Comments{c})
+			if err != nil {
+				log.Printf("Failed to get last comment context: %v", err)
+				return "", err
+			}
+			commentsContext = tagContent("comment", commentsContext, 1)
+			return commentsContext, nil
+		}
+	case models.ContextComments:
+		if len(comments) > 0 {
+			commentsContext, err := getCommentsContext(comments)
+			if err != nil {
+				log.Printf("Failed to get comments context: %v", err)
+				return "", err
+			}
+			commentsContext = tagContent("comments", commentsContext, 1)
+			return commentsContext, nil
+		}
+	case models.ContextTicket:
+		issueContext, err := getIssueContext(issue, issueTypes)
+		if err != nil {
+			log.Printf("Failed to get current issue context: %v", err)
+			return "", err
+		}
+		issueContext = tagContent("current_issue", issueContext, 1)
+		return issueContext, nil
+	case models.ContextProject:
+		issueContext, err := getProjectContext(project)
+		if err != nil {
+			log.Printf("Failed to get project context: %v", err)
+			return "", err
+		}
+		issueContext = tagContent("project", issueContext, 1)
+		return issueContext, nil
+	case models.ContextProjectWiki:
+		issueContext, err := getProjectWikiContext(project)
+		if err != nil {
+			log.Printf("Failed to get project wiki context: %v", err)
+			return "", err
+		}
+		issueContext = tagContent("project_wiki", issueContext, 1)
+		return issueContext, nil
+	case models.ContextParent:
+		if parent != nil && parent.Id != 0 {
+			issueContext, err := getIssueContext(*parent, issueTypes)
+			if err != nil {
+				log.Printf("Failed to get parent issue context: %v", err)
+				return "", err
+			}
+			issueContext = fmt.Sprintf("<parent_issue>\n%s\n</parent_issue>", issueContext)
+			return issueContext, nil
+		}
+	case models.ContextParents:
+		if len(parents) > 0 {
+			parentsContext := make([]string, 0)
+			for _, p := range parents {
+				parentIssueContext, err := getIssueContext(p, issueTypes)
+				if err != nil {
+					log.Printf("Failed to get single parent issue context: %v", err)
+					return "", err
+				}
+				txt := tagContent("parent_issue", parentIssueContext, 2)
+				parentsContext = append(parentsContext, txt)
+			}
+			issueContext := tagContent("parent_issues", strings.Join(parentsContext, "\n"), 1)
+			return issueContext, nil
+		}
+	case models.ContextChildren:
+		if len(children) > 0 {
+			childrenContext := make([]string, 0)
+			for _, child := range children {
+				childIssueContext, err := getIssueContext(child, issueTypes)
+				if err != nil {
+					log.Printf("Failed to get single child issue context: %v", err)
+					return "", err
+				}
+				txt := tagContent("child_issue", childIssueContext, 2)
+				childrenContext = append(childrenContext, txt)
+			}
+			issueContext := tagContent("children_issues", strings.Join(childrenContext, "\n"), 1)
+			return issueContext, nil
+		}
+	case models.ContextIssueTypes:
+		if len(issueTypes) > 0 {
+			issueTypeContext, err := getIssueTypesContext(issueTypes)
+			if err != nil {
+				log.Printf("Failed to get issue types context: %v", err)
+				return "", err
+			}
+			issueContext := tagContent("project_issue_types", issueTypeContext, 1)
+			return issueContext, nil
+		}
+	default:
+		return "", fmt.Errorf("unknown context: %q", context)
+	}
+	return "", nil
 }
 
 func getCommentsContext(comments redminemodels.Comments) (string, error) {
