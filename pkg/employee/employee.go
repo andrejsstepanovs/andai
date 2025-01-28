@@ -146,36 +146,13 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 		if err != nil {
 			return out, err
 		}
-		createdIDs := make(map[int]int)
-		for k, issue := range issues {
-			projectID := i.issue.Project.Id
-			issue.ProjectId = projectID
-			issue.Project = &redmine.IdName{Id: projectID}
-			issue.ParentId = i.issue.Id
-			issue.Parent = &redmine.Id{Id: i.issue.Id}
-			issue.TrackerId = trackerID
 
-			created, err := i.model.CreateIssue(issue)
-			if err != nil {
-				log.Printf("Failed to create issue: %v", err)
-				return out, err
-			}
-			log.Printf("Created issue: %d\n", created.Id)
-			createdIDs[k] = created.Id
+		err = i.model.CreateChildIssuesWithDependencies(trackerID, i.issue, issues, deps)
+		if err != nil {
+			log.Printf("Failed to create new issues: %v", err)
+			return exec.Output{}, err
 		}
-		for k, issueID := range createdIDs {
-			for _, depK := range deps[k] {
-				if createdIDs[depK] == issueID {
-					continue
-				}
-				err = i.model.DBCreateBlockedByIssueRelation(issueID, createdIDs[depK])
-				if err != nil {
-					log.Printf("Failed to set blocks dependency: %v", err)
-					return out, err
-				}
-			}
-		}
-
+		return exec.Output{}, nil
 	case "bobik":
 		promptFile, err := utils.BuildPromptTmpFile(i.issue, step)
 		if err != nil {
@@ -185,8 +162,6 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 	default:
 		return exec.Output{}, fmt.Errorf("unknown step command: %q", step.Command)
 	}
-
-	return exec.Output{}, nil
 }
 
 func (i *Employee) addHistory(step models.Step) models.StepPrompt {

@@ -268,3 +268,38 @@ func (c *Model) CreateIssue(issue redmine.Issue) (redmine.Issue, error) {
 	}
 	return *created, nil
 }
+
+func (c *Model) CreateChildIssuesWithDependencies(trackerID int, parent redmine.Issue, issues map[int]redmine.Issue, deps map[int][]int) error {
+	createdIDs := make(map[int]int)
+	for k, issue := range issues {
+		projectID := parent.Project.Id
+		issue.ProjectId = projectID
+		issue.Project = &redmine.IdName{Id: projectID}
+		issue.ParentId = parent.Id
+		issue.Parent = &redmine.Id{Id: parent.Id}
+		issue.TrackerId = trackerID
+
+		created, err := c.CreateIssue(issue)
+		if err != nil {
+			log.Printf("Failed to create issue: %v", err)
+			return err
+		}
+		log.Printf("Created issue: %d\n", created.Id)
+		createdIDs[k] = created.Id
+	}
+
+	for k, issueID := range createdIDs {
+		for _, depK := range deps[k] {
+			if createdIDs[depK] == issueID {
+				continue
+			}
+			err := c.DBCreateBlockedByIssueRelation(issueID, createdIDs[depK])
+			if err != nil {
+				log.Printf("Failed to set blocks dependency: %v", err)
+				return err
+			}
+		}
+	}
+
+	return nil
+}

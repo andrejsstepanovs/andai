@@ -17,7 +17,7 @@ func BobikExecute(promptFile string, step models.Step) (exec.Output, error) {
 	return exec.Exec(step.Command, step.Action, fmt.Sprintf(format, promptFile))
 }
 
-func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile string) (exec.Output, []redmine.Issue, map[int][]int, error) {
+func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile string) (exec.Output, map[int]redmine.Issue, map[int][]int, error) {
 	taskPrompt, err := getTaskPrompt(targetIssueTypeName)
 	if err != nil {
 		return exec.Output{}, nil, nil, err
@@ -47,13 +47,13 @@ func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile st
 		break
 	}
 
-	items := make([]redmine.Issue, 0)
+	items := make(map[int]redmine.Issue)
 	deps := make(map[int][]int)
 	for _, issue := range createIssues.Issues {
-		items = append(items, redmine.Issue{
+		items[issue.ID] = redmine.Issue{
 			Subject:     issue.Subject,
 			Description: issue.Description,
-		})
+		}
 
 		if deps[issue.ID] == nil {
 			deps[issue.ID] = make([]int, 0)
