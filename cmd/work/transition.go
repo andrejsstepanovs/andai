@@ -93,6 +93,7 @@ func newTriggersCommand(model *model.Model, workflow models.Workflow) *cobra.Com
 					}
 					siblingsStatuses = append(siblingsStatuses, models.StateName(status.Name))
 				}
+				log.Printf("Siblings statuses for %q %d: %v\n", issue.Tracker.Name, issue.Id, siblingsStatuses)
 				siblingStatusOK := action.AllSiblingsCheck(siblingsStatuses)
 				log.Printf("Siblings status check for %q %d: %t\n", issue.Tracker.Name, issue.Id, siblingStatusOK)
 
