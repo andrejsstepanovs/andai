@@ -141,13 +141,7 @@ func getContext(
 	case models.ContextComments:
 		return getComments(comments, "comments")
 	case models.ContextTicket:
-		issueContext, err := getIssueContext(issue, issueTypes)
-		if err != nil {
-			log.Printf("Failed to get current issue context: %v", err)
-			return "", err
-		}
-		issueContext = tagContent("current_issue", issueContext, 1)
-		return issueContext, nil
+		return getIssue(issue, issueTypes)
 	case models.ContextProject:
 		return getProject(project)
 	case models.ContextProjectWiki:
@@ -164,6 +158,16 @@ func getContext(
 		return "", fmt.Errorf("unknown context: %q", context)
 	}
 	return "", nil
+}
+
+func getIssue(issue redmine.Issue, issueTypes models.IssueTypes) (string, error) {
+	issueContext, err := getIssueContext(issue, issueTypes)
+	if err != nil {
+		log.Printf("Failed to get current issue context: %v", err)
+		return "", err
+	}
+	issueContext = tagContent("current_issue", issueContext, 1)
+	return issueContext, nil
 }
 
 func getComments(comments redminemodels.Comments, tag string) (string, error) {
