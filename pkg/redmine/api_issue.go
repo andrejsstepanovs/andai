@@ -28,6 +28,9 @@ func (c *Model) APIGetChildren(issue redmine.Issue) ([]redmine.Issue, error) {
 		if projectIssue.Id == issue.Id {
 			continue
 		}
+		if projectIssue.Parent == nil {
+			continue
+		}
 		if projectIssue.Parent.Id == issue.Id {
 			children = append(children, projectIssue)
 		}
