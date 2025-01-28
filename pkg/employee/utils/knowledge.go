@@ -64,16 +64,7 @@ func (k Knowledge) BuildPromptTmpFile() (string, error) {
 func (k Knowledge) BuildIssueKnowledgeTmpFile() (string, error) {
 	parts := make([]string, 0)
 	for _, context := range k.Step.Context {
-		newPart, err := getContext(
-			context,
-			k.Issue,
-			k.Parent,
-			k.Parents,
-			k.Children,
-			k.Project,
-			k.IssueTypes,
-			k.Comments,
-		)
+		newPart, err := k.getContext(context)
 		if err != nil {
 			return "", err
 		}
@@ -108,39 +99,30 @@ func (k Knowledge) BuildIssueKnowledgeTmpFile() (string, error) {
 	return tempFile.Name(), nil
 }
 
-func getContext(
-	context string,
-	issue redmine.Issue,
-	parent *redmine.Issue,
-	parents []redmine.Issue,
-	children []redmine.Issue,
-	project models.Project,
-	issueTypes models.IssueTypes,
-	comments redminemodels.Comments,
-) (string, error) {
+func (k Knowledge) getContext(context string) (string, error) {
 	switch context {
 	case models.ContextLastComment:
-		if len(comments) == 0 {
+		if len(k.Comments) == 0 {
 			return "", nil
 		}
-		c := comments[len(comments)-1]
+		c := k.Comments[len(k.Comments)-1]
 		return getComments(redminemodels.Comments{c}, "comment")
 	case models.ContextComments:
-		return getComments(comments, "comments")
+		return getComments(k.Comments, "comments")
 	case models.ContextTicket:
-		return getIssue(issue, issueTypes)
+		return getIssue(k.Issue, k.IssueTypes)
 	case models.ContextProject:
-		return getProject(project)
+		return getProject(k.Project)
 	case models.ContextProjectWiki:
-		return getProjectWiki(project)
+		return getProjectWiki(k.Project)
 	case models.ContextParent:
-		return getParent(parent, issueTypes)
+		return getParent(k.Parent, k.IssueTypes)
 	case models.ContextParents:
-		return getParents(parents, issueTypes)
+		return getParents(k.Parents, k.IssueTypes)
 	case models.ContextChildren:
-		return getChildren(children, issueTypes)
+		return getChildren(k.Children, k.IssueTypes)
 	case models.ContextIssueTypes:
-		return getIssueTypes(issueTypes)
+		return getIssueTypes(k.IssueTypes)
 	default:
 		return "", fmt.Errorf("unknown context: %q", context)
 	}
