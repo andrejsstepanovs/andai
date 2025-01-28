@@ -110,9 +110,9 @@ func (k Knowledge) getContext(context string) (string, error) {
 	case models.ContextComments:
 		return k.getComments(k.Comments, "comments")
 	case models.ContextTicket:
-		return getIssue(k.Issue, k.IssueTypes)
+		return k.getIssue()
 	case models.ContextProject:
-		return getProject(k.Project)
+		return k.getProject()
 	case models.ContextProjectWiki:
 		return getProjectWiki(k.Project)
 	case models.ContextParent:
@@ -128,8 +128,8 @@ func (k Knowledge) getContext(context string) (string, error) {
 	}
 }
 
-func getIssue(issue redmine.Issue, issueTypes models.IssueTypes) (string, error) {
-	issueContext, err := getIssueContext(issue, issueTypes)
+func (k Knowledge) getIssue() (string, error) {
+	issueContext, err := getIssueContext(k.Issue, k.IssueTypes)
 	if err != nil {
 		log.Printf("Failed to get current issue context: %v", err)
 		return "", err
@@ -161,8 +161,8 @@ func getProjectWiki(project models.Project) (string, error) {
 	return issueContext, nil
 }
 
-func getProject(project models.Project) (string, error) {
-	issueContext, err := getProjectContext(project)
+func (k Knowledge) getProject() (string, error) {
+	issueContext, err := k.getProjectContext()
 	if err != nil {
 		log.Printf("Failed to get project context: %v", err)
 		return "", err
@@ -273,13 +273,13 @@ func getIssueContext(issue redmine.Issue, issueTypes models.IssueTypes) (string,
 	return buf.String(), err
 }
 
-func getProjectContext(project models.Project) (string, error) {
+func (k Knowledge) getProjectContext() (string, error) {
 	promptTemplate := "# {{.Project.Name}} (Identifier: {{.Project.Identifier}})\n\n" +
 		"## Description\n" +
 		"{{.Project.Description}}"
 
 	data := map[string]interface{}{
-		"Project": project,
+		"Project": k.Project,
 	}
 
 	tmpl, err := template.New("Project").Parse(promptTemplate)
