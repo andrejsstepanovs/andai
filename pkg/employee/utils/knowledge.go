@@ -217,17 +217,22 @@ func getContext(
 			return issueContext, nil
 		}
 	case models.ContextIssueTypes:
-		if len(issueTypes) > 0 {
-			issueTypeContext, err := getIssueTypesContext(issueTypes)
-			if err != nil {
-				log.Printf("Failed to get issue types context: %v", err)
-				return "", err
-			}
-			issueContext := tagContent("project_issue_types", issueTypeContext, 1)
-			return issueContext, nil
-		}
+		return getIssueTypes(issueTypes)
 	default:
 		return "", fmt.Errorf("unknown context: %q", context)
+	}
+	return "", nil
+}
+
+func getIssueTypes(issueTypes models.IssueTypes) (string, error) {
+	if len(issueTypes) > 0 {
+		issueTypeContext, err := getIssueTypesContext(issueTypes)
+		if err != nil {
+			log.Printf("Failed to get issue types context: %v", err)
+			return "", err
+		}
+		issueContext := tagContent("project_issue_types", issueTypeContext, 1)
+		return issueContext, nil
 	}
 	return "", nil
 }
