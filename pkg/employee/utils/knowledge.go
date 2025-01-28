@@ -189,20 +189,7 @@ func getContext(
 			return issueContext, nil
 		}
 	case models.ContextParents:
-		if len(parents) > 0 {
-			parentsContext := make([]string, 0)
-			for _, p := range parents {
-				parentIssueContext, err := getIssueContext(p, issueTypes)
-				if err != nil {
-					log.Printf("Failed to get single parent issue context: %v", err)
-					return "", err
-				}
-				txt := tagContent("parent_issue", parentIssueContext, 2)
-				parentsContext = append(parentsContext, txt)
-			}
-			issueContext := tagContent("parent_issues", strings.Join(parentsContext, "\n"), 1)
-			return issueContext, nil
-		}
+		return getParents(parents, issueTypes)
 	case models.ContextChildren:
 		return getChildren(children, issueTypes)
 	case models.ContextIssueTypes:
@@ -213,22 +200,40 @@ func getContext(
 	return "", nil
 }
 
+func getParents(parents []redmine.Issue, issueTypes models.IssueTypes) (string, error) {
+	if len(parents) == 0 {
+		return "", nil
+	}
+	parentsContext := make([]string, 0)
+	for _, p := range parents {
+		parentIssueContext, err := getIssueContext(p, issueTypes)
+		if err != nil {
+			log.Printf("Failed to get single parent issue context: %v", err)
+			return "", err
+		}
+		txt := tagContent("parent_issue", parentIssueContext, 2)
+		parentsContext = append(parentsContext, txt)
+	}
+	issueContext := tagContent("parent_issues", strings.Join(parentsContext, "\n"), 1)
+	return issueContext, nil
+}
+
 func getChildren(children []redmine.Issue, issueTypes models.IssueTypes) (string, error) {
 	if len(children) > 0 {
-		childrenContext := make([]string, 0)
-		for _, child := range children {
-			childIssueContext, err := getIssueContext(child, issueTypes)
-			if err != nil {
-				log.Printf("Failed to get single child issue context: %v", err)
-				return "", err
-			}
-			txt := tagContent("child_issue", childIssueContext, 2)
-			childrenContext = append(childrenContext, txt)
-		}
-		issueContext := tagContent("children_issues", strings.Join(childrenContext, "\n"), 1)
-		return issueContext, nil
+		return "", nil
 	}
-	return "", nil
+	childrenContext := make([]string, 0)
+	for _, child := range children {
+		childIssueContext, err := getIssueContext(child, issueTypes)
+		if err != nil {
+			log.Printf("Failed to get single child issue context: %v", err)
+			return "", err
+		}
+		txt := tagContent("child_issue", childIssueContext, 2)
+		childrenContext = append(childrenContext, txt)
+	}
+	issueContext := tagContent("children_issues", strings.Join(childrenContext, "\n"), 1)
+	return issueContext, nil
 }
 
 func getIssueTypes(issueTypes models.IssueTypes) (string, error) {
