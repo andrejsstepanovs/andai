@@ -59,7 +59,7 @@ func newTriggersCommand(model *model.Model, workflow models.Workflow) *cobra.Com
 			for _, trigger := range triggers {
 				action := trigger.GetTriggerIf(models.StateName(statusTo.Name))
 				if action == nil {
-					log.Printf("No action found for %q %d %s -> %s\n", issue.Tracker.Name, issue.Id, statusFrom.Name, statusTo.Name)
+					//log.Printf("No action found for %q %d %s -> %s\n", issue.Tracker.Name, issue.Id, statusFrom.Name, statusTo.Name)
 					continue
 				}
 				log.Printf("Trigger Action was found for %q %d %s -> %s\n", issue.Tracker.Name, issue.Id, statusFrom.Name, statusTo.Name)

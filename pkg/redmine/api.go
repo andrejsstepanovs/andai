@@ -107,7 +107,18 @@ func (c *Model) APIGetIssueSiblings(issue redmine.Issue) ([]redmine.Issue, error
 		return []redmine.Issue{}, nil
 	}
 
-	return c.APIGetChildren(*parent)
+	children, err := c.APIGetChildren(*parent)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get redmine children issue err: %v", err)
+	}
+	siblings := make([]redmine.Issue, 0)
+	for _, child := range children {
+		if child.Id == issue.Id {
+			continue
+		}
+		siblings = append(siblings, child)
+	}
+	return siblings, nil
 }
 
 func (c *Model) APIGetIssueStatusByID(statusID int) (redmine.IssueStatus, error) {

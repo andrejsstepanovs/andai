@@ -45,7 +45,7 @@ func (c *Model) APIGetParent(issue redmine.Issue) (parent *redmine.Issue, err er
 		if err != nil {
 			return nil, fmt.Errorf("failed to get redmine parent issue err: %v", err)
 		}
-		log.Printf("Parent Issue %d: %s", parent.Id, parent.Subject)
+		//log.Printf("Parent Issue %d: %s", parent.Id, parent.Subject)
 	}
 	return parent, nil
 }
