@@ -35,3 +35,12 @@ func (t Triggers) GetTriggers(issueType IssueTypeName) []Trigger {
 	}
 	return triggers
 }
+
+func (t Trigger) GetTriggerIf(movedTo StateName) *TriggerIf {
+	for _, triggerIf := range t.TriggerIf {
+		if triggerIf.MovedTo == movedTo {
+			return &triggerIf
+		}
+	}
+	return nil
+}

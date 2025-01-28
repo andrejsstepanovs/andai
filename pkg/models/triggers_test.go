@@ -59,3 +59,62 @@ func TestTriggers_GetTriggers(t *testing.T) {
 		})
 	}
 }
+
+func TestTrigger_GetTriggerIf(t *testing.T) {
+	tests := []struct {
+		name     string
+		trigger  models.Trigger
+		movedTo  models.StateName
+		expected *models.TriggerIf
+	}{
+		{
+			name:     "empty trigger",
+			trigger:  models.Trigger{},
+			movedTo:  models.StateName(""),
+			expected: nil,
+		},
+		{
+			name: "single trigger if",
+			trigger: models.Trigger{
+				TriggerIf: []models.TriggerIf{
+					{MovedTo: models.StateName("in_progress")},
+				},
+			},
+			movedTo: models.StateName("in_progress"),
+			expected: &models.TriggerIf{
+				MovedTo: models.StateName("in_progress"),
+			},
+		},
+		{
+			name: "multiple trigger ifs",
+			trigger: models.Trigger{
+				TriggerIf: []models.TriggerIf{
+					{MovedTo: models.StateName("in_progress")},
+					{MovedTo: models.StateName("done")},
+				},
+			},
+			movedTo: models.StateName("done"),
+			expected: &models.TriggerIf{
+				MovedTo: models.StateName("done"),
+			},
+		},
+		{
+			name: "no trigger if for moved to state",
+			trigger: models.Trigger{
+				TriggerIf: []models.TriggerIf{
+					{MovedTo: models.StateName("in_progress")},
+					{MovedTo: models.StateName("done")},
+				},
+			},
+			movedTo:  models.StateName("todo"),
+			expected: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			triggerIf := tt.trigger.GetTriggerIf(tt.movedTo)
+			assert.Equal(t, tt.expected, triggerIf)
+		})
+	}
+}
