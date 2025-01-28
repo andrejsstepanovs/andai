@@ -116,20 +116,20 @@ func (k Knowledge) getContext(context string) (string, error) {
 	case models.ContextProjectWiki:
 		return k.getProjectWiki()
 	case models.ContextParent:
-		return getParent(k.Parent, k.IssueTypes)
+		return k.getParent()
 	case models.ContextParents:
-		return getParents(k.Parents, k.IssueTypes)
+		return k.getParents()
 	case models.ContextChildren:
-		return getChildren(k.Children, k.IssueTypes)
+		return k.getChildren()
 	case models.ContextIssueTypes:
-		return getIssueTypes(k.IssueTypes)
+		return k.getIssueTypes()
 	default:
 		return "", fmt.Errorf("unknown context: %q", context)
 	}
 }
 
 func (k Knowledge) getIssue() (string, error) {
-	issueContext, err := getIssueContext(k.Issue, k.IssueTypes)
+	issueContext, err := k.getIssueContext(k.Issue)
 	if err != nil {
 		log.Printf("Failed to get current issue context: %v", err)
 		return "", err
@@ -171,11 +171,11 @@ func (k Knowledge) getProject() (string, error) {
 	return issueContext, nil
 }
 
-func getParent(parent *redmine.Issue, issueTypes models.IssueTypes) (string, error) {
-	if parent == nil || parent.Id == 0 {
+func (k Knowledge) getParent() (string, error) {
+	if k.Parent == nil || k.Parent.Id == 0 {
 		return "", nil
 	}
-	issueContext, err := getIssueContext(*parent, issueTypes)
+	issueContext, err := k.getIssueContext(*k.Parent)
 	if err != nil {
 		log.Printf("Failed to get parent issue context: %v", err)
 		return "", err
@@ -184,13 +184,13 @@ func getParent(parent *redmine.Issue, issueTypes models.IssueTypes) (string, err
 	return issueContext, nil
 }
 
-func getParents(parents []redmine.Issue, issueTypes models.IssueTypes) (string, error) {
-	if len(parents) == 0 {
+func (k Knowledge) getParents() (string, error) {
+	if len(k.Parents) == 0 {
 		return "", nil
 	}
 	parentsContext := make([]string, 0)
-	for _, p := range parents {
-		parentIssueContext, err := getIssueContext(p, issueTypes)
+	for _, p := range k.Parents {
+		parentIssueContext, err := k.getIssueContext(p)
 		if err != nil {
 			log.Printf("Failed to get single parent issue context: %v", err)
 			return "", err
@@ -202,13 +202,13 @@ func getParents(parents []redmine.Issue, issueTypes models.IssueTypes) (string, 
 	return issueContext, nil
 }
 
-func getChildren(children []redmine.Issue, issueTypes models.IssueTypes) (string, error) {
-	if len(children) == 0 {
+func (k Knowledge) getChildren() (string, error) {
+	if len(k.Children) == 0 {
 		return "", nil
 	}
 	childrenContext := make([]string, 0)
-	for _, child := range children {
-		childIssueContext, err := getIssueContext(child, issueTypes)
+	for _, child := range k.Children {
+		childIssueContext, err := k.getIssueContext(child)
 		if err != nil {
 			log.Printf("Failed to get single child issue context: %v", err)
 			return "", err
@@ -220,11 +220,11 @@ func getChildren(children []redmine.Issue, issueTypes models.IssueTypes) (string
 	return issueContext, nil
 }
 
-func getIssueTypes(issueTypes models.IssueTypes) (string, error) {
-	if len(issueTypes) == 0 {
+func (k Knowledge) getIssueTypes() (string, error) {
+	if len(k.IssueTypes) == 0 {
 		return "", nil
 	}
-	issueTypeContext, err := getIssueTypesContext(issueTypes)
+	issueTypeContext, err := k.getIssueTypesContext()
 	if err != nil {
 		log.Printf("Failed to get issue types context: %v", err)
 		return "", err
@@ -252,7 +252,7 @@ func (k Knowledge) getCommentsContext(comments redminemodels.Comments) (string, 
 	return buf.String(), err
 }
 
-func getIssueContext(issue redmine.Issue, issueTypes models.IssueTypes) (string, error) {
+func (k Knowledge) getIssueContext(issue redmine.Issue) (string, error) {
 	promptTemplate := "# Title: {{.Issue.Subject}}\n" +
 		"- ID: {{.Issue.Id}}\n" +
 		"- Issue Type: {{.IssueType.Name}}\n\n" +
@@ -261,7 +261,7 @@ func getIssueContext(issue redmine.Issue, issueTypes models.IssueTypes) (string,
 
 	data := map[string]interface{}{
 		"Issue":     issue,
-		"IssueType": issueTypes.Get(models.IssueTypeName(issue.Tracker.Name)),
+		"IssueType": k.IssueTypes.Get(models.IssueTypeName(issue.Tracker.Name)),
 	}
 
 	tmpl, err := template.New("Issue").Parse(promptTemplate)
@@ -309,13 +309,13 @@ func (k Knowledge) getProjectWikiContext() (string, error) {
 	return strings.Trim(buf.String(), "\n"), err
 }
 
-func getIssueTypesContext(issueTypes models.IssueTypes) (string, error) {
+func (k Knowledge) getIssueTypesContext() (string, error) {
 	promptTemplate := "{{ range .IssueTypes }}" +
 		"- Issue Type \"{{.Name}}\": {{.Description}}\n" +
 		"{{ end }}"
 
 	data := map[string]interface{}{
-		"IssueTypes": issueTypes,
+		"IssueTypes": k.IssueTypes,
 	}
 
 	tmpl, err := template.New("IssueTypes").Parse(promptTemplate)
