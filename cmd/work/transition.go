@@ -1,6 +1,7 @@
 package work
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/andrejsstepanovs/andai/pkg/models"
@@ -33,6 +34,7 @@ func newTriggersCommand(model *model.Model, workflow models.Workflow) *cobra.Com
 				log.Printf("Issue not found: %d", issueID)
 				return nil
 			}
+			log.Printf("Checking %q id=%d project=%d\n", issue.Tracker.Name, issue.Id, issue.Project.Id)
 
 			statusFrom, err := model.APIGetIssueStatusByID(statusIDFrom)
 			if err != nil {
@@ -60,6 +62,12 @@ func newTriggersCommand(model *model.Model, workflow models.Workflow) *cobra.Com
 					continue
 				}
 				log.Printf("Trigger Action was found for %q %d %s -> %s\n", issue.Tracker.Name, issue.Id, statusFrom.Name, statusTo.Name)
+
+				children, err := model.APIGetChildren(*issue)
+				if err != nil {
+					return fmt.Errorf("failed to get redmine children issue err: %v", err)
+				}
+				log.Printf("Children found for %q %d: %d\n", issue.Tracker.Name, issue.Id, len(children))
 
 				siblings, err := model.APIGetIssueSiblings(*issue)
 				if err != nil {
