@@ -114,7 +114,7 @@ func (k Knowledge) getContext(context string) (string, error) {
 	case models.ContextProject:
 		return k.getProject()
 	case models.ContextProjectWiki:
-		return getProjectWiki(k.Project)
+		return k.getProjectWiki()
 	case models.ContextParent:
 		return getParent(k.Parent, k.IssueTypes)
 	case models.ContextParents:
@@ -151,8 +151,8 @@ func (k Knowledge) getComments(comments redminemodels.Comments, tag string) (str
 	return commentsContext, nil
 }
 
-func getProjectWiki(project models.Project) (string, error) {
-	issueContext, err := getProjectWikiContext(project)
+func (k Knowledge) getProjectWiki() (string, error) {
+	issueContext, err := k.getProjectWikiContext()
 	if err != nil {
 		log.Printf("Failed to get project wiki context: %v", err)
 		return "", err
@@ -292,12 +292,12 @@ func (k Knowledge) getProjectContext() (string, error) {
 }
 
 // todo use wiki content from db or api
-func getProjectWikiContext(project models.Project) (string, error) {
+func (k Knowledge) getProjectWikiContext() (string, error) {
 	promptTemplate := "# Project Wiki page:\n" +
 		"{{.Project.Wiki}}"
 
 	data := map[string]interface{}{
-		"Project": project,
+		"Project": k.Project,
 	}
 
 	tmpl, err := template.New("ProjectWiki").Parse(promptTemplate)
