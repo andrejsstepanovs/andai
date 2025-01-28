@@ -25,3 +25,13 @@ type TriggerTransition struct {
 	IssueType IssueTypeName `yaml:"issue_type"`
 	To        StateName     `yaml:"to"`
 }
+
+func (t Triggers) GetTriggers(issueType IssueTypeName) []Trigger {
+	triggers := make([]Trigger, 0)
+	for _, trigger := range t {
+		if trigger.IssueType == issueType {
+			triggers = append(triggers, trigger)
+		}
+	}
+	return triggers
+}
