@@ -134,7 +134,7 @@ func (k Knowledge) getIssue() (string, error) {
 		log.Printf("Failed to get current issue context: %v", err)
 		return "", err
 	}
-	issueContext = tagContent("current_issue", issueContext, 1)
+	issueContext = k.TagContent("current_issue", issueContext, 1)
 	return issueContext, nil
 }
 
@@ -147,7 +147,7 @@ func (k Knowledge) getComments(comments redminemodels.Comments, tag string) (str
 		log.Printf("Failed to get comments context: %v", err)
 		return "", err
 	}
-	commentsContext = tagContent(tag, commentsContext, 1)
+	commentsContext = k.TagContent(tag, commentsContext, 1)
 	return commentsContext, nil
 }
 
@@ -157,7 +157,7 @@ func (k Knowledge) getProjectWiki() (string, error) {
 		log.Printf("Failed to get project wiki context: %v", err)
 		return "", err
 	}
-	issueContext = tagContent("project_wiki", issueContext, 1)
+	issueContext = k.TagContent("project_wiki", issueContext, 1)
 	return issueContext, nil
 }
 
@@ -167,7 +167,7 @@ func (k Knowledge) getProject() (string, error) {
 		log.Printf("Failed to get project context: %v", err)
 		return "", err
 	}
-	issueContext = tagContent("project", issueContext, 1)
+	issueContext = k.TagContent("project", issueContext, 1)
 	return issueContext, nil
 }
 
@@ -195,10 +195,10 @@ func (k Knowledge) getParents() (string, error) {
 			log.Printf("Failed to get single parent issue context: %v", err)
 			return "", err
 		}
-		txt := tagContent("parent_issue", parentIssueContext, 2)
+		txt := k.TagContent("parent_issue", parentIssueContext, 2)
 		parentsContext = append(parentsContext, txt)
 	}
-	issueContext := tagContent("parent_issues", strings.Join(parentsContext, "\n"), 1)
+	issueContext := k.TagContent("parent_issues", strings.Join(parentsContext, "\n"), 1)
 	return issueContext, nil
 }
 
@@ -213,10 +213,10 @@ func (k Knowledge) getChildren() (string, error) {
 			log.Printf("Failed to get single child issue context: %v", err)
 			return "", err
 		}
-		txt := tagContent("child_issue", childIssueContext, 2)
+		txt := k.TagContent("child_issue", childIssueContext, 2)
 		childrenContext = append(childrenContext, txt)
 	}
-	issueContext := tagContent("children_issues", strings.Join(childrenContext, "\n"), 1)
+	issueContext := k.TagContent("children_issues", strings.Join(childrenContext, "\n"), 1)
 	return issueContext, nil
 }
 
@@ -229,7 +229,7 @@ func (k Knowledge) getIssueTypes() (string, error) {
 		log.Printf("Failed to get issue types context: %v", err)
 		return "", err
 	}
-	issueContext := tagContent("project_issue_types", issueTypeContext, 1)
+	issueContext := k.TagContent("project_issue_types", issueTypeContext, 1)
 	return issueContext, nil
 }
 
@@ -327,16 +327,14 @@ func (k Knowledge) getIssueTypesContext() (string, error) {
 	return strings.Trim(buf.String(), "\n"), err
 }
 
-func tagContent(tagName, content string, tabs int) string {
+func (k Knowledge) TagContent(tagName, content string, tabs int) string {
+	tabsStr := strings.Repeat("\t", tabs)
+	content = tabsStr + strings.ReplaceAll(content, "\n", "\n"+tabsStr)
+
 	return fmt.Sprintf(
 		"<%s>\n%s\n</%s>",
 		tagName,
-		strings.Trim(tabContent(content, tabs), "\n"),
+		strings.Trim(content, "\n"),
 		tagName,
 	)
-}
-
-func tabContent(content string, tabCount int) string {
-	tabs := strings.Repeat("\t", tabCount)
-	return tabs + strings.ReplaceAll(content, "\n", "\n"+tabs)
 }
