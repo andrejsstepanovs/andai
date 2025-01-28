@@ -134,10 +134,11 @@ func getContext(
 ) (string, error) {
 	switch context {
 	case models.ContextLastComment:
-		if len(comments) > 0 {
-			c := comments[len(comments)-1]
-			return getComments(redminemodels.Comments{c}, "comment")
+		if len(comments) == 0 {
+			return "", nil
 		}
+		c := comments[len(comments)-1]
+		return getComments(redminemodels.Comments{c}, "comment")
 	case models.ContextComments:
 		return getComments(comments, "comments")
 	case models.ContextTicket:
@@ -157,7 +158,6 @@ func getContext(
 	default:
 		return "", fmt.Errorf("unknown context: %q", context)
 	}
-	return "", nil
 }
 
 func getIssue(issue redmine.Issue, issueTypes models.IssueTypes) (string, error) {
