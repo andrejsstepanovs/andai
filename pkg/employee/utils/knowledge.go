@@ -106,9 +106,9 @@ func (k Knowledge) getContext(context string) (string, error) {
 			return "", nil
 		}
 		c := k.Comments[len(k.Comments)-1]
-		return getComments(redminemodels.Comments{c}, "comment")
+		return k.getComments(redminemodels.Comments{c}, "comment")
 	case models.ContextComments:
-		return getComments(k.Comments, "comments")
+		return k.getComments(k.Comments, "comments")
 	case models.ContextTicket:
 		return getIssue(k.Issue, k.IssueTypes)
 	case models.ContextProject:
@@ -138,11 +138,11 @@ func getIssue(issue redmine.Issue, issueTypes models.IssueTypes) (string, error)
 	return issueContext, nil
 }
 
-func getComments(comments redminemodels.Comments, tag string) (string, error) {
+func (k Knowledge) getComments(comments redminemodels.Comments, tag string) (string, error) {
 	if len(comments) == 0 {
 		return "", nil
 	}
-	commentsContext, err := getCommentsContext(comments)
+	commentsContext, err := k.getCommentsContext(comments)
 	if err != nil {
 		log.Printf("Failed to get comments context: %v", err)
 		return "", err
@@ -233,7 +233,7 @@ func getIssueTypes(issueTypes models.IssueTypes) (string, error) {
 	return issueContext, nil
 }
 
-func getCommentsContext(comments redminemodels.Comments) (string, error) {
+func (k Knowledge) getCommentsContext(comments redminemodels.Comments) (string, error) {
 	promptTemplate := "{{ range .Comments }}" +
 		"### Comment {{.Number}} (Created: {{.CreatedAt}})\n" +
 		"{{.Text}}" +
