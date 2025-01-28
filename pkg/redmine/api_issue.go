@@ -40,8 +40,8 @@ func (c *Model) APIGetChildren(issue redmine.Issue) ([]redmine.Issue, error) {
 }
 
 func (c *Model) APIGetParent(issue redmine.Issue) (parent *redmine.Issue, err error) {
-	if issue.ParentId != 0 {
-		parent, err = c.API().Issue(issue.ParentId)
+	if issue.Parent != nil && issue.Parent.Id != 0 {
+		parent, err = c.API().Issue(issue.Parent.Id)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get redmine parent issue err: %v", err)
 		}

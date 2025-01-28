@@ -68,6 +68,11 @@ func newTriggersCommand(model *model.Model, workflow models.Workflow) *cobra.Com
 				if err != nil {
 					return fmt.Errorf("failed to get redmine parent issue err: %v", err)
 				}
+				if parent != nil {
+					log.Printf("Parent found for %q %d: %q\n", issue.Tracker.Name, issue.Id, parent.Subject)
+				} else {
+					log.Printf("No parent found for %q %d\n", issue.Tracker.Name, issue.Id)
+				}
 				children, err := model.APIGetChildren(*issue)
 				if err != nil {
 					return fmt.Errorf("failed to get redmine children issue err: %v", err)
