@@ -113,7 +113,13 @@ func newTriggersCommand(model *model.Model, workflow models.Workflow) *cobra.Com
 						// todo, check if this transition triggers something else
 					}
 				case models.TriggerTransitionWhoParent:
-					_ = parent
+					if parent == nil {
+						return fmt.Errorf("no parent found")
+					}
+					err = model.Transition(*parent, nextIssueStatus)
+					if err != nil {
+						return fmt.Errorf("failed to transition issue err: %v", err)
+					}
 				}
 			}
 
