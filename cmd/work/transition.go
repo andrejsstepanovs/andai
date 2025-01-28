@@ -63,6 +63,10 @@ func newTriggersCommand(model *model.Model, workflow models.Workflow) *cobra.Com
 				}
 				log.Printf("Trigger Action was found for %q %d %s -> %s\n", issue.Tracker.Name, issue.Id, statusFrom.Name, statusTo.Name)
 
+				parent, err := model.APIGetParent(*issue)
+				if err != nil {
+					return fmt.Errorf("failed to get redmine parent issue err: %v", err)
+				}
 				children, err := model.APIGetChildren(*issue)
 				if err != nil {
 					return fmt.Errorf("failed to get redmine children issue err: %v", err)
@@ -90,15 +94,26 @@ func newTriggersCommand(model *model.Model, workflow models.Workflow) *cobra.Com
 					return nil
 				}
 
-				//switch action.AllSiblingsStatus {
-				//case models.TriggerTransitionWhoParent:
-				//	parent, err := model.APIGetParent(*issue)
-				//	if err != nil {
-				//		return fmt.Errorf("failed to get redmine parent issue err: %v", err)
-				//	}
-				//case models.TriggerTransitionWhoChildren:
-				//
-				//}
+				nextIssueStatus, err := model.APIGetIssueStatus(string(action.TriggerTransition.To))
+				if err != nil {
+					return fmt.Errorf("failed to get next issue status err: %v", err)
+				}
+				switch action.TriggerTransition.Who {
+				case models.TriggerTransitionWhoChildren:
+					for _, child := range children {
+						childState := workflow.States.Get(models.StateName(child.Status.Name))
+						log.Printf("Transitioning child %q %d - %q -> %q\n", child.Tracker.Name, child.Id, childState.Name, nextIssueStatus.Name)
+					}
+					for _, child := range children {
+						err = model.Transition(child, nextIssueStatus)
+						if err != nil {
+							return fmt.Errorf("failed to transition issue err: %v", err)
+						}
+						fmt.Printf("Successfully moved %d to: %d - %s\n", child.Id, nextIssueStatus.Id, nextIssueStatus.Name)
+					}
+				case models.TriggerTransitionWhoParent:
+					_ = parent
+				}
 			}
 
 			return nil

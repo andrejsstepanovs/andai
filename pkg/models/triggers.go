@@ -21,9 +21,8 @@ type TriggerIf struct {
 }
 
 type TriggerTransition struct {
-	Who       string        `yaml:"who"`
-	IssueType IssueTypeName `yaml:"issue_type"`
-	To        StateName     `yaml:"to"`
+	Who string    `yaml:"who"`
+	To  StateName `yaml:"to"`
 }
 
 func (t Triggers) GetTriggers(issueType IssueTypeName) []Trigger {

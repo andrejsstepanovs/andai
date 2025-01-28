@@ -61,10 +61,6 @@ func (s *Settings) validateTriggers(issueTypeNames map[IssueTypeName]bool, state
 				return fmt.Errorf("trigger state %s does not exist", triggerIf.MovedTo)
 			}
 
-			if _, ok := issueTypeNames[triggerIf.TriggerTransition.IssueType]; !ok {
-				return fmt.Errorf("trigger transition issue type %s does not exist", triggerIf.TriggerTransition.IssueType)
-			}
-
 			if _, ok := stateNames[triggerIf.TriggerTransition.To]; !ok {
 				return fmt.Errorf("trigger transition to state %s does not exist", triggerIf.TriggerTransition.To)
 			}
