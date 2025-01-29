@@ -206,12 +206,12 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 
 			txt := make([]string, 0)
 			branchName := i.workbench.GetIssueBranchName(i.issue)
-			format := "- branch [%s](/projects/%s/repository/lco?rev=%s)"
+			format := "### Branch [%s](/projects/%s/repository/lco?rev=%s)"
 			txt = append(txt, fmt.Sprintf(format, branchName, i.project.Identifier, branchName))
 			if len(commits) > 0 {
 				for n, sha := range commits {
-					format = "- %d. committed changes to branch %s [%s](/projects/lco/repository/%s/revisions/%s/diff)"
-					txt = append(txt, fmt.Sprintf(format, n, branchName, sha, i.project.Identifier, sha))
+					format = "%d. Commit [%s](/projects/lco/repository/%s/revisions/%s/diff)"
+					txt = append(txt, fmt.Sprintf(format, n+1, branchName, sha, i.project.Identifier, sha))
 				}
 
 				err = i.AddComment(strings.Join(txt, "\n"))
@@ -230,6 +230,7 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 	return exec.Output{}, nil
 }
 
+// TODO add this to <history> in knowledge. Prompt is bad place.
 func (i *Employee) addHistory(step models.Step) models.StepPrompt {
 	if len(i.history) == 0 {
 		return step.Prompt
