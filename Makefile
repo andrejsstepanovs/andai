@@ -135,7 +135,7 @@ docker: build.linux ## Build docker image
 
 .PHONY: configure
 configure: build
-	PROJECT=$(PROJECT) $(BUILD_PATH)/andai validate config && \
+	@PROJECT=$(PROJECT) $(BUILD_PATH)/andai validate config && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping db && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup auto-increments && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup admin && \
@@ -149,7 +149,7 @@ configure: build
 # make start PROJECT=lco
 .PHONY: start
 start: build
-	PROJECT=$(PROJECT) $(BUILD_PATH)/andai validate config && \
+	@PROJECT=$(PROJECT) $(BUILD_PATH)/andai validate config && \
 	docker-compose -f docker-compose.yaml up -d redmine-$(PROJECT) && \
 	while ! PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping db 2>/dev/null; do sleep 2; done
 	@echo "DB Ready (but probably not yet fully configured)"
@@ -162,6 +162,13 @@ start: build
 	@echo "Redmine Project URLs:"
 	@echo "http://localhost:10083/projects/$(PROJECT)"
 	@echo "http://localhost:10083/projects/$(PROJECT)/issues"
+
+.PHONY: work
+work:
+	@PROJECT=$(PROJECT) $(BUILD_PATH)/andai validate config && \
+	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work triggers && \
+	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work next && \
+	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work triggers
 
 .PHONY: rm
 rm:
