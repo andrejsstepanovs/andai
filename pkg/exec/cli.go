@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -36,6 +37,7 @@ func Exec(command string, args ...string) (Output, error) {
 	}
 
 	fullCommand := fmt.Sprintf("%s %s", command, strings.Join(args, " "))
+	log.Printf("EXEC: %s", fullCommand)
 
 	cmd := exec.CommandContext(ctx, shell, shellArg, fullCommand) // nolint:gosec
 	cmd.Env = append(os.Environ(), fmt.Sprintf("SHELL=%s", shellPath))

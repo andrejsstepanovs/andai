@@ -95,7 +95,7 @@ func (i *Employee) Work() (bool, error) {
 }
 
 func (i *Employee) processStep(step models.Step) (exec.Output, error) {
-	fmt.Println(step.Command, step.Action)
+	log.Printf("%s - %s", step.Command, step.Action)
 
 	comments, err := i.getComments()
 	if err != nil {
