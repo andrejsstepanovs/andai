@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/mattn/go-redmine"
 )
@@ -17,6 +16,7 @@ type Workbench struct {
 }
 
 type git interface {
+	BranchName(issueID int) string
 	CheckoutBranch(name string) error
 	GetPath() string
 	SetPath(path string)
@@ -64,9 +64,14 @@ func (i *Workbench) changeDirectory() error {
 }
 
 func (i *Workbench) checkoutBranch() error {
-	err := i.Git.CheckoutBranch(strconv.Itoa(i.Issue.Id))
+	branchName := i.GetIssueBranchName(i.Issue)
+	err := i.Git.CheckoutBranch(branchName)
 	if err != nil {
 		return fmt.Errorf("failed to checkout branch err: %v", err)
 	}
 	return nil
+}
+
+func (i *Workbench) GetIssueBranchName(issue redmine.Issue) string {
+	return i.Git.BranchName(issue.Id)
 }

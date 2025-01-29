@@ -161,6 +161,26 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			return exec.Output{}, err
 		}
 		return exec.Output{}, nil
+	case "merge-into-parent":
+		currentBranchName := i.workbench.GetIssueBranchName(i.issue)
+		parentBranchName := i.workbench.GetIssueBranchName(*i.parent)
+		log.Printf("Merging current branch: %q into parent branch: %q", currentBranchName, parentBranchName)
+
+		err = i.workbench.Git.CheckoutBranch(parentBranchName)
+		if err != nil {
+			log.Printf("Failed to checkout parent branch: %v", err)
+			return exec.Output{}, err
+		}
+		log.Printf("Checked out parent branch: %q", parentBranchName)
+		log.Printf("Merging...")
+
+		out, err := exec.Exec("git", "merge", currentBranchName)
+		if err == nil {
+			log.Printf("Merged current branch: %q into parent branch: %q", currentBranchName, parentBranchName)
+		} else {
+			log.Printf("Failed to merge current branch: %q into parent branch: %q: %v", currentBranchName, parentBranchName, err)
+		}
+		return out, err
 	case "bobik":
 		promptFile, err := knowledge.BuildPromptTmpFile()
 		if err != nil {

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	redminemodels "github.com/andrejsstepanovs/andai/pkg/redmine/models"
@@ -55,12 +56,12 @@ func (g *Git) Open() error {
 	return nil
 }
 
-func (g *Git) BranchName(name string) string {
-	return fmt.Sprintf("%s-%s", BranchPrefix, name)
+func (g *Git) BranchName(issueID int) string {
+	id := strconv.Itoa(issueID)
+	return fmt.Sprintf("%s-%s", BranchPrefix, id)
 }
 
-func (g *Git) CheckoutBranch(name string) error {
-	branchName := g.BranchName(name)
+func (g *Git) CheckoutBranch(branchName string) error {
 	branchRefName := plumbing.NewBranchReferenceName(branchName)
 
 	// Check if the branch already exists
