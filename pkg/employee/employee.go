@@ -201,7 +201,8 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			}
 			if sha != "" {
 				log.Printf("Last commit sha: %q", sha)
-				err = i.AddComment(fmt.Sprintf("http://localhost:10083/projects/lco/repository/lco/revisions/%s/diff", sha))
+				branchName := i.workbench.GetIssueBranchName(i.issue)
+				err = i.AddComment(fmt.Sprintf("branch %s [commit %s](/projects/lco/repository/%s/revisions/%s/diff)", sha, branchName, i.project.Identifier, sha))
 				if err != nil {
 					return out, err
 				}
