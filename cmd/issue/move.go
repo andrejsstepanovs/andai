@@ -1,9 +1,11 @@
 package issue
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 
+	"github.com/andrejsstepanovs/andai/pkg/employee/actions"
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	model "github.com/andrejsstepanovs/andai/pkg/redmine"
 	"github.com/mattn/go-redmine"
@@ -69,30 +71,10 @@ func newMoveCommand(model *model.Model, workflow models.Workflow) *cobra.Command
 				log.Printf("Moving issue %d to fail", foundIssue.Id)
 			}
 
-			//trackerID, err := model.DBGetTrackersByName(issueType)
-			//if err != nil {
-			//	log.Printf("Failed to find issue type (tracker): %s", issueType)
-			//	return err
-			//}
-			//
-			//issue := redmine.Issue{
-			//	Subject:     issueSubject,
-			//	Description: issueDescription,
-			//
-			//	ProjectId: project.Id,
-			//	Project:   &redmine.IdName{Id: project.Id},
-			//	TrackerId: trackerID,
-			//}
-			//
-			//issue, err = model.CreateIssue(issue)
-			//if err != nil {
-			//	log.Println("Failed to create issue")
-			//	return err
-			//}
-			//
-			//log.Printf("Issue created: %d", issue.Id)
-			//log.Printf("http://localhost:10083/issues/%d", issue.Id)
-
+			err = actions.TransitionToNextStatus(workflow, model, foundIssue, success)
+			if err != nil {
+				return fmt.Errorf("failed to comment issue err: %v", err)
+			}
 			return nil
 		},
 	}

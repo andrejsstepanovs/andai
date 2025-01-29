@@ -5,12 +5,12 @@ import (
 	"log"
 
 	"github.com/andrejsstepanovs/andai/pkg/employee"
+	"github.com/andrejsstepanovs/andai/pkg/employee/actions"
 	"github.com/andrejsstepanovs/andai/pkg/llm"
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	model "github.com/andrejsstepanovs/andai/pkg/redmine"
 	"github.com/andrejsstepanovs/andai/pkg/workbench"
 	"github.com/andrejsstepanovs/andai/pkg/worker"
-	"github.com/mattn/go-redmine"
 	"github.com/spf13/cobra"
 )
 
@@ -109,7 +109,7 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 				)
 				success := work.Work()
 
-				err = transitionToNextStatus(workflow, model, issue, success)
+				err = actions.TransitionToNextStatus(workflow, model, issue, success)
 				if err != nil {
 					return fmt.Errorf("failed to comment issue err: %v", err)
 				}
@@ -118,21 +118,4 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 			return nil
 		},
 	}
-}
-
-func transitionToNextStatus(workflow models.Workflow, model *model.Model, issue redmine.Issue, success bool) error {
-	nextTransition := workflow.Transitions.GetNextTransition(models.StateName(issue.Status.Name))
-	nextTransition.LogPrint()
-	nextIssueStatus, err := model.APIGetIssueStatus(string(nextTransition.GetTarget(success)))
-	if err != nil {
-		return fmt.Errorf("failed to get next issue status err: %v", err)
-	}
-	fmt.Printf("Next status: %d - %s\n", nextIssueStatus.Id, nextIssueStatus.Name)
-
-	err = model.Transition(issue, nextIssueStatus)
-	if err != nil {
-		return fmt.Errorf("failed to transition issue err: %v", err)
-	}
-	fmt.Printf("Successfully moved to: %d - %s\n", nextIssueStatus.Id, nextIssueStatus.Name)
-	return nil
 }
