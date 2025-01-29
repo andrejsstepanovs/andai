@@ -72,6 +72,14 @@ func (c *Model) APIGetAllParents(issue redmine.Issue) ([]redmine.Issue, error) {
 	return parents, nil
 }
 
+func (c *Model) APIGetProjectIssues(project redmine.Project) ([]redmine.Issue, error) {
+	projectIssues, err := c.API().IssuesOf(project.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error redmine issues of project: %v", err)
+	}
+	return projectIssues, nil
+}
+
 func (c *Model) APIGetWorkableIssues(workflow models.Workflow) ([]redmine.Issue, error) {
 	projects, err := c.APIGetProjects()
 	if err != nil {
@@ -79,7 +87,7 @@ func (c *Model) APIGetWorkableIssues(workflow models.Workflow) ([]redmine.Issue,
 	}
 
 	for _, project := range projects {
-		projectIssues, err := c.API().IssuesOf(project.Id)
+		projectIssues, err := c.APIGetProjectIssues(project)
 		if err != nil {
 			return nil, fmt.Errorf("error redmine issues of project: %v", err)
 		}

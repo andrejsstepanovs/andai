@@ -15,6 +15,7 @@ func Cmd(deps *deps.AppDependencies, settings models.Settings) *cobra.Command {
 
 	cmd.AddCommand(
 		newCreateCommand(deps.Model, settings.Workflow),
+		newMoveCommand(deps.Model, settings.Workflow),
 	)
 
 	return cmd
