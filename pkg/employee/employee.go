@@ -66,13 +66,13 @@ func NewWorkOnIssue(
 	}
 }
 
-func (i *Employee) Work() bool {
+func (i *Employee) Work() (bool, error) {
 	log.Printf("Working on %q %q (ID: %d)", i.state.Name, i.issueType.Name, i.issue.Id)
 
 	err := i.workbench.PrepareWorkplace()
 	if err != nil {
 		log.Printf("Failed to prepare workplace: %v", err)
-		return false
+		return false, err
 	}
 
 	fmt.Printf("Total steps: %d\n", len(i.job.Steps))
@@ -82,7 +82,7 @@ func (i *Employee) Work() bool {
 		output, err := i.processStep(step)
 		if err != nil {
 			log.Printf("Failed to action step: %v", err)
-			return false
+			return false, err
 		}
 		i.CommentOutput(step, output)
 		if step.Remember {
@@ -91,7 +91,7 @@ func (i *Employee) Work() bool {
 		fmt.Println("Success")
 	}
 
-	return true
+	return true, nil
 }
 
 func (i *Employee) processStep(step models.Step) (exec.Output, error) {

@@ -14,7 +14,6 @@ import (
 
 func BobikExecute(promptFile string, step models.Step) (exec.Output, error) {
 	format := "Use this file %s as a question and Answer!"
-	panic(step.Command)
 	return exec.Exec(step.Command, step.Action, fmt.Sprintf(format, promptFile))
 }
 

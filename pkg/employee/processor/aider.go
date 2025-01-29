@@ -13,7 +13,6 @@ import (
 // If contextFile is provided step.Prompt will be ignored. (don't worry, it should be part of contextFile).
 // If you want to use step.Prompt, provide empty string for contextFile.
 func AiderExecute(contextFile string, step models.Step) (exec.Output, error) {
-	panic("WHY AM I HERE????")
 	if contextFile != "" {
 		log.Printf("Context file: %q\n", contextFile)
 	}

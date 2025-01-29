@@ -120,7 +120,10 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 					workflow.IssueTypes.Get(models.IssueTypeName(issue.Tracker.Name)),
 					workflow.IssueTypes,
 				)
-				success := work.Work()
+				success, err := work.Work()
+				if err != nil {
+					return fmt.Errorf("failed to finish work on issue err: %v", err)
+				}
 
 				err = actions.TransitionToNextStatus(workflow, model, issue, success)
 				if err != nil {
