@@ -21,6 +21,7 @@ type git interface {
 	CheckoutBranch(name string) error
 	GetPath() string
 	SetPath(path string)
+	Reload()
 }
 
 func (i *Workbench) PrepareWorkplace() error {
@@ -30,6 +31,7 @@ func (i *Workbench) PrepareWorkplace() error {
 		return err
 	}
 
+	i.Git.Reload()
 	err = i.checkoutBranch()
 	if err != nil {
 		log.Printf("Failed to checkout branch: %v", err)
@@ -78,5 +80,6 @@ func (i *Workbench) GetIssueBranchName(issue redmine.Issue) string {
 }
 
 func (i *Workbench) GetLastCommit() (string, error) {
+	i.Git.Reload()
 	return i.Git.GetLastCommitHash()
 }

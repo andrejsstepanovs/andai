@@ -39,6 +39,13 @@ func (g *Git) GetPath() string {
 	return g.path
 }
 
+func (g *Git) Reload() {
+	err := g.Open()
+	if err != nil {
+		log.Printf("failed to reload git repository: %v", err)
+	}
+}
+
 func (g *Git) Open() error {
 	var err error
 

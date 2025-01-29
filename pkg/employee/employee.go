@@ -172,11 +172,15 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 		log.Printf("Merging...")
 
 		out, err := exec.Exec("git", "merge", currentBranchName)
-		if err == nil {
-			log.Printf("Merged current branch: %q into parent branch: %q", currentBranchName, parentBranchName)
-		} else {
+		if err != nil {
 			log.Printf("Failed to merge current branch: %q into parent branch: %q: %v", currentBranchName, parentBranchName, err)
+			return out, err
 		}
+		log.Printf("Merged current branch: %q into parent branch: %q", currentBranchName, parentBranchName)
+
+		txt := fmt.Sprintf("Merged #%d branch %q into %q", i.issue.Id, currentBranchName, parentBranchName)
+		err = i.AddCommentToParent(txt)
+
 		return out, err
 	case "bobik":
 		promptFile, err := knowledge.BuildPromptTmpFile()
@@ -201,8 +205,16 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			}
 			if sha != "" {
 				log.Printf("Last commit sha: %q", sha)
+				txt := make([]string, 0)
+
 				branchName := i.workbench.GetIssueBranchName(i.issue)
-				err = i.AddComment(fmt.Sprintf("branch %s [commit %s](/projects/lco/repository/%s/revisions/%s/diff)", sha, branchName, i.project.Identifier, sha))
+				format := "- committed changes to branch %s [%s](/projects/lco/repository/%s/revisions/%s/diff)"
+				txt = append(txt, fmt.Sprintf(format, branchName, sha, i.project.Identifier, sha))
+
+				format = "- branch [%s](/projects/%s/repository/lco?rev=%s)"
+				txt = append(txt, fmt.Sprintf(format, branchName, i.project.Identifier, branchName))
+
+				err = i.AddComment(strings.Join(txt, "\n"))
 				if err != nil {
 					return out, err
 				}

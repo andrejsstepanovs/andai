@@ -22,6 +22,17 @@ func (i *Employee) getComments() (redminemodels.Comments, error) {
 	return comments, nil
 }
 
+func (i *Employee) AddCommentToParent(text string) error {
+	if i.parent == nil {
+		return fmt.Errorf("no parent issue")
+	}
+	err := i.model.Comment(*i.parent, text)
+	if err != nil {
+		return fmt.Errorf("failed to comment issue err: %v", err)
+	}
+	return nil
+}
+
 func (i *Employee) AddComment(text string) error {
 	err := i.model.Comment(i.issue, text)
 	if err != nil {
