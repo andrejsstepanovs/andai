@@ -167,8 +167,16 @@ start: build
 work:
 	@PROJECT=$(PROJECT) $(BUILD_PATH)/andai validate config && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work triggers && \
-	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work next && \
+	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work next
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work triggers
+
+.PHONY: loop
+loop:
+	@trap 'exit 0' INT; \
+	while true; do \
+		$(MAKE) work || true; \
+		sleep 2; \
+	done
 
 .PHONY: issue
 issue:
