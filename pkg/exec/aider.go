@@ -28,9 +28,9 @@ var (
 		"--no-browser",
 		"--no-copy-paste",
 		"--git",
+		"--yes-always",
 	}
 	aiderCodeArgs = []string{
-		"--yes-always",
 		"--auto-commits",
 		"--no-auto-lint",
 		"--no-auto-test",

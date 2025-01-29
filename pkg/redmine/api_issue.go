@@ -3,6 +3,7 @@ package redmine
 import (
 	"fmt"
 	"log"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -68,6 +69,11 @@ func (c *Model) APIGetAllParents(issue redmine.Issue) ([]redmine.Issue, error) {
 		parents = append(parents, *parent)
 		issue = *parent
 	}
+
+	// sort parents by ID ASC order so last one is newest
+	sort.SliceIsSorted(parents, func(i, j int) bool {
+		return parents[i].Id < parents[j].Id
+	})
 
 	return parents, nil
 }
