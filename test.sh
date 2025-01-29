@@ -28,6 +28,15 @@ PROJECT=test make work # will move task to QA
 PROJECT=test make work # will move task from QA to Approved
 
 
-PROJECT=test make work # other task?
+PROJECT=test make work # Will move to Approved
+PROJECT=test make work # Will move to Deployment
+PROJECT=test make work # Will merge to parent and move to Done
 
-#PROJECT=test bin/andai move-children # will move created children from Initial to Backlog
+# now other task will be unblocked
+PROJECT=test make work # Will move to Analysis
+PROJECT=test make work # will work on Analysis and move to In Progress
+PROJECT=test make work # Will work on In Progress and move to Testing
+PROJECT=test make work # Will move from Testing to QA
+PROJECT=test make work # Will move from QA to Approved
+PROJECT=test make work # Will move to Deployment
+PROJECT=test make work # Will merge to parent and move to Done. Then should figure out that all children of Task are done and move Task from Approved to Deployment

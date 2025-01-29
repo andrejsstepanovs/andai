@@ -54,6 +54,13 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 
 			log.Printf("FOUND WORKABLE ISSUES (%d)", len(issues))
 			for _, issue := range issues {
+				fmt.Printf("WORKING ON: %q in %q ID=%d: %s\n",
+					workflow.IssueTypes.Get(models.IssueTypeName(issue.Tracker.Name)).Name,
+					workflow.States.Get(models.StateName(issue.Status.Name)).Name,
+					issue.Id,
+					issue.Subject,
+				)
+
 				parent, err := model.APIGetParent(issue)
 				if err != nil {
 					return fmt.Errorf("failed to get redmine parent issue err: %v", err)
@@ -113,8 +120,6 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 				if err != nil {
 					return fmt.Errorf("failed to comment issue err: %v", err)
 				}
-
-				return nil // work on only 1 issue at the time
 			}
 
 			return nil
