@@ -187,8 +187,26 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 	case "aider":
 	case "aid":
 		switch step.Action {
-		case "architect", "code":
+		case "architect":
 			return processor.AiderExecute(contextFile, step)
+		case "code":
+			out, err := processor.AiderExecute(contextFile, step)
+			if err != nil {
+				return out, err
+			}
+			sha, getShaErr := i.workbench.GetLastCommit()
+			if getShaErr != nil {
+				log.Printf("Failed to get last commit sha: %v", getShaErr)
+				return out, nil
+			}
+			if sha != "" {
+				log.Printf("Last commit sha: %q", sha)
+				err = i.AddComment(fmt.Sprintf("http://localhost:10083/projects/lco/repository/lco/revisions/%s/diff", sha))
+				if err != nil {
+					return out, err
+				}
+			}
+			return out, nil
 		default:
 			return exec.Output{}, fmt.Errorf("unknown %q action: %q", step.Command, step.Action)
 		}

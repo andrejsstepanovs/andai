@@ -56,6 +56,16 @@ func (g *Git) Open() error {
 	return nil
 }
 
+func (g *Git) GetLastCommitHash() (string, error) {
+	commit, err := g.repo.CommitObject(g.headRef.Hash())
+	if err != nil {
+		log.Printf("failed to get commit object: %v", err)
+		return "", err
+	}
+
+	return commit.Hash.String(), nil
+}
+
 func (g *Git) BranchName(issueID int) string {
 	id := strconv.Itoa(issueID)
 	return fmt.Sprintf("%s-%s", BranchPrefix, id)

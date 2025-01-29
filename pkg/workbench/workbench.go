@@ -16,6 +16,7 @@ type Workbench struct {
 }
 
 type git interface {
+	GetLastCommitHash() (string, error)
 	BranchName(issueID int) string
 	CheckoutBranch(name string) error
 	GetPath() string
@@ -74,4 +75,8 @@ func (i *Workbench) checkoutBranch() error {
 
 func (i *Workbench) GetIssueBranchName(issue redmine.Issue) string {
 	return i.Git.BranchName(issue.Id)
+}
+
+func (i *Workbench) GetLastCommit() (string, error) {
+	return i.Git.GetLastCommitHash()
 }
