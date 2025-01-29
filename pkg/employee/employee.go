@@ -198,21 +198,21 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			if err != nil {
 				return out, err
 			}
-			sha, getShaErr := i.workbench.GetLastCommit()
+			commits, getShaErr := i.workbench.GetBranchCommits()
 			if getShaErr != nil {
 				log.Printf("Failed to get last commit sha: %v", getShaErr)
 				return out, nil
 			}
-			if sha != "" {
-				log.Printf("Last commit sha: %q", sha)
-				txt := make([]string, 0)
 
-				branchName := i.workbench.GetIssueBranchName(i.issue)
-				format := "- committed changes to branch %s [%s](/projects/lco/repository/%s/revisions/%s/diff)"
-				txt = append(txt, fmt.Sprintf(format, branchName, sha, i.project.Identifier, sha))
-
-				format = "- branch [%s](/projects/%s/repository/lco?rev=%s)"
-				txt = append(txt, fmt.Sprintf(format, branchName, i.project.Identifier, branchName))
+			txt := make([]string, 0)
+			branchName := i.workbench.GetIssueBranchName(i.issue)
+			format := "- branch [%s](/projects/%s/repository/lco?rev=%s)"
+			txt = append(txt, fmt.Sprintf(format, branchName, i.project.Identifier, branchName))
+			if len(commits) > 0 {
+				for n, sha := range commits {
+					format = "- %d. committed changes to branch %s [%s](/projects/lco/repository/%s/revisions/%s/diff)"
+					txt = append(txt, fmt.Sprintf(format, n, branchName, sha, i.project.Identifier, sha))
+				}
 
 				err = i.AddComment(strings.Join(txt, "\n"))
 				if err != nil {

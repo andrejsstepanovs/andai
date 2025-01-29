@@ -16,6 +16,7 @@ type Workbench struct {
 }
 
 type git interface {
+	GetAllBranchCommitHashes() ([]string, error)
 	GetLastCommitHash() (string, error)
 	BranchName(issueID int) string
 	CheckoutBranch(name string) error
@@ -79,7 +80,16 @@ func (i *Workbench) GetIssueBranchName(issue redmine.Issue) string {
 	return i.Git.BranchName(issue.Id)
 }
 
-func (i *Workbench) GetLastCommit() (string, error) {
+func (i *Workbench) GetBranchCommits() ([]string, error) {
 	i.Git.Reload()
-	return i.Git.GetLastCommitHash()
+	commits, err := i.Git.GetAllBranchCommitHashes()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get branch commits err: %v", err)
+	}
+
+	// reverse the order of commits
+	for i, j := 0, len(commits)-1; i < j; i, j = i+1, j-1 {
+		commits[i], commits[j] = commits[j], commits[i]
+	}
+	return commits, nil
 }

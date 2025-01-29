@@ -1,6 +1,7 @@
 package worker_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -17,6 +18,7 @@ func TestNewGit(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
+	fmt.Println(tmpDir)
 	// Initialize git repository
 	repo, err := gitlib.PlainInit(tmpDir, false)
 	require.NoError(t, err)
@@ -45,4 +47,41 @@ func TestNewGit(t *testing.T) {
 	hash, err := g.GetLastCommitHash()
 	assert.NoError(t, err)
 	assert.NotEmpty(t, hash)
+
+	// checkout new branch
+	err = g.CheckoutBranch("test-branch2")
+	assert.NoError(t, err)
+
+	// make 2 commits
+
+	// commit 1
+	testFile = filepath.Join(tmpDir, "test2.txt")
+	err = os.WriteFile(testFile, []byte("test content 2"), 0644)
+	require.NoError(t, err)
+
+	_, err = wt.Add("test2.txt")
+	require.NoError(t, err)
+
+	_, err = wt.Commit("Commit within branch 1", co)
+	require.NoError(t, err)
+
+	// commit 2
+	testFile = filepath.Join(tmpDir, "test3.txt")
+	err = os.WriteFile(testFile, []byte("test content 3"), 0644)
+	require.NoError(t, err)
+
+	_, err = wt.Add("test3.txt")
+	require.NoError(t, err)
+
+	_, err = wt.Commit("Commit within branch 2", co)
+	require.NoError(t, err)
+
+	hashes, err := g.GetAllBranchCommitHashes()
+	require.NoError(t, err)
+
+	assert.Len(t, hashes, 2)
+	for _, h := range hashes {
+		//fmt.Println(i, h)
+		assert.NotEmpty(t, h)
+	}
 }
