@@ -119,6 +119,12 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 	if contextFile != "" {
 		log.Printf("Context file: %q\n", contextFile)
 		//defer os.Remove(contextFile)
+
+		contents, err := utils.GetFileContents(contextFile)
+		if err != nil {
+			log.Printf("Failed to get file contents: %v", err)
+		}
+		log.Printf("Context file contents: \n------------------\n%s\n------------------\n", contents)
 	}
 
 	switch step.Command {

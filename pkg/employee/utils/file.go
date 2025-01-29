@@ -21,3 +21,11 @@ func BuildPromptTextTmpFile(content string) (string, error) {
 
 	return tempFile.Name(), nil
 }
+
+func GetFileContents(filename string) (string, error) {
+	file, err := os.ReadFile(filename)
+	if err != nil {
+		return "", err
+	}
+	return string(file), nil
+}

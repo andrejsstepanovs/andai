@@ -80,9 +80,6 @@ func (k Knowledge) BuildIssueKnowledgeTmpFile() (string, error) {
 	}
 
 	content := strings.Join(parts, "\n\n")
-	//fmt.Println("\n##############\n", content, "\n##############\n")
-
-	//panic(1)
 
 	tempFile, err := os.CreateTemp("", fmt.Sprintf(tmpFile, k.Issue.Id))
 	if err != nil {
@@ -94,7 +91,7 @@ func (k Knowledge) BuildIssueKnowledgeTmpFile() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer tempFile.Close()
+	//defer tempFile.Close()
 
 	return tempFile.Name(), nil
 }
