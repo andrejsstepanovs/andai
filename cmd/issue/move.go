@@ -20,20 +20,36 @@ func newMoveCommand(model *model.Model, workflow models.Workflow) *cobra.Command
 		RunE: func(_ *cobra.Command, args []string) error {
 			log.Println("Moving issue")
 
-			foundIssue, success, err := findIssue(model, args)
+			foundIssue, success, nestStatus, err := findIssue(model, args, workflow)
 			if err != nil {
 				return err
 			}
 
-			if success {
-				log.Printf("Moving issue %d to success", foundIssue.Id)
-			} else {
-				log.Printf("Moving issue %d to fail", foundIssue.Id)
-			}
+			if nestStatus != "" {
+				log.Printf("Moving issue %d to %s", foundIssue.Id, nestStatus)
+				nextIssueStatus, err := model.APIGetIssueStatus(string(nestStatus))
+				if err != nil {
+					return fmt.Errorf("failed to get next issue status err: %v", err)
+				}
+				if nextIssueStatus.Id == 0 {
+					return errors.New("next status not found")
+				}
 
-			err = actions.TransitionToNextStatus(workflow, model, foundIssue, success)
-			if err != nil {
-				return fmt.Errorf("failed to comment issue err: %v", err)
+				err = model.Transition(foundIssue, nextIssueStatus)
+				if err != nil {
+					return fmt.Errorf("failed to comment issue err: %v", err)
+				}
+			} else {
+				if success {
+					log.Printf("Moving issue %d to success", foundIssue.Id)
+				} else {
+					log.Printf("Moving issue %d to fail", foundIssue.Id)
+				}
+
+				err = actions.TransitionToNextStatus(workflow, model, foundIssue, success)
+				if err != nil {
+					return fmt.Errorf("failed to comment issue err: %v", err)
+				}
 			}
 			return nil
 		},
@@ -47,7 +63,7 @@ func newMoveChildrenCommand(model *model.Model, workflow models.Workflow) *cobra
 		RunE: func(_ *cobra.Command, args []string) error {
 			log.Println("Moving issue children")
 
-			foundIssue, success, err := findIssue(model, args)
+			foundIssue, success, useStatus, err := findIssue(model, args, workflow)
 			if err != nil {
 				return err
 			}
@@ -62,16 +78,21 @@ func newMoveChildrenCommand(model *model.Model, workflow models.Workflow) *cobra
 				return nil
 			}
 
-			if success {
-				log.Printf("Moving issue %d children %d to success", len(children), foundIssue.Id)
+			if useStatus != "" {
+				log.Printf("Moving issue %d children %d to %s", len(children), foundIssue.Id, useStatus)
+				panic("not implemented")
 			} else {
-				log.Printf("Moving issue %d children %d to fail", len(children), foundIssue.Id)
-			}
+				if success {
+					log.Printf("Moving issue %d children %d to success", len(children), foundIssue.Id)
+				} else {
+					log.Printf("Moving issue %d children %d to fail", len(children), foundIssue.Id)
+				}
 
-			for _, child := range children {
-				err = actions.TransitionToNextStatus(workflow, model, child, success)
-				if err != nil {
-					return fmt.Errorf("failed to comment issue err: %v", err)
+				for _, child := range children {
+					err = actions.TransitionToNextStatus(workflow, model, child, success)
+					if err != nil {
+						return fmt.Errorf("failed to comment issue err: %v", err)
+					}
 				}
 			}
 			return nil
@@ -79,38 +100,33 @@ func newMoveChildrenCommand(model *model.Model, workflow models.Workflow) *cobra
 	}
 }
 
-func findIssue(model *model.Model, args []string) (redmine.Issue, bool, error) {
+func findIssue(model *model.Model, args []string, workflow models.Workflow) (redmine.Issue, bool, models.StateName, error) {
 	if len(args) < 2 {
 		log.Println("Not enough arguments")
-		return redmine.Issue{}, false, errors.New("not enough arguments")
+		return redmine.Issue{}, false, "", errors.New("not enough arguments")
 	}
 
 	projects, err := model.APIGetProjects()
 	if err != nil {
 		log.Println("Failed to get projects")
-		return redmine.Issue{}, false, err
+		return redmine.Issue{}, false, "", err
 	}
 	if len(projects) == 0 {
 		log.Println("No projects found")
-		return redmine.Issue{}, false, err
+		return redmine.Issue{}, false, "", err
 	}
 	if len(projects) > 1 {
 		log.Println("Too many projects found")
-		return redmine.Issue{}, false, err
+		return redmine.Issue{}, false, "", err
 	}
 	project := projects[0]
 
 	issueSubject := args[0]
-	success, err := strconv.ParseBool(args[1])
-	if err != nil {
-		log.Println("Failed to parse success/fail")
-		return redmine.Issue{}, false, err
-	}
 
 	issues, err := model.APIGetProjectIssues(project)
 	if err != nil {
 		log.Printf("Failed to get project issues: %v", err)
-		return redmine.Issue{}, success, err
+		return redmine.Issue{}, false, "", err
 	}
 
 	var foundIssue redmine.Issue
@@ -123,8 +139,26 @@ func findIssue(model *model.Model, args []string) (redmine.Issue, bool, error) {
 	}
 	if foundIssue.Id == 0 {
 		log.Printf("Issue not found: %s", issueSubject)
-		return redmine.Issue{}, success, nil
+		return redmine.Issue{}, false, "", nil
 	}
 
-	return foundIssue, success, nil
+	toTarget := models.StateName("")
+	success, err := strconv.ParseBool(args[1])
+	if err != nil {
+		toTarget = models.StateName(args[1])
+		transitions := workflow.Transitions.GetTransitions(models.StateName(foundIssue.Status.Name))
+		found := false
+		for _, transition := range transitions {
+			if transition.Target == toTarget {
+				log.Printf("Transition found: %s -> %s", foundIssue.Status.Name, toTarget)
+				found = true
+			}
+		}
+		if !found {
+			log.Printf("Transition %q not found", toTarget)
+			return redmine.Issue{}, false, "", err
+		}
+	}
+
+	return foundIssue, success, toTarget, nil
 }

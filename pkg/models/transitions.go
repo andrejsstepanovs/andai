@@ -15,8 +15,8 @@ type NextTransition struct {
 }
 
 type Transition struct {
-	Source  StateName `yaml:"source"`
-	Target  StateName `yaml:"target"`
+	Source  StateName `yaml:"source"`  // Initial, Backlog, In Progress, etc
+	Target  StateName `yaml:"target"`  // Initial, Testing, etc
 	Success bool      `yaml:"success"` // Transition on success if multiple transitions available
 	Fail    bool      `yaml:"fail"`    // Transition on fail if multiple transitions available
 }

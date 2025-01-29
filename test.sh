@@ -19,5 +19,7 @@ PROJECT=test make work # will work on Analysis and move to In Progress
 PROJECT=test make work # will create 2 Step tasks and put them in Initial, finally wil move Task to Testing
 PROJECT=test make work # will move Task from QA
 
-PROJECT=test build/andai issue move "Init repository" True
+PROJECT=test build/andai issue move "Init repository" "Approved" # move parent task to Approved
+PROJECT=test build/andai work triggers
+
 #PROJECT=test bin/andai move-children # will move created children from Initial to Backlog
