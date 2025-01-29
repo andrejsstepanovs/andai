@@ -22,6 +22,7 @@ type Knowledge struct {
 	Parent     *redmine.Issue
 	Parents    []redmine.Issue
 	Children   []redmine.Issue
+	Siblings   []redmine.Issue
 	Project    models.Project
 	IssueTypes models.IssueTypes
 	Comments   redminemodels.Comments
@@ -116,6 +117,8 @@ func (k Knowledge) getContext(context string) (string, error) {
 		return k.getParent()
 	case models.ContextParents:
 		return k.getParents()
+	case models.ContextSiblings:
+		return k.getSiblings()
 	case models.ContextChildren:
 		return k.getChildren()
 	case models.ContextIssueTypes:
@@ -196,6 +199,24 @@ func (k Knowledge) getParents() (string, error) {
 		parentsContext = append(parentsContext, txt)
 	}
 	issueContext := k.TagContent("parent_issues", strings.Join(parentsContext, "\n"), 1)
+	return issueContext, nil
+}
+
+func (k Knowledge) getSiblings() (string, error) {
+	if len(k.Siblings) == 0 {
+		return "", nil
+	}
+	siblingsContext := make([]string, 0)
+	for _, sibling := range k.Siblings {
+		siblingIssueContext, err := k.getIssueContext(sibling)
+		if err != nil {
+			log.Printf("Failed to get single child issue context: %v", err)
+			return "", err
+		}
+		txt := k.TagContent("sibling_issue", siblingIssueContext, 2)
+		siblingsContext = append(siblingsContext, txt)
+	}
+	issueContext := k.TagContent("sibling_issues", strings.Join(siblingsContext, "\n"), 1)
 	return issueContext, nil
 }
 

@@ -20,6 +20,9 @@ const ContextProjectWiki = "wiki"
 // ContextChildren is a special context that matches the children
 const ContextChildren = "children"
 
+// ContextSiblings is a special context that matches the siblings
+const ContextSiblings = "siblings"
+
 // ContextParent is a special context that matches the parent
 const ContextParent = "parent"
 

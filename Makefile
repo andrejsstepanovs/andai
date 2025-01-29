@@ -193,3 +193,6 @@ stop:
 	echo "Stopping."
 	docker-compose down
 	@echo "Done!"
+
+
+# for BRANCH in $(git branch | grep AI); do git branch -D $BRANCH; done

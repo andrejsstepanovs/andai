@@ -22,6 +22,7 @@ type Employee struct {
 	parent     *redmine.Issue
 	parents    []redmine.Issue
 	children   []redmine.Issue
+	siblings   []redmine.Issue
 	project    redmine.Project
 	projectCfg models.Project
 	workbench  *workbench.Workbench
@@ -39,6 +40,7 @@ func NewWorkOnIssue(
 	parent *redmine.Issue,
 	parents []redmine.Issue,
 	children []redmine.Issue,
+	siblings []redmine.Issue,
 	project redmine.Project,
 	projectCfg models.Project,
 	workbench *workbench.Workbench,
@@ -53,6 +55,7 @@ func NewWorkOnIssue(
 		parent:     parent,
 		parents:    parents,
 		children:   children,
+		siblings:   siblings,
 		project:    project,
 		projectCfg: projectCfg,
 		workbench:  workbench,
@@ -105,6 +108,7 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 		Parent:     i.parent,
 		Parents:    i.parents,
 		Children:   i.children,
+		Siblings:   i.siblings,
 		Project:    i.projectCfg,
 		IssueTypes: i.issueTypes,
 		Comments:   comments,
