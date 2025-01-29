@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/andrejsstepanovs/andai/cmd/issue"
 	"github.com/andrejsstepanovs/andai/cmd/ping"
 	"github.com/andrejsstepanovs/andai/cmd/setup"
 	"github.com/andrejsstepanovs/andai/cmd/validate"
@@ -50,6 +51,7 @@ func main() {
 		ping.SetupPingCmd(dependencies),
 		setup.Cmd(dependencies, settings),
 		work.Cmd(dependencies, settings),
+		issue.Cmd(dependencies, settings),
 	)
 
 	if err := rootCmd.Execute(); err != nil {

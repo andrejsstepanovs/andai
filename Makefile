@@ -170,6 +170,10 @@ work:
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work next && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work triggers
 
+.PHONY: issue
+issue:
+	@PROJECT=$(PROJECT) $(BUILD_PATH)/andai issue create
+
 .PHONY: rm
 rm:
 	echo "Stopping and removing volumes."

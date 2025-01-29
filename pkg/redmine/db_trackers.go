@@ -1,5 +1,7 @@
 package redmine
 
+// Trackers are: Epic, Task, Step
+
 import (
 	"database/sql"
 	"errors"
