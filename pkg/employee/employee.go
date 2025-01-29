@@ -139,13 +139,6 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 		}, nil
 	case "git":
 		return exec.Exec(step.Command, step.Action)
-	case "aider", "aid":
-		switch step.Action {
-		case "architect", "code":
-			return processor.AiderExecute(contextFile, step)
-		default:
-			return exec.Output{}, fmt.Errorf("unknown %q action: %q", step.Command, step.Action)
-		}
 	case "create-issues":
 		trackerID, err := i.model.DBGetTrackersByName(step.Action)
 		if err != nil {
@@ -191,9 +184,19 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			log.Printf("Failed to build prompt tmp file: %v", err)
 		}
 		return processor.BobikExecute(promptFile, step)
+	case "aider":
+	case "aid":
+		switch step.Action {
+		case "architect", "code":
+			return processor.AiderExecute(contextFile, step)
+		default:
+			return exec.Output{}, fmt.Errorf("unknown %q action: %q", step.Command, step.Action)
+		}
 	default:
 		return exec.Output{}, fmt.Errorf("unknown step command: %q", step.Command)
 	}
+
+	return exec.Output{}, nil
 }
 
 func (i *Employee) addHistory(step models.Step) models.StepPrompt {

@@ -15,6 +15,8 @@ const (
 
 // JournalIssueType is a constant for the journalized type
 const JournalIssueType = "Issue"
+
+// JournalStatusID is a constant for the status_id
 const JournalStatusID = "status_id"
 
 func (c *Model) DBGetComments(issueID int) (models.Comments, error) {

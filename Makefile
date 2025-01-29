@@ -112,6 +112,7 @@ build: build-engine
 
 .PHONY: build-engine
 build-engine: ## Build engine CLI
+	rm -rf $(BUILD_PATH)/$(ENGINE_NAME)
 	$(call fn_build,$@,$(ENGINE_NAME),$(ENGINE_DIR))
 
 # END of <build>

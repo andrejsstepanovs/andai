@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newCreateCommand(model *model.Model, workflow models.Workflow) *cobra.Command {
+func newCreateCommand(model *model.Model, _ models.Workflow) *cobra.Command {
 	return &cobra.Command{
 		Use:   "create",
 		Short: "Creates new Issue. First param Issue Type, Second param Issue Subject, Third param Issue Description",

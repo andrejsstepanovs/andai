@@ -43,7 +43,7 @@ func newTriggersCommand(model *model.Model, workflow models.Workflow) *cobra.Com
 			}
 			statusTo, err := model.APIGetIssueStatusByID(statusIDTo)
 			if err != nil {
-				log.Printf("Failed to get status: %d", statusTo)
+				log.Printf("Failed to get status: %s", statusTo.Name)
 				return err
 			}
 

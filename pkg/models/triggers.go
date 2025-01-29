@@ -1,7 +1,7 @@
 package models
 
 const (
-	// TriggerTransitionWhoSelf is used to indicate that the transition should be applied to parent issues.
+	// TriggerTransitionWhoParent is used to indicate that the transition should be applied to the parent issue.
 	TriggerTransitionWhoParent = "parent"
 	// TriggerTransitionWhoChildren is used to indicate that the transition should be applied to children issues.
 	TriggerTransitionWhoChildren = "children"

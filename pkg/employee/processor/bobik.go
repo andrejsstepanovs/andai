@@ -14,6 +14,7 @@ import (
 
 func BobikExecute(promptFile string, step models.Step) (exec.Output, error) {
 	format := "Use this file %s as a question and Answer!"
+	panic(step.Command)
 	return exec.Exec(step.Command, step.Action, fmt.Sprintf(format, promptFile))
 }
 
@@ -93,19 +94,23 @@ func getTaskPrompt(targetIssueTypeName models.IssueTypeName) (string, error) {
 	}
 	exampleJSON := string(jsonTxt)
 
-	format := "You need to Answer using raw JSON. Expected json format example data:\n" +
+	format := "# Your task is:\nSplit current_issue into %s issues.\n\n" +
+		"## Instructions:\n" +
+		"- You need to Answer using raw JSON. Expected json format example data:\n" +
 		"```json\n%s\n```\n" +
-		"Keep track on task dependencies on other tasks you create.\n" +
-		"It is super important that tasks do not have cyclomatic dependencies! i.e. no 2 tasks depend on each other.\n" +
-		"It is really important that Answer contains only raw JSON with tags: " +
+		"- Keep track on task dependencies on other tasks you create.\n" +
+		"- Your task needs to focus only on what is asked in current_issue and nothing else.\n" +
+		"- Make sure to follow instructions provided in comments.\n" +
+		"- It is super important that tasks do not have cyclomatic dependencies! i.e. no 2 tasks depend on each other.\n" +
+		"- It is really important that Answer contains only raw JSON with tags: " +
 		"issues that contains issue type: **%s** elements.\n" +
-		"Each element should contain: number_int, subject, " +
+		"- Each element should contain: number_int, subject, " +
 		"description (contains detailed explanation what needs to be achieved.\n" +
-		"Use \"# Acceptance Criteria\" to define exact points), blocked_by_numbers (array of integers).\n" +
-		"Do not use any other tags in JSON.\n" +
-		"Do not create tasks that are out of scope of current issue requirements."
+		"- Use \"# Acceptance Criteria\" to define exact points), blocked_by_numbers (array of integers).\n" +
+		"- Do not use any other tags in JSON.\n" +
+		"- Do not create tasks that are out of scope of current_issue requirements and its comments.\n"
 
-	taskPrompt := fmt.Sprintf(format, exampleJSON, targetIssueTypeName)
+	taskPrompt := fmt.Sprintf(format, targetIssueTypeName, exampleJSON, targetIssueTypeName)
 	return taskPrompt, err
 }
 
@@ -122,7 +127,7 @@ func getIssuesFromLLM(knowledgeFile string, taskPrompt string, promptExtension s
 		return exec.Output{}, Answer{}, "", err
 	}
 
-	format := "Use knowledge file %s and your task file %s to form a response. Answer with raws JSON!"
+	format := "Use the knowledge file %s and your task file %s to create a response. Respond with raw JSON!"
 	prompt := fmt.Sprintf(format, knowledgeFile, taskFile)
 	//prompt = fmt.Sprintf("\"%s\"", prompt)
 	out, err := exec.Exec("bobik", "zalando", "once", "llm", "quiet", prompt)

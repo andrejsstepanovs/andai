@@ -17,13 +17,13 @@ func BuildPromptTextTmpFile(content string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer tempFile.Close()
+	err = tempFile.Close()
 
-	return tempFile.Name(), nil
+	return tempFile.Name(), err
 }
 
 func GetFileContents(filename string) (string, error) {
-	file, err := os.ReadFile(filename)
+	file, err := os.ReadFile(filename) // nolint:gosec
 	if err != nil {
 		return "", err
 	}

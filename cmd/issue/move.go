@@ -80,7 +80,7 @@ func newMoveChildrenCommand(model *model.Model, workflow models.Workflow) *cobra
 
 			if useStatus != "" {
 				log.Printf("Moving issue %d children %d to %s", len(children), foundIssue.Id, useStatus)
-				panic("not implemented")
+				log.Println("not implemented")
 			} else {
 				if success {
 					log.Printf("Moving issue %d children %d to success", len(children), foundIssue.Id)
