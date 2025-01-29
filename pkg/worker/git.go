@@ -63,25 +63,16 @@ func (g *Git) Open() error {
 	return nil
 }
 
+// GetAllBranchCommitHashes same as `git log --no-walk`
 func (g *Git) GetAllBranchCommitHashes() ([]string, error) {
-	branches, err := g.repo.Branches()
+	commit, err := g.repo.CommitObject(g.headRef.Hash())
 	if err != nil {
-		return nil, fmt.Errorf("failed to get branches: %v", err)
+		log.Printf("failed to get commit object: %v", err)
+		return nil, err
 	}
 
 	var hashes []string
-	err = branches.ForEach(func(ref *plumbing.Reference) error {
-		commit, err := g.repo.CommitObject(ref.Hash())
-		if err != nil {
-			return fmt.Errorf("failed to get commit object: %v", err)
-		}
-
-		hashes = append(hashes, commit.Hash.String())
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to iterate branches: %v", err)
-	}
+	hashes = append(hashes, commit.Hash.String())
 
 	return hashes, nil
 }
