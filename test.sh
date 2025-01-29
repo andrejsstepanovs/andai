@@ -27,4 +27,7 @@ PROJECT=test make work # will work on 1 child from Analysis and move to In Progr
 PROJECT=test make work # will move task to QA
 PROJECT=test make work # will move task from QA to Approved
 
+
+PROJECT=test make work # other task?
+
 #PROJECT=test bin/andai move-children # will move created children from Initial to Backlog
