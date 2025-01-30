@@ -211,7 +211,7 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			if len(commits) > 0 {
 				for n, sha := range commits {
 					format = "%d. Commit [%s](/projects/lco/repository/%s/revisions/%s/diff)"
-					txt = append(txt, fmt.Sprintf(format, n+1, branchName, sha, i.project.Identifier, sha))
+					txt = append(txt, fmt.Sprintf(format, n+1, sha, i.project.Identifier, sha))
 				}
 
 				err = i.AddComment(strings.Join(txt, "\n"))
