@@ -48,6 +48,14 @@ var (
 	aiderCodeParams = map[string]string{
 		"--map-refresh": "auto", // auto,always,files,manual
 	}
+	aiderCommitParams = map[string]string{
+		"--map-refresh": "auto", // auto,always,files,manual
+	}
+	aiderCommitArgs = []string{
+		"--commit",
+		"--no-auto-lint",
+		"--no-auto-test",
+	}
 )
 
 func AiderCommand(contextFile string, step models.Step) string {
@@ -59,6 +67,9 @@ func AiderCommand(contextFile string, step models.Step) string {
 	case "architect":
 		params = aiderArchitectParams
 		args = aiderArchitectArgs
+	case "commit":
+		params = aiderCommitParams
+		args = aiderCommitArgs
 	case "code":
 		params = aiderCodeParams
 		args = aiderCodeArgs

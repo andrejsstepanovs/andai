@@ -202,6 +202,34 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 	case "aider":
 	case "aid":
 		switch step.Action {
+		case "commit":
+			commits, err := i.workbench.GetBranchCommits()
+			if err != nil {
+				log.Printf("Failed to get branch commits: %v", err)
+				return exec.Output{}, err
+			}
+			lastSha := ""
+			if len(commits) > 0 {
+				lastSha = commits[len(commits)-1]
+			}
+			out, err := processor.AiderExecute("Commit any uncommited changes", step)
+			if err != nil {
+				return out, err
+			}
+			commits, err = i.workbench.GetBranchCommits()
+			if err != nil {
+				log.Printf("Failed to get last commit sha: %v", err)
+				return out, nil
+			}
+			if len(commits) > 0 && lastSha != commits[len(commits)-1] {
+				sha := commits[len(commits)-1]
+				format := "%d. Commit [%s](/projects/%s/repository/%s/revisions/%s/diff)"
+				txt := fmt.Sprintf(format, 1, sha, i.project.Identifier, i.project.Identifier, sha)
+				err = i.AddComment(txt)
+				if err != nil {
+					return out, err
+				}
+			}
 		case "architect":
 			return processor.AiderExecute(contextFile, step)
 		case "code":

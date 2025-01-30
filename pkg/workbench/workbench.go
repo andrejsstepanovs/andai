@@ -80,6 +80,7 @@ func (i *Workbench) GetIssueBranchName(issue redmine.Issue) string {
 	return i.Git.BranchName(issue.Id)
 }
 
+// GetBranchCommits last is newest
 func (i *Workbench) GetBranchCommits() ([]string, error) {
 	i.Git.Reload()
 	commits, err := i.Git.GetAllBranchCommitHashes()
