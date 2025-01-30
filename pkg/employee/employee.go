@@ -180,8 +180,19 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 
 		txt := fmt.Sprintf("Merged #%d branch %q into %q", i.issue.Id, currentBranchName, parentBranchName)
 		err = i.AddCommentToParent(txt)
+		if err != nil {
+			log.Printf("Failed to add comment to parent: %v", err)
+			return out, err
+		}
 
-		return out, err
+		txt = fmt.Sprintf("Merged #%d branch %q into parent %q", i.issue.Id, currentBranchName, parentBranchName)
+		err = i.AddComment(txt)
+		if err != nil {
+			log.Printf("Failed to add comment: %v", err)
+			return out, err
+		}
+
+		return out, nil
 	case "bobik":
 		promptFile, err := knowledge.BuildPromptTmpFile()
 		if err != nil {
