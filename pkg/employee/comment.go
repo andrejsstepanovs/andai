@@ -3,6 +3,7 @@ package employee
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/andrejsstepanovs/andai/pkg/exec"
 	"github.com/andrejsstepanovs/andai/pkg/models"
@@ -56,6 +57,10 @@ func (i *Employee) CommentOutput(step models.Step, output exec.Output) {
 		}
 	}
 	if output.Stderr != "" {
+		if strings.Contains(output.Stderr, "Scanning repo") {
+			log.Println("OK stderr: Aider scanning repo")
+			return
+		}
 		log.Printf("stderr: %s\n", output.Stderr)
 		if step.Comment {
 			format := "Command: %s\n<error>\n%s\n</error>"
