@@ -231,7 +231,16 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 				}
 			}
 		case "architect":
-			return processor.AiderExecute(contextFile, step)
+			out, err := processor.AiderExecute(contextFile, step)
+			if err != nil {
+				return out, err
+			}
+			// because architect is running with --yes flag he is proceeding with code changes. We clean it after the run.
+			out, err = exec.Exec("git", "reset", "--hard")
+			if err != nil {
+				return out, err
+			}
+			return exec.Exec("git", "clean", "-fd")
 		case "code":
 			out, err := processor.AiderExecute(contextFile, step)
 			if err != nil {
