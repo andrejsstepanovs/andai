@@ -94,7 +94,7 @@ func getTaskIdeaPrompt(targetIssueTypeName models.IssueTypeName) string {
 		"but your focus should remain solely on splitting the current issue.\n" +
 		"- Do not create smaller scope issues that address aspects outside the scope of the current issue, " +
 		"even if they are mentioned in the parent task.\n" +
-		"- Make sure to follow instructions provided in comments (if there are any).\n\n" +
+		"- Make sure to follow instructions provided in comments.\n\n" +
 		"## Answer Instructions:\n" +
 		"- Answer with a list of **%s** issues.\n" +
 		"- Each issue should have:\n" +

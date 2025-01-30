@@ -129,6 +129,7 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 				if err != nil {
 					return fmt.Errorf("failed to comment issue err: %v", err)
 				}
+				break
 			}
 
 			return nil
