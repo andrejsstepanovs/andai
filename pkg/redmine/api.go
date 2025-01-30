@@ -118,6 +118,8 @@ func (c *Model) APIGetIssueSiblings(issue redmine.Issue) ([]redmine.Issue, error
 		}
 		siblings = append(siblings, child)
 	}
+
+	siblings = sortDescID(siblings)
 	return siblings, nil
 }
 

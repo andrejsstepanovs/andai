@@ -37,6 +37,7 @@ func (c *Model) APIGetChildren(issue redmine.Issue) ([]redmine.Issue, error) {
 		}
 	}
 
+	children = sortDescID(children)
 	return children, nil
 }
 
@@ -70,12 +71,15 @@ func (c *Model) APIGetAllParents(issue redmine.Issue) ([]redmine.Issue, error) {
 		issue = *parent
 	}
 
-	// sort parents by ID ASC order so last one is newest
-	sort.SliceIsSorted(parents, func(i, j int) bool {
-		return parents[i].Id < parents[j].Id
-	})
-
+	parents = sortDescID(parents)
 	return parents, nil
+}
+
+func sortDescID(parents []redmine.Issue) []redmine.Issue {
+	sort.SliceIsSorted(parents, func(i, j int) bool {
+		return parents[i].Id > parents[j].Id
+	})
+	return parents
 }
 
 func (c *Model) APIGetProjectIssues(project redmine.Project) ([]redmine.Issue, error) {
