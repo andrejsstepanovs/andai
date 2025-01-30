@@ -206,12 +206,12 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 
 			txt := make([]string, 0)
 			branchName := i.workbench.GetIssueBranchName(i.issue)
-			format := "### Branch [%s](/projects/%s/repository/lco?rev=%s)"
-			txt = append(txt, fmt.Sprintf(format, branchName, i.project.Identifier, branchName))
+			format := "### Branch [%s](/projects/%s/repository/%s?rev=%s)"
+			txt = append(txt, fmt.Sprintf(format, branchName, i.project.Identifier, i.project.Identifier, branchName))
 			if len(commits) > 0 {
 				for n, sha := range commits {
-					format = "%d. Commit [%s](/projects/lco/repository/%s/revisions/%s/diff)"
-					txt = append(txt, fmt.Sprintf(format, n+1, sha, i.project.Identifier, sha))
+					format = "%d. Commit [%s](/projects/%s/repository/%s/revisions/%s/diff)"
+					txt = append(txt, fmt.Sprintf(format, n+1, sha, i.project.Identifier, i.project.Identifier, sha))
 				}
 
 				err = i.AddComment(strings.Join(txt, "\n"))
