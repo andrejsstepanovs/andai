@@ -69,7 +69,11 @@ func NewWorkOnIssue(
 func (i *Employee) Work() (bool, error) {
 	log.Printf("Working on %q %q (ID: %d)", i.state.Name, i.issueType.Name, i.issue.Id)
 
-	err := i.workbench.PrepareWorkplace()
+	var parentIssueID *int
+	if i.parent != nil {
+		parentIssueID = &i.parent.Id
+	}
+	err := i.workbench.PrepareWorkplace(parentIssueID)
 	if err != nil {
 		log.Printf("Failed to prepare workplace: %v", err)
 		return false, err

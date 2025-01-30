@@ -25,7 +25,7 @@ type git interface {
 	Reload()
 }
 
-func (i *Workbench) PrepareWorkplace() error {
+func (i *Workbench) PrepareWorkplace(parentIssueID *int) error {
 	err := i.changeDirectory()
 	if err != nil {
 		log.Printf("Failed to change directory: %v", err)
@@ -33,7 +33,18 @@ func (i *Workbench) PrepareWorkplace() error {
 	}
 
 	i.Git.Reload()
-	err = i.checkoutBranch()
+
+	if parentIssueID != nil {
+		branchName := i.GetIssueBranchName(redmine.Issue{Id: *parentIssueID})
+		err = i.checkoutBranch(branchName)
+		if err != nil {
+			log.Printf("Failed to checkout parent branch: %v", err)
+		}
+		i.Git.Reload()
+	}
+
+	branchName := i.GetIssueBranchName(i.Issue)
+	err = i.checkoutBranch(branchName)
 	if err != nil {
 		log.Printf("Failed to checkout branch: %v", err)
 		return err
@@ -67,8 +78,7 @@ func (i *Workbench) changeDirectory() error {
 	return nil
 }
 
-func (i *Workbench) checkoutBranch() error {
-	branchName := i.GetIssueBranchName(i.Issue)
+func (i *Workbench) checkoutBranch(branchName string) error {
 	err := i.Git.CheckoutBranch(branchName)
 	if err != nil {
 		return fmt.Errorf("failed to checkout branch err: %v", err)
