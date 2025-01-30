@@ -17,15 +17,41 @@ func BobikExecute(promptFile string, step models.Step) (exec.Output, error) {
 	return exec.Exec(step.Command, step.Action, fmt.Sprintf(format, promptFile))
 }
 
+func getIdeaResponse(targetIssueTypeName models.IssueTypeName, knowledgeFile string) (exec.Output, error) {
+	ideaPrompt := getTaskIdeaPrompt(targetIssueTypeName)
+	ideaTaskFile, err := utils.BuildPromptTextTmpFile(ideaPrompt)
+	if err != nil {
+		log.Printf("Failed to build prompt tmp file: %v", err)
+		return exec.Output{}, err
+	}
+
+	format := "Use the knowledge file %s and your task file %s to form a response."
+	prompt := fmt.Sprintf(format, knowledgeFile, ideaTaskFile)
+	out, err := exec.Exec("bobik", "zalando", "once", "llm", "quiet", prompt)
+	if err != nil {
+		return out, err
+	}
+
+	return out, nil
+}
+
 func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile string) (exec.Output, map[int]redmine.Issue, map[int][]int, error) {
-	taskPrompt, err := getTaskPrompt(targetIssueTypeName)
+	out, err := getIdeaResponse(targetIssueTypeName, knowledgeFile)
+	if err != nil {
+		return exec.Output{}, nil, nil, err
+	}
+
+	log.Println("######## OUTPUT ##########")
+	log.Println(out.Stdout)
+	log.Println("##################")
+
+	taskPrompt, err := getTaskPrompt(targetIssueTypeName, out.Stdout)
 	if err != nil {
 		return exec.Output{}, nil, nil, err
 	}
 
 	promptExtension := ""
 	var createIssues Answer
-	var out exec.Output
 	tries := 4
 	for {
 		tries--
@@ -33,18 +59,13 @@ func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile st
 			return exec.Output{}, nil, nil, fmt.Errorf("failed to get issues from LLM")
 		}
 
-		out, createIssues, promptExtension, err = getIssuesFromLLM(
-			knowledgeFile,
-			taskPrompt,
-			promptExtension,
-		)
-		if promptExtension != "" {
-			continue
-		}
+		out, createIssues, promptExtension, err = getIssuesFromLLM(taskPrompt, promptExtension)
 		if err != nil {
 			return exec.Output{}, nil, nil, err
 		}
-		break
+		if promptExtension == "" {
+			break
+		}
 	}
 
 	items := make(map[int]redmine.Issue)
@@ -64,7 +85,29 @@ func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile st
 	return out, items, deps, nil
 }
 
-func getTaskPrompt(targetIssueTypeName models.IssueTypeName) (string, error) {
+func getTaskIdeaPrompt(targetIssueTypeName models.IssueTypeName) string {
+	format := "# Your task is:\n" +
+		"Split current_issue into smaller scope %s issues.\n\n" +
+		"## Instructions:\n" +
+		"- Your task is to split the current issue into smaller scope issues.\n" +
+		"- To do this effectively, you'll need to understand the context provided in the parent task, " +
+		"but your focus should remain solely on splitting the current issue.\n" +
+		"- Do not create smaller scope issues that address aspects outside the scope of the current issue, " +
+		"even if they are mentioned in the parent task.\n" +
+		"- Make sure to follow instructions provided in comments (if there are any).\n\n" +
+		"## Answer Instructions:\n" +
+		"- Answer with a list of **%s** issues.\n" +
+		"- Each issue should have:\n" +
+		"-- Issue Number: integer\n" +
+		"-- Subject: Issue title\n" +
+		"-- Description: detailed explanation what needs to be achieved.\n" +
+		"-- Blocked By: list of integers that blocks this task and need to be done beforehand (avoid circular dependencies).\n"
+
+	taskPrompt := fmt.Sprintf(format, targetIssueTypeName, targetIssueTypeName)
+	return taskPrompt
+}
+
+func getTaskPrompt(targetIssueTypeName models.IssueTypeName, solution string) (string, error) {
 	example := Answer{
 		Issues: []AnswerIssues{
 			{
@@ -93,28 +136,24 @@ func getTaskPrompt(targetIssueTypeName models.IssueTypeName) (string, error) {
 	}
 	exampleJSON := string(jsonTxt)
 
-	format := "# Your task is:\nSplit current_issue into %s issues.\n\n" +
-		"## Instructions:\n" +
-		"- You need to Answer using raw JSON. Expected json format example data:\n" +
+	format := "# Your task is:\nConvert solution issues %s into specific format json data.\n\n" +
+		"<selected_solutions>\n%s\n</selected_solutions>" +
+		"## Instructions:" +
+		"- Use selected_solutions tag text and convert it into JSON data.\n" +
+		"- I expect your answer to have following JSON structure (example):\n" +
 		"```json\n%s\n```\n" +
-		"- Keep track on task dependencies on other tasks you create.\n" +
-		"- Your task needs to focus only on what is asked in current_issue and nothing else.\n" +
-		"- Make sure to follow instructions provided in comments.\n" +
-		"- It is super important that tasks do not have cyclomatic dependencies! i.e. no 2 tasks depend on each other.\n" +
 		"- It is really important that Answer contains only raw JSON with tags: " +
-		"issues that contains issue type: **%s** elements.\n" +
-		"- Each element should contain: number_int, subject, " +
-		"description (contains detailed explanation what needs to be achieved.\n" +
-		"- Use \"# Acceptance Criteria\" to define exact points), blocked_by_numbers (array of integers).\n" +
-		"- Do not use any other tags in JSON.\n" +
-		"- Do not create tasks that are out of scope of current_issue requirements and its comments.\n"
+		"issues that contains array of elements.\n" +
+		"- Each element should contain: number_int, subject, description, blocked_by_numbers.\n" +
+		"- Where blocked_by_numbers is array of integers.\n" +
+		"- Do not use any other tags in JSON.\n"
 
-	taskPrompt := fmt.Sprintf(format, targetIssueTypeName, exampleJSON, targetIssueTypeName)
+	taskPrompt := fmt.Sprintf(format, targetIssueTypeName, solution, exampleJSON)
 	return taskPrompt, err
 }
 
 // second string is LLM response json parsing error
-func getIssuesFromLLM(knowledgeFile string, taskPrompt string, promptExtension string) (exec.Output, Answer, string, error) {
+func getIssuesFromLLM(taskPrompt string, promptExtension string) (exec.Output, Answer, string, error) {
 	if promptExtension != "" {
 		format := "%s\n\n\nYou failed last time with error: %s.\n" +
 			"Try again and be more careful this time!"
@@ -125,10 +164,8 @@ func getIssuesFromLLM(knowledgeFile string, taskPrompt string, promptExtension s
 		log.Printf("Failed to build prompt tmp file: %v", err)
 		return exec.Output{}, Answer{}, "", err
 	}
+	prompt := fmt.Sprintf("Analyze given file %s and reformat it into JSON. Answer with raw JSON!", taskFile)
 
-	format := "Use the knowledge file %s and your task file %s to create a response. Respond with raw JSON!"
-	prompt := fmt.Sprintf(format, knowledgeFile, taskFile)
-	//prompt = fmt.Sprintf("\"%s\"", prompt)
 	out, err := exec.Exec("bobik", "zalando", "once", "llm", "quiet", prompt)
 	if err != nil {
 		return out, Answer{}, "", err

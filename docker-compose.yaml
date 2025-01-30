@@ -62,6 +62,21 @@ services:
     depends_on:
       - database-lco
 
+# Grappler project
+  database-grappler:
+    <<: *database_base
+    volumes:
+      - database_data_grappler:/var/lib/mysql
+
+  redmine-grappler:
+    <<: *redmine_base
+    environment:
+      - DB_HOST=database-grappler
+    volumes:
+      - /home/astepanovs/go/src/grappler:/var/repositories/grappler
+    depends_on:
+      - database-grappler
+
 # Test project
   database-test:
     <<: *database_base
@@ -125,4 +140,5 @@ networks:
 volumes:
   database_data_lco:
   database_data_test:
+  database_data_grappler:
 
