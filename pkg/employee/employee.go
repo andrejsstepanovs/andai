@@ -157,7 +157,7 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			log.Printf("Failed to create new issues: %v", err)
 			return exec.Output{}, err
 		}
-		return exec.Output{}, nil
+		return exec.Output{Stdout: fmt.Sprintf("Created %d Issues", len(issues))}, nil
 	case "merge-into-parent":
 		currentBranchName := i.workbench.GetIssueBranchName(i.issue)
 		parentBranchName := i.workbench.GetIssueBranchName(*i.parent)
@@ -192,7 +192,7 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			return out, err
 		}
 
-		return out, nil
+		return exec.Output{Stdout: "Merged"}, nil
 	case "bobik":
 		promptFile, err := knowledge.BuildPromptTmpFile()
 		if err != nil {
@@ -212,14 +212,14 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			if len(commits) > 0 {
 				lastSha = commits[len(commits)-1]
 			}
-			out, err := processor.AiderExecute("Commit any uncommited changes", step)
+			commitOut, err := processor.AiderExecute("Commit any uncommited changes", step)
 			if err != nil {
-				return out, err
+				return commitOut, err
 			}
 			commits, err = i.workbench.GetBranchCommits()
 			if err != nil {
 				log.Printf("Failed to get last commit sha: %v", err)
-				return out, nil
+				return commitOut, nil
 			}
 			if len(commits) > 0 && lastSha != commits[len(commits)-1] {
 				sha := commits[len(commits)-1]
@@ -227,20 +227,25 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 				txt := fmt.Sprintf(format, 1, sha, i.project.Identifier, i.project.Identifier, sha)
 				err = i.AddComment(txt)
 				if err != nil {
-					return out, err
+					return commitOut, err
 				}
 			}
+			return commitOut, nil
 		case "architect":
-			out, err := processor.AiderExecute(contextFile, step)
+			architectOut, err := processor.AiderExecute(contextFile, step)
 			if err != nil {
-				return out, err
+				return architectOut, err
 			}
 			// because architect is running with --yes flag he is proceeding with code changes. We clean it after the run.
-			out, err = exec.Exec("git", "reset", "--hard")
+			_, err = exec.Exec("git", "reset", "--hard")
 			if err != nil {
-				return out, err
+				return architectOut, err
 			}
-			return exec.Exec("git", "clean", "-fd")
+			_, err = exec.Exec("git", "clean", "-fd")
+			if err != nil {
+				return architectOut, err
+			}
+			return architectOut, nil
 		case "code":
 			out, err := processor.AiderExecute(contextFile, step)
 			if err != nil {
