@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// LlmModelNormal is the name of the normal model
 const LlmModelNormal = "normal"
 
 type LlmModels []LlmModel

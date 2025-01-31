@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/andrejsstepanovs/andai/pkg/exec"
 	"github.com/teilomillet/gollm"
 	"github.com/teilomillet/gollm/llm"
 	"github.com/teilomillet/gollm/providers"
@@ -78,8 +79,15 @@ type AI struct {
 	model    string
 }
 
-func (a *AI) Simple(prompt string) (response string, err error) {
-	return a.client.Generate(context.Background(), &llm.Prompt{Input: prompt})
+func (a *AI) Simple(prompt string) (exec.Output, error) {
+	resp, err := a.client.Generate(context.Background(), &llm.Prompt{Input: prompt})
+	if err != nil {
+		return exec.Output{}, err
+	}
+	out := exec.Output{
+		Stdout: resp,
+	}
+	return out, nil
 }
 
 func (a *AI) Generate(ctx context.Context, prompt *llm.Prompt, opts ...llm.GenerateOption) (response string, err error) {

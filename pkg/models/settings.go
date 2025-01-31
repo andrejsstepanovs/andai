@@ -50,6 +50,43 @@ func (s *Settings) validateStates() error {
 	return nil
 }
 
+func (s *Settings) validateSteps(issueTypeNames map[IssueTypeName]bool) error {
+	for _, types := range s.Workflow.IssueTypes {
+		for _, job := range types.Jobs {
+			for _, step := range job.Steps {
+				switch step.Command {
+				case "git":
+				case "next":
+				case "create-issues":
+				case "merge-into-parent":
+				case "ai":
+				case "aid":
+				case "aider":
+				default:
+					return fmt.Errorf("step command %s is not valid", step.Command)
+				}
+
+				if step.Command == "aider" || step.Command == "aid" {
+					switch step.Action {
+					case "commit":
+					case "architect":
+					case "code":
+					default:
+						return fmt.Errorf("%s step action %s is not valid", step.Command, step.Action)
+					}
+				}
+
+				if step.Command == "create-issues" {
+					if _, ok := issueTypeNames[IssueTypeName(step.Action)]; !ok {
+						return fmt.Errorf("%q step action %q is not a valid issue type", step.Command, step.Action)
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func (s *Settings) validateLlmModels() error {
 	for _, model := range s.LlmModels {
 		if model.Model == "" {
@@ -256,6 +293,10 @@ func (s *Settings) Validate() error {
 	}
 
 	if err := s.validateLlmModels(); err != nil {
+		return err
+	}
+
+	if err := s.validateSteps(issueTypeNames); err != nil {
 		return err
 	}
 

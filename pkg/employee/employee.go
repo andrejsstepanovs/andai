@@ -197,12 +197,17 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 		}
 
 		return exec.Output{Stdout: "Merged"}, nil
-	case "bobik":
+	case "ai":
 		promptFile, err := knowledge.BuildPromptTmpFile()
 		if err != nil {
 			log.Printf("Failed to build prompt tmp file: %v", err)
 		}
-		return processor.BobikExecute(promptFile, step)
+
+		prompt, err := utils.GetFileContents(promptFile)
+		if err != nil {
+			log.Printf("Failed to get file contents: %v", err)
+		}
+		return i.llmNorm.Simple(prompt)
 	case "aider":
 	case "aid":
 		switch step.Action {

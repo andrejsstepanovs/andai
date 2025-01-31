@@ -20,7 +20,7 @@ func newLLMPingCommand(llm *ai.AI) *cobra.Command {
 				log.Println("Failed to get response from LlmNorm")
 			}
 
-			if response == "" {
+			if response.Stdout == "" {
 				log.Println("LLM failed")
 				return fmt.Errorf("LLM failed")
 			}
