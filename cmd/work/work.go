@@ -9,7 +9,27 @@
 // The package exposes commands for working with Redmine issues through the cobra CLI framework.
 package work
 
-// AI: Helper function to process a single issue
+// processIssue handles the workflow execution for a single Redmine issue.
+// It performs the following steps:
+//   - Retrieves all issue relationships (parent, children, siblings)
+//   - Sets up project context and git workbench
+//   - Executes the configured workflow through an employee
+//   - Transitions the issue to its next workflow state
+//
+// Parameters:
+//   - model: Redmine model providing API and database access
+//   - llmNorm: AI client for LLM operations
+//   - issue: The Redmine issue to process
+//   - projects: Configuration containing all available project definitions
+//   - workflow: Workflow configuration defining states and transitions
+//
+// Returns:
+//   - bool: Success status of the workflow execution
+//   - error: Any errors encountered during processing
+//
+// The function coordinates the core issue processing workflow by setting up
+// required contexts and delegating the actual work execution to an employee.
+// After execution, it handles transitioning the issue to its next state.
 func processIssue(model *model.Model, llmNorm *ai.AI, issue redmine.Issue, projects models.Projects, workflow models.Workflow) (bool, error) {
 	fmt.Printf("WORKING ON: %q in %q ID=%d: %s\n",
 		workflow.IssueTypes.Get(models.IssueTypeName(issue.Tracker.Name)).Name,
