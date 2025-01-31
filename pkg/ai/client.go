@@ -109,21 +109,21 @@ func (a *AI) Generate(ctx context.Context, prompt *llm.Prompt, opts ...llm.Gener
 // GenerateJSON generates JSON from the given prompt
 // Second error is json validation error
 // Last error is general LLM call error
-func (a *AI) GenerateJSON(ctx context.Context, prompt *llm.Prompt) (exec.Output, error, error) {
+func (a *AI) GenerateJSON(ctx context.Context, prompt *llm.Prompt, element any) (exec.Output, error, error) {
 	templateResponse, err := a.Generate(ctx, prompt, gollm.WithJSONSchemaValidation())
 	if err != nil {
 		return exec.Output{}, nil, err
 	}
 
-	var picked []string
 	responseJson := templateResponse.Stdout
 	if responseJson != "[]" {
 		responseJson = gollm.CleanResponse(responseJson)
-		err = json.Unmarshal([]byte(responseJson), &picked)
+		err = json.Unmarshal([]byte(responseJson), &element)
 		if err != nil {
 			log.Println(templateResponse.Stdout)
 			return exec.Output{}, err, nil
 		}
+		templateResponse.Stdout = responseJson
 	}
 
 	return exec.Output{Stdout: responseJson}, nil, nil

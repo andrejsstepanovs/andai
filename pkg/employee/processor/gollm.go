@@ -98,7 +98,7 @@ func getIssues(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, knowled
 			gollm.WithDirectives("Convert given context content into issues as JSON structure that be used to create new Jira issues."),
 			gollm.WithOutput("JSON"),
 			gollm.WithContext(knowledge),
-			gollm.WithExamples([]string{string(jsonResp)}...),
+			gollm.WithExamples([]string{"\n```\n" + string(jsonResp) + "\n```\n"}...),
 		),
 	)
 
@@ -109,21 +109,15 @@ func getIssues(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, knowled
 		return Answer{}, "", err
 	}
 
-	//log.Println(prompt.String())
-
 	ctx := context.Background()
-	templateResponse, validationErr, err := llmNorm.GenerateJSON(ctx, prompt)
+
+	picked := Answer{}
+	_, validationErr, err := llmNorm.GenerateJSON(ctx, prompt, &picked)
 	if err != nil {
 		return Answer{}, "", err
 	}
 	if validationErr != nil {
 		return Answer{}, validationErr.Error(), nil
-	}
-
-	picked := Answer{}
-	err = json.Unmarshal([]byte(templateResponse.Stdout), &picked)
-	if err != nil {
-		return picked, err.Error(), err
 	}
 
 	err = picked.Validate()

@@ -28,6 +28,10 @@ func (a Answer) GetDeps() map[int][]int {
 }
 
 func (a Answer) Validate() error {
+	if len(a.Issues) == 0 {
+		return fmt.Errorf("no issues provided")
+	}
+
 	if err := a.ValidateNoSelfReference(); err != nil {
 		return fmt.Errorf("dependent on self validation failed: %v", err)
 	}
