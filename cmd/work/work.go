@@ -30,7 +30,7 @@ package work
 // The function coordinates the core issue processing workflow by setting up
 // required contexts and delegating the actual work execution to an employee.
 // After execution, it handles transitioning the issue to its next state.
-func processIssue(model *model.Model, llmNorm *ai.AI, issue redmine.Issue, projects models.Projects, workflow models.Workflow) (bool, error) {
+func processIssue(model *model.Model, aiClient *ai.AI, issue redmine.Issue, projects models.Projects, workflow models.Workflow) (bool, error) {
 	fmt.Printf("WORKING ON: %q in %q ID=%d: %s\n",
 		workflow.IssueTypes.Get(models.IssueTypeName(issue.Tracker.Name)).Name,
 		workflow.States.Get(models.StateName(issue.Status.Name)).Name,
@@ -51,16 +51,16 @@ func processIssue(model *model.Model, llmNorm *ai.AI, issue redmine.Issue, proje
 	}
 	log.Printf("Project %d: %s", project.Id, project.Name)
 
-	wb, err := getProjectContext(model, project, projects)
+	workbench, err := getProjectContext(model, project, projects)
 	if err != nil {
 		return false, err
 	}
-	wb.Issue = issue
-	log.Printf("Project Repository Opened %s", wb.Git.GetPath())
+	workbench.Issue = issue
+	log.Printf("Project Repository Opened %s", workbench.Git.GetPath())
 
-	work := employee.NewEmployee(
+	emp := employee.NewEmployee(
 		model,
-		llmNorm,
+		aiClient,
 		issue,
 		parent,
 		parents,
@@ -68,12 +68,12 @@ func processIssue(model *model.Model, llmNorm *ai.AI, issue redmine.Issue, proje
 		siblings,
 		*project,
 		projectConfig,
-		wb,
+		workbench,
 		workflow.States.Get(models.StateName(issue.Status.Name)),
 		workflow.IssueTypes.Get(models.IssueTypeName(issue.Tracker.Name)),
 		workflow.IssueTypes,
 	)
-	success, err := work.ExecuteWorkflow()
+	success, err := emp.ExecuteWorkflow()
 	if err != nil {
 		return false, fmt.Errorf("failed to execute workflow for issue #%d (%s): %w",
 			issue.Id, issue.Subject, err)
@@ -210,7 +210,7 @@ func getProjectContext(model *model.Model, project *redmine.Project, projects mo
 //   - workflow: Workflow configuration defining states and transitions
 //
 // Returns a cobra.Command configured to execute the next issue processing workflow.
-func newNextCommand(model *model.Model, llmNorm *ai.AI, projects models.Projects, workflow models.Workflow) *cobra.Command {
+func newNextCommand(model *model.Model, aiClient *ai.AI, projects models.Projects, workflow models.Workflow) *cobra.Command {
 	return &cobra.Command{
 		Use:   "next",
 		Short: "Work with redmine",
