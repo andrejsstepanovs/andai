@@ -90,14 +90,17 @@ func (a *AI) Simple(prompt string) (exec.Output, error) {
 	return out, nil
 }
 
-func (a *AI) Generate(ctx context.Context, prompt *llm.Prompt, opts ...llm.GenerateOption) (response string, err error) {
+func (a *AI) Generate(ctx context.Context, prompt *llm.Prompt, opts ...llm.GenerateOption) (exec.Output, error) {
 	resp, err := a.client.Generate(ctx, prompt, opts...)
 	if err != nil {
-		return "", err
+		return exec.Output{}, err
 	}
 
 	log.Printf("%s %s Response OK", a.provider, a.model)
-	log.Println(resp) // debug
+	//log.Println(resp) // debug
 
-	return resp, nil
+	out := exec.Output{
+		Stdout: resp,
+	}
+	return out, nil
 }

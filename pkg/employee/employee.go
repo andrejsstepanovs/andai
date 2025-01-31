@@ -151,7 +151,7 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 		}
 		fmt.Printf("Need to create: %q Tracker ID: %d", step.Action, trackerID)
 
-		out, issues, deps, err := processor.BobikCreateIssue(models.IssueTypeName(step.Action), contextFile)
+		out, issues, deps, err := processor.GollmCreateIssue(i.llmNorm, models.IssueTypeName(step.Action), contextFile)
 		if err != nil {
 			return out, err
 		}

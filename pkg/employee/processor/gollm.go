@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/andrejsstepanovs/andai/pkg/ai"
 	"github.com/andrejsstepanovs/andai/pkg/employee/utils"
 	"github.com/andrejsstepanovs/andai/pkg/exec"
 	"github.com/andrejsstepanovs/andai/pkg/models"
@@ -12,14 +13,8 @@ import (
 	"github.com/teilomillet/gollm"
 )
 
-func GollmExecute(promptFile string, step models.Step) (exec.Output, error) {
-	format := "Use this file %s as a question and Answer!"
-
-	return exec.Exec(step.Command, step.Action, fmt.Sprintf(format, promptFile))
-}
-
-func GollmCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile string) (exec.Output, map[int]redmine.Issue, map[int][]int, error) {
-	out, err := getIdeaResponse(targetIssueTypeName, knowledgeFile)
+func GollmCreateIssue(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, knowledgeFile string) (exec.Output, map[int]redmine.Issue, map[int][]int, error) {
+	out, err := getIdeaResponse(llmNorm, targetIssueTypeName, knowledgeFile)
 	if err != nil {
 		return exec.Output{}, nil, nil, err
 	}
