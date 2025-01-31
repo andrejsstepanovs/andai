@@ -245,7 +245,7 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			if err != nil {
 				return architectOut, err
 			}
-			_, err = exec.Exec("git", "clean", "-fd")
+			_, err = exec.Exec("git", "clean", "-fd", ".aider.tags.cache.v3")
 			if err != nil {
 				return architectOut, err
 			}

@@ -29,33 +29,31 @@ var (
 		"--no-copy-paste",
 		"--git",
 		"--yes-always",
-	}
-	aiderCodeArgs = []string{
-		"--auto-commits",
-		"--no-auto-lint",
-		"--no-auto-test",
-	}
-	aiderArchitectArgs = []string{
-		"--architect",
-		"--no-auto-commits",
 		"--no-auto-lint",
 		"--no-auto-test",
 	}
 
-	aiderArchitectParams = map[string]string{
+	aiderDefaultParams = map[string]string{
 		"--map-refresh": "auto", // auto,always,files,manual
+		"--map-tokens":  "2048",
 	}
-	aiderCodeParams = map[string]string{
-		"--map-refresh": "auto", // auto,always,files,manual
+
+	aiderCodeArgs = []string{
+		"--auto-commits",
 	}
-	aiderCommitParams = map[string]string{
-		"--map-refresh": "auto", // auto,always,files,manual
+
+	aiderArchitectArgs = []string{
+		"--architect",
+		"--no-auto-commits",
 	}
+
 	aiderCommitArgs = []string{
 		"--commit",
-		"--no-auto-lint",
-		"--no-auto-test",
 	}
+
+	aiderArchitectParams = map[string]string{}
+	aiderCodeParams      = map[string]string{}
+	aiderCommitParams    = map[string]string{}
 )
 
 func AiderCommand(contextFile string, step models.Step) string {
@@ -84,6 +82,9 @@ func AiderCommand(contextFile string, step models.Step) string {
 	}
 
 	paramsCli := make([]string, 0, len(params))
+	for k, v := range aiderDefaultParams {
+		paramsCli = append(paramsCli, fmt.Sprintf("%s=%q", k, v))
+	}
 	for k, v := range params {
 		paramsCli = append(paramsCli, fmt.Sprintf("%s=%q", k, v))
 	}
