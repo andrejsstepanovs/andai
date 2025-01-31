@@ -33,16 +33,19 @@ type Employee struct {
 	history    []exec.Output
 }
 
-func NewWorkOnIssue(
+// AI: NewEmployee creates an Employee instance configured to work on a specific Redmine issue.
+// It initializes the employee with all necessary context including issue relationships,
+// project details, and workflow configuration.
+func NewEmployee(
 	model *model.Model,
-	llmNorm *ai.AI,
+	llm *ai.AI,
 	issue redmine.Issue,
-	parent *redmine.Issue,
-	parents []redmine.Issue,
-	children []redmine.Issue,
-	siblings []redmine.Issue,
+	parentIssue *redmine.Issue,
+	parentIssues []redmine.Issue,
+	childIssues []redmine.Issue,
+	siblingIssues []redmine.Issue,
 	project redmine.Project,
-	projectCfg models.Project,
+	projectConfig models.Project,
 	workbench *workbench.Workbench,
 	state models.State,
 	issueType models.IssueType,
@@ -50,14 +53,14 @@ func NewWorkOnIssue(
 ) *Employee {
 	return &Employee{
 		model:      model,
-		llmNorm:    llmNorm,
+		llmNorm:    llm,
 		issue:      issue,
-		parent:     parent,
-		parents:    parents,
-		children:   children,
-		siblings:   siblings,
+		parent:     parentIssue,
+		parents:    parentIssues,
+		children:   childIssues,
+		siblings:   siblingIssues,
 		project:    project,
-		projectCfg: projectCfg,
+		projectCfg: projectConfig,
 		workbench:  workbench,
 		state:      state,
 		issueType:  issueType,
