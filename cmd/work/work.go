@@ -1,3 +1,12 @@
+// Package work provides functionality for processing Redmine issues through configured workflows.
+// It handles the core workflow execution logic for the AndAI framework, including:
+//   - Retrieving and processing workable issues from Redmine
+//   - Managing issue relationships (parents, children, siblings)
+//   - Setting up project contexts and workbenches
+//   - Executing configured workflows for issues
+//   - Transitioning issues to their next workflow states
+//
+// The package exposes commands for working with Redmine issues through the cobra CLI framework.
 package work
 
 // AI: Helper function to process a single issue
