@@ -114,34 +114,34 @@ import (
 //
 // The function makes separate API calls to fetch each type of relation.
 // If any API call fails, the function returns an error immediately.
-func getIssueRelations(model *model.Model, issue redmine.Issue) (
+func getIssueRelations(model *model.Model, targetIssue redmine.Issue) (
 	*redmine.Issue, // parent
 	[]redmine.Issue, // parents 
 	[]redmine.Issue, // children
 	[]redmine.Issue, // siblings
 	error,
 ) {
-	parent, err := model.APIGetParent(issue)
+	directParent, err := model.APIGetParent(targetIssue)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to get parent issue for issue #%d: %w", issue.Id, err)
+		return nil, nil, nil, nil, fmt.Errorf("failed to get parent issue for targetIssue #%d: %w", targetIssue.Id, err)
 	}
 
-	parents, err := model.APIGetAllParents(issue)
+	ancestorIssues, err := model.APIGetAllParents(targetIssue)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to get all parent issues for issue #%d: %w", issue.Id, err)
+		return nil, nil, nil, nil, fmt.Errorf("failed to get all parent issues for targetIssue #%d: %w", targetIssue.Id, err)
 	}
 
-	children, err := model.APIGetChildren(issue)
+	childIssues, err := model.APIGetChildren(targetIssue)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to get child issues for issue #%d: %w", issue.Id, err)
+		return nil, nil, nil, nil, fmt.Errorf("failed to get child issues for targetIssue #%d: %w", targetIssue.Id, err)
 	}
 
-	siblings, err := model.APIGetIssueSiblings(issue)
+	siblingIssues, err := model.APIGetIssueSiblings(targetIssue)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to get sibling issues for issue #%d: %w", issue.Id, err)
+		return nil, nil, nil, nil, fmt.Errorf("failed to get sibling issues for targetIssue #%d: %w", targetIssue.Id, err)
 	}
 
-	return parent, parents, children, siblings, nil
+	return directParent, ancestorIssues, childIssues, siblingIssues, nil
 }
 	"github.com/andrejsstepanovs/andai/pkg/employee"
 	"github.com/andrejsstepanovs/andai/pkg/employee/actions"
