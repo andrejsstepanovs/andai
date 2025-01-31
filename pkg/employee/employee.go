@@ -85,7 +85,7 @@ func (i *Employee) Work() (bool, error) {
 	fmt.Printf("Total steps: %d\n", len(i.job.Steps))
 	for j, step := range i.job.Steps {
 		fmt.Printf("Step: %d\n", j+1)
-		step.Prompt = i.addHistory(step)
+		step.Prompt = i.appendHistoryToPrompt(step)
 		output, err := i.processStep(step)
 		if err != nil {
 			log.Printf("Failed to action step: %v", err)
@@ -298,15 +298,18 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 	return exec.Output{}, nil
 }
 
-// TODO add this to <history> in knowledge. Prompt is bad place.
-func (i *Employee) addHistory(step models.Step) models.StepPrompt {
+// appendHistoryToPrompt combines previous execution outputs with the current step prompt.
+// It prepends historical execution outputs to the current step's prompt, separated by
+// delimiters, creating a context-aware prompt for the next operation.
+// If no history exists, returns the original prompt unchanged.
+func (i *Employee) appendHistoryToPrompt(step models.Step) models.StepPrompt {
 	if len(i.history) == 0 {
 		return step.Prompt
 	}
-	hydratedPrompt := make([]string, 0)
-	for _, o := range i.history {
-		hydratedPrompt = append(hydratedPrompt, o.AsPrompt())
+	promptParts := make([]string, 0)
+	for _, output := range i.history {
+		promptParts = append(promptParts, output.AsPrompt())
 	}
-	hydratedPrompt = append(hydratedPrompt, string(step.Prompt))
-	return models.StepPrompt(strings.Join(hydratedPrompt, "\n\n----\n\n"))
+	promptParts = append(promptParts, string(step.Prompt))
+	return models.StepPrompt(strings.Join(promptParts, "\n\n----\n\n"))
 }
