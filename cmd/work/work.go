@@ -105,13 +105,20 @@ func getIssueRelations(model *model.Model, issue redmine.Issue) (
 func getProjectContext(model *model.Model, project *redmine.Project, projects models.Projects) (*workbench.Workbench, error) {
 	projectRepo, err := model.DBGetRepository(*project)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get redmine repository err: %v", err)
+		return nil, fmt.Errorf("failed to get repository for project %s (ID: %d): %w", 
+			project.Name, project.Id, err)
 	}
 
 	projectConfig := projects.Find(project.Identifier)
+	if projectConfig == nil {
+		return nil, fmt.Errorf("project configuration not found for identifier %q",
+			project.Identifier)
+	}
+
 	git, err := worker.FindProjectGit(projectConfig, projectRepo)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find project git err: %v", err)
+		return nil, fmt.Errorf("failed to initialize git for project %s (ID: %d) with repo path %s: %w",
+			project.Name, project.Id, projectRepo.RootURL, err)
 	}
 
 	return &workbench.Workbench{
