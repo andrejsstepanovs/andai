@@ -40,3 +40,5 @@ PROJECT=test make work # Will move from Testing to QA
 PROJECT=test make work # Will move from QA to Approved
 PROJECT=test make work # Will move to Deployment
 PROJECT=test make work # Will merge to parent and move to Done. Then should figure out that all children of Task are done and move Task from Approved to Deployment
+
+PROJECT=test make rm
