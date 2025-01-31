@@ -173,13 +173,9 @@ work:
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work triggers
 
 # run this command like so:
-# trap "exit" INT; PROJECT=test make loop
-.PHONY: loop
-loop:
-	@while true; do \
-		$(MAKE) work || true; \
-		sleep 2; \
-	done
+# while ; do
+# PROJECT=andai make work
+# done
 
 .PHONY: issue
 issue:
