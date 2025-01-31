@@ -144,7 +144,7 @@ func newNextCommand(model *model.Model, llmNorm *ai.AI, projects models.Projects
 					return err
 				}
 				// stop after first issue
-				break // nolint:staticcheck
+				break
 			}
 
 			return nil
