@@ -138,21 +138,29 @@ func newNextCommand(model *model.Model, llmNorm *ai.AI, projects models.Projects
 
 			issues, err := model.APIGetWorkableIssues(workflow)
 			if err != nil {
-				log.Println("Failed to get workable issue")
-				return err
+				log.Printf("Failed to retrieve workable issues: %v", err)
+				return fmt.Errorf("failed to retrieve workable issues from Redmine: %w", err)
 			}
 
 			if len(issues) == 0 {
-				log.Println("No workable issues found")
+				log.Println("No workable issues found in current workflow state")
 				return nil
 			}
 
-			log.Printf("FOUND WORKABLE ISSUES (%d)", len(issues))
+			log.Printf("Found %d workable issues to process", len(issues))
 			for _, issue := range issues {
 				success, err := processIssue(model, llmNorm, issue, projects, workflow)
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to process issue #%d (%s): %w", 
+						issue.Id, issue.Subject, err)
 				}
+
+				if success {
+					log.Printf("Successfully processed issue #%d", issue.Id)
+				} else {
+					log.Printf("Issue #%d processing completed without success", issue.Id)
+				}
+
 				// stop after first issue
 				break
 			}
