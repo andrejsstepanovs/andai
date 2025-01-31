@@ -72,22 +72,22 @@ func getIssueRelations(model *model.Model, issue redmine.Issue) (
 ) {
 	parent, err := model.APIGetParent(issue)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to get redmine parent issue err: %v", err)
+		return nil, nil, nil, nil, fmt.Errorf("failed to get parent issue for issue #%d: %w", issue.Id, err)
 	}
 
 	parents, err := model.APIGetAllParents(issue)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to get redmine all parent issues err: %v", err)
+		return nil, nil, nil, nil, fmt.Errorf("failed to get all parent issues for issue #%d: %w", issue.Id, err)
 	}
 
 	children, err := model.APIGetChildren(issue)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to get redmine issue relations err: %v", err)
+		return nil, nil, nil, nil, fmt.Errorf("failed to get child issues for issue #%d: %w", issue.Id, err)
 	}
 
 	siblings, err := model.APIGetIssueSiblings(issue)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to get redmine issue siblings err: %v", err)
+		return nil, nil, nil, nil, fmt.Errorf("failed to get sibling issues for issue #%d: %w", issue.Id, err)
 	}
 
 	return parent, parents, children, siblings, nil
