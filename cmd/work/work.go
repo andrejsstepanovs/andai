@@ -17,7 +17,8 @@ func processIssue(model *model.Model, llmNorm *ai.AI, issue redmine.Issue, proje
 	log.Printf("Issue %d: %s", issue.Id, issue.Subject)
 	project, err := model.API().Project(issue.Project.Id)
 	if err != nil {
-		return false, fmt.Errorf("failed to get redmine project err: %v", err)
+		return false, fmt.Errorf("failed to get redmine project (ID: %d) for issue #%d: %w", 
+			issue.Project.Id, issue.Id, err)
 	}
 	log.Printf("Project %d: %s", project.Id, project.Name)
 
@@ -45,12 +46,14 @@ func processIssue(model *model.Model, llmNorm *ai.AI, issue redmine.Issue, proje
 	)
 	success, err := work.ExecuteWorkflow()
 	if err != nil {
-		return false, fmt.Errorf("failed to finish work on issue err: %v", err)
+		return false, fmt.Errorf("failed to execute workflow for issue #%d (%s): %w",
+			issue.Id, issue.Subject, err)
 	}
 
 	err = actions.TransitionToNextStatus(workflow, model, issue, success)
 	if err != nil {
-		return false, fmt.Errorf("failed to comment issue err: %v", err)
+		return false, fmt.Errorf("failed to transition issue #%d to next status (current: %s): %w",
+			issue.Id, issue.Status.Name, err)
 	}
 
 	return success, nil
