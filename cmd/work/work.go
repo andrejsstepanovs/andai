@@ -86,7 +86,7 @@ func newNextCommand(model *model.Model, llmNorm *ai.AI, projects models.Projects
 					Issue: issue,
 				}
 
-				work := employee.NewWorkOnIssue(
+				work := employee.NewEmployee(
 					model,
 					llmNorm,
 					issue,
@@ -101,7 +101,7 @@ func newNextCommand(model *model.Model, llmNorm *ai.AI, projects models.Projects
 					workflow.IssueTypes.Get(models.IssueTypeName(issue.Tracker.Name)),
 					workflow.IssueTypes,
 				)
-				success, err := work.Work()
+				success, err := work.ExecuteWorkflow()
 				if err != nil {
 					return fmt.Errorf("failed to finish work on issue err: %v", err)
 				}

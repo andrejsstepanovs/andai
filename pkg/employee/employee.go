@@ -137,7 +137,7 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 		Project:    i.projectCfg,
 		IssueTypes: i.issueTypes,
 		Comments:   comments,
-		Step:       step,
+		Step:       workflowStep,
 	}
 
 	contextFile, err := knowledge.BuildIssueKnowledgeTmpFile()
@@ -156,21 +156,21 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 		log.Printf("Context file contents: \n------------------\n%s\n------------------\n", contents)
 	}
 
-	switch step.Command {
+	switch workflowStep.Command {
 	case "next":
 		return exec.Output{
 			Command: "next",
 			Stdout:  "Success, moving to next",
 		}, nil
 	case "git":
-		return exec.Exec(step.Command, step.Action)
+		return exec.Exec(workflowStep.Command, workflowStep.Action)
 	case "create-issues":
-		trackerID, err := i.model.DBGetTrackersByName(step.Action)
+		trackerID, err := i.model.DBGetTrackersByName(workflowStep.Action)
 		if err != nil {
 			log.Printf("Failed to get tracker by name: %v", err)
 			return exec.Output{}, err
 		}
-		fmt.Printf("Need to create: %q Tracker ID: %d", step.Action, trackerID)
+		fmt.Printf("Need to create: %q Tracker ID: %d", workflowStep.Action, trackerID)
 
 		executionOutput, issues, deps, err := processor.GenerateIssues(i.llmNorm, models.IssueTypeName(workflowStep.Action), contextFile)
 		if err != nil {
@@ -234,7 +234,7 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 		return i.llmNorm.Simple(prompt)
 	case "aider":
 	case "aid":
-		switch step.Action {
+		switch workflowStep.Action {
 		case "commit":
 			commits, err := i.workbench.GetBranchCommits()
 			if err != nil {
@@ -252,7 +252,7 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 			commits, err = i.workbench.GetBranchCommits()
 			if err != nil {
 				log.Printf("Failed to get last commit sha: %v", err)
-				return commitOut, nil
+				return commitResult, nil
 			}
 			if len(commits) > 0 && lastSha != commits[len(commits)-1] {
 				sha := commits[len(commits)-1]
@@ -260,10 +260,10 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 				txt := fmt.Sprintf(format, 1, sha, i.project.Identifier, i.project.Identifier, sha)
 				err = i.AddComment(txt)
 				if err != nil {
-					return commitOut, err
+					return commitResult, err
 				}
 			}
-			return commitOut, nil
+			return commitResult, nil
 		case "architect":
 			architectResult, err := processor.AiderExecute(contextFile, workflowStep)
 			if err != nil {
@@ -276,11 +276,11 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 			}
 			_, err = exec.Exec("git", "clean", "-fd", ".aider.tags.cache.v3")
 			if err != nil {
-				return architectOut, err
+				return architectResult, err
 			}
-			return architectOut, nil
+			return architectResult, nil
 		case "code":
-			out, err := processor.AiderExecute(contextFile, step)
+			out, err := processor.AiderExecute(contextFile, workflowStep)
 			if err != nil {
 				return out, err
 			}
@@ -307,10 +307,10 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 			}
 			return out, nil
 		default:
-			return exec.Output{}, fmt.Errorf("unknown %q action: %q", step.Command, step.Action)
+			return exec.Output{}, fmt.Errorf("unknown %q action: %q", workflowStep.Command, workflowStep.Action)
 		}
 	default:
-		return exec.Output{}, fmt.Errorf("unknown step command: %q", step.Command)
+		return exec.Output{}, fmt.Errorf("unknown step command: %q", workflowStep.Command)
 	}
 
 	return exec.Output{}, nil
