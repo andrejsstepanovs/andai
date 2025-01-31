@@ -2,6 +2,7 @@ package issue
 
 import (
 	"log"
+	"strings"
 
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	model "github.com/andrejsstepanovs/andai/pkg/redmine"
@@ -47,6 +48,7 @@ func newCreateCommand(model *model.Model, _ models.Workflow) *cobra.Command {
 				return err
 			}
 
+			issueDescription = strings.ReplaceAll(issueDescription, "\n", "<br/>")
 			issue := redmine.Issue{
 				Subject:     issueSubject,
 				Description: issueDescription,

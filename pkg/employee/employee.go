@@ -232,8 +232,7 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 			log.Printf("Failed to get file contents: %v", err)
 		}
 		return i.llmNorm.Simple(prompt)
-	case "aider":
-	case "aid":
+	case "aid", "aider":
 		switch workflowStep.Action {
 		case "commit":
 			commits, err := i.workbench.GetBranchCommits()
