@@ -14,8 +14,7 @@ func Cmd(deps *deps.AppDependencies, settings models.Settings) *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		newWorkCommand(deps.Model, deps.LLM, settings.LlmModels),
-		newNextCommand(deps.Model, deps.LLM, settings.Projects, settings.Workflow),
+		newNextCommand(deps.Model, deps.LlmNorm, settings.Projects, settings.Workflow),
 		newTriggersCommand(deps.Model, settings.Workflow),
 	)
 

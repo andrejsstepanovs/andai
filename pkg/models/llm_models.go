@@ -4,13 +4,16 @@ import (
 	"fmt"
 )
 
+const LlmModelNormal = "normal"
+
 type LlmModels []LlmModel
 
 type LlmModel struct {
-	Name     string `yaml:"name"`
-	Model    string `yaml:"model"`
-	Provider string `yaml:"provider"`
-	APIKey   string `yaml:"api_key"`
+	Name        string `yaml:"name"`
+	Model       string `yaml:"model"`
+	Provider    string `yaml:"provider"`
+	APIKey      string `yaml:"api_key"`
+	Temperature string `yaml:"temperature"`
 }
 
 func (m LlmModels) Get(name string) LlmModel {

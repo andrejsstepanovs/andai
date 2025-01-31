@@ -15,6 +15,7 @@ func SetupPingCmd(deps *deps.AppDependencies) *cobra.Command {
 	cmd.AddCommand(
 		newAPIPingCommand(deps.Model),
 		newDBPingCommand(deps.Model),
+		newLLMPingCommand(deps.LlmNorm),
 	)
 
 	return cmd

@@ -56,7 +56,7 @@ func BobikCreateIssue(targetIssueTypeName models.IssueTypeName, knowledgeFile st
 	for {
 		tries--
 		if tries == 0 {
-			return exec.Output{}, nil, nil, fmt.Errorf("failed to get issues from LLM")
+			return exec.Output{}, nil, nil, fmt.Errorf("failed to get issues from LlmNorm")
 		}
 
 		out, createIssues, promptExtension, err = getIssuesFromLLM(taskPrompt, promptExtension)
@@ -152,7 +152,7 @@ func getTaskPrompt(targetIssueTypeName models.IssueTypeName, solution string) (s
 	return taskPrompt, err
 }
 
-// second string is LLM response json parsing error
+// second string is LlmNorm response json parsing error
 func getIssuesFromLLM(taskPrompt string, promptExtension string) (exec.Output, Answer, string, error) {
 	if promptExtension != "" {
 		format := "%s\n\n\nYou failed last time with error: %s.\n" +

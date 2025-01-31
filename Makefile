@@ -145,6 +145,7 @@ configure: build
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping api && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup projects && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup workflow && \
+	PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping llm && \
 	echo "Configure Success"
 
 # make start PROJECT=lco

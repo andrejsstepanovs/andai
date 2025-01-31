@@ -5,10 +5,10 @@ import (
 	"log"
 	"strings"
 
+	"github.com/andrejsstepanovs/andai/pkg/ai"
 	"github.com/andrejsstepanovs/andai/pkg/employee/processor"
 	"github.com/andrejsstepanovs/andai/pkg/employee/utils"
 	"github.com/andrejsstepanovs/andai/pkg/exec"
-	"github.com/andrejsstepanovs/andai/pkg/llm"
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	model "github.com/andrejsstepanovs/andai/pkg/redmine"
 	"github.com/andrejsstepanovs/andai/pkg/workbench"
@@ -17,7 +17,7 @@ import (
 
 type Employee struct {
 	model      *model.Model
-	llm        *llm.LLM
+	llmNorm    *ai.AI
 	issue      redmine.Issue
 	parent     *redmine.Issue
 	parents    []redmine.Issue
@@ -35,7 +35,7 @@ type Employee struct {
 
 func NewWorkOnIssue(
 	model *model.Model,
-	llm *llm.LLM,
+	llmNorm *ai.AI,
 	issue redmine.Issue,
 	parent *redmine.Issue,
 	parents []redmine.Issue,
@@ -50,7 +50,7 @@ func NewWorkOnIssue(
 ) *Employee {
 	return &Employee{
 		model:      model,
-		llm:        llm,
+		llmNorm:    llmNorm,
 		issue:      issue,
 		parent:     parent,
 		parents:    parents,
@@ -216,7 +216,7 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			if len(commits) > 0 {
 				lastSha = commits[len(commits)-1]
 			}
-			commitOut, err := processor.AiderExecute("Commit any uncommited changes", step)
+			commitOut, err := processor.AiderExecute("Commit any uncommitted changes", step)
 			if err != nil {
 				return commitOut, err
 			}

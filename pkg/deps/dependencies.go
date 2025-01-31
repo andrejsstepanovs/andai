@@ -2,8 +2,9 @@ package deps
 
 import (
 	"database/sql"
+	"fmt"
 
-	"github.com/andrejsstepanovs/andai/pkg/llm"
+	"github.com/andrejsstepanovs/andai/pkg/ai"
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	"github.com/andrejsstepanovs/andai/pkg/redmine"
 	apiredmine "github.com/mattn/go-redmine"
@@ -11,13 +12,13 @@ import (
 )
 
 type AppDependencies struct {
-	Model *redmine.Model
-	LLM   *llm.LLM
+	Model   *redmine.Model
+	LlmNorm *ai.AI
 }
 
 var Container *AppDependencies
 
-func NewAppDependencies(models models.LlmModels) (*AppDependencies, error) {
+func NewAppDependencies(mod models.LlmModels) (*AppDependencies, error) {
 	if Container != nil {
 		return Container, nil
 	}
@@ -28,11 +29,15 @@ func NewAppDependencies(models models.LlmModels) (*AppDependencies, error) {
 	}
 	api := apiredmine.NewClient(viper.GetString("redmine.url"), viper.GetString("redmine.api_key"))
 
-	llm := llm.NewLLM(models)
+	p := mod.Get(models.LlmModelNormal)
+	aiNorm, err := ai.NewAI(p.Provider, p.Model, p.APIKey, p.Temperature)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create AI (normal) err: %v", err)
+	}
 
 	Container = &AppDependencies{
-		Model: redmine.NewModel(db, api),
-		LLM:   llm,
+		Model:   redmine.NewModel(db, api),
+		LlmNorm: aiNorm,
 	}
 
 	return Container, nil

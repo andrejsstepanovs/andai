@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/andrejsstepanovs/andai/pkg/ai"
 	"github.com/andrejsstepanovs/andai/pkg/employee"
 	"github.com/andrejsstepanovs/andai/pkg/employee/actions"
-	"github.com/andrejsstepanovs/andai/pkg/llm"
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	model "github.com/andrejsstepanovs/andai/pkg/redmine"
 	"github.com/andrejsstepanovs/andai/pkg/workbench"
@@ -14,27 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newWorkCommand(_ *model.Model, llm *llm.LLM, models models.LlmModels) *cobra.Command {
-	return &cobra.Command{
-		Use:   "once",
-		Short: "Work with redmine",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			log.Println("Starting work with redmine")
-			log.Printf("Models %d", len(models))
-
-			response, err := llm.Simple("Hi!")
-			if err != nil {
-				log.Println("Failed to get response from LLM")
-			}
-
-			log.Println(response)
-
-			return nil
-		},
-	}
-}
-
-func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, workflow models.Workflow) *cobra.Command {
+func newNextCommand(model *model.Model, llmNorm *ai.AI, projects models.Projects, workflow models.Workflow) *cobra.Command {
 	return &cobra.Command{
 		Use:   "next",
 		Short: "Work with redmine",
@@ -105,9 +85,10 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 					Git:   git,
 					Issue: issue,
 				}
+
 				work := employee.NewWorkOnIssue(
 					model,
-					llm,
+					llmNorm,
 					issue,
 					parent,
 					parents,
@@ -129,7 +110,9 @@ func newNextCommand(model *model.Model, llm *llm.LLM, projects models.Projects, 
 				if err != nil {
 					return fmt.Errorf("failed to comment issue err: %v", err)
 				}
-				break
+
+				// stop after first issue
+				break // nolint:staticcheck
 			}
 
 			return nil

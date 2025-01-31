@@ -50,6 +50,26 @@ func (s *Settings) validateStates() error {
 	return nil
 }
 
+func (s *Settings) validateLlmModels() error {
+	for _, model := range s.LlmModels {
+		if model.Model == "" {
+			return fmt.Errorf("llm model model is required")
+		}
+		if model.Provider == "" {
+			return fmt.Errorf("llm model provider is required")
+		}
+		if model.APIKey == "" {
+			return fmt.Errorf("llm model api_key is required")
+		}
+		switch model.Name {
+		case LlmModelNormal:
+		default:
+			return fmt.Errorf("llm model %s is not valid", model.Name)
+		}
+	}
+	return nil
+}
+
 func (s *Settings) validateTriggers(issueTypeNames map[IssueTypeName]bool, stateNames map[StateName]bool) error {
 	for _, trigger := range s.Workflow.Triggers {
 		if _, ok := issueTypeNames[trigger.IssueType]; !ok {
@@ -233,6 +253,10 @@ func (s *Settings) Validate() error {
 		if _, ok := issueTypeNames[priority.Type]; !ok {
 			return fmt.Errorf("priority issue type %s does not exist", priority.Type)
 		}
+	}
+
+	if err := s.validateLlmModels(); err != nil {
+		return err
 	}
 
 	return nil

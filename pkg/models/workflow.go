@@ -7,6 +7,7 @@ type Workflow struct {
 	Transitions Transitions `yaml:"transitions"`
 	Priorities  Priorities  `yaml:"priorities"`
 	Triggers    Triggers    `yaml:"triggers"`
+	LlmModels   LlmModels   `yaml:"llm_models"`
 }
 
 // UnmarshalYAML implements custom unmarshalling for the Workflow struct.
@@ -17,6 +18,7 @@ func (w *Workflow) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Transitions Transitions                 `yaml:"transitions"`
 		Priorities  Priorities                  `yaml:"priorities"`
 		Triggers    Triggers                    `yaml:"triggers"`
+		LlmModels   LlmModels                   `yaml:"llm_models"`
 	}
 
 	var raw rawWorkflow
@@ -27,6 +29,7 @@ func (w *Workflow) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	w.Transitions = raw.Transitions
 	w.Priorities = raw.Priorities
 	w.Triggers = raw.Triggers
+	w.LlmModels = raw.LlmModels
 
 	// map States
 	cleanStates := make(map[StateName]State)
