@@ -172,10 +172,10 @@ work:
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work next
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work triggers
 
+# trap "exit" INT; PROJECT=test make loop
 .PHONY: loop
 loop:
-	@trap 'exit 0' INT; \
-	while true; do \
+	@while true; do \
 		$(MAKE) work || true; \
 		sleep 2; \
 	done
