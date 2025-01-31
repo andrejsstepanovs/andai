@@ -170,22 +170,22 @@ func getIssueRelations(model *model.Model, issue redmine.Issue) (
 // The returned workbench provides the git context needed for processing issues
 // within the project's repository.
 func getProjectContext(model *model.Model, project *redmine.Project, projects models.Projects) (*workbench.Workbench, error) {
-	projectRepo, err := model.DBGetRepository(*project)
+	repository, err := model.DBGetRepository(*project)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get repository for project %s (ID: %d): %w", 
 			project.Name, project.Id, err)
 	}
 
-	projectConfig := projects.Find(project.Identifier)
-	if projectConfig == nil {
+	configuration := projects.Find(project.Identifier)
+	if configuration == nil {
 		return nil, fmt.Errorf("project configuration not found for identifier %q",
 			project.Identifier)
 	}
 
-	git, err := worker.FindProjectGit(projectConfig, projectRepo)
+	git, err := worker.FindProjectGit(configuration, repository)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize git for project %s (ID: %d) with repo path %s: %w",
-			project.Name, project.Id, projectRepo.RootURL, err)
+			project.Name, project.Id, repository.RootURL, err)
 	}
 
 	return &workbench.Workbench{
