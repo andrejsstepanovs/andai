@@ -172,6 +172,7 @@ work:
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work next
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work triggers
 
+# run this command like so:
 # trap "exit" INT; PROJECT=test make loop
 .PHONY: loop
 loop:
