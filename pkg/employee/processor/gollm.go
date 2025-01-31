@@ -71,6 +71,7 @@ func getIssues(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, knowled
 	templatePrompt := gollm.NewPromptTemplate("IssuePlanToJson", "",
 		"# Instructions:\n"+
 			"- Use Context and specifically comments section to convert proposed issues into JSON data.\n"+
+			"- Make sure to not make circular dependencies between issues.\n"+
 			"- Convert suggested issues {{.TargetIssueType}} into specific format json data.\n"+
 			"- Each element should contain: number_int, subject, description, blocked_by_numbers.\n"+
 			"- Where blocked_by_numbers is array of integers.\n"+
