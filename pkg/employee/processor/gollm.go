@@ -83,17 +83,18 @@ func getIssues(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, knowled
 	}
 
 	templatePrompt := gollm.NewPromptTemplate("IssuePlanToJson", "",
-		"# Instructions:\n"+
+		"You are software engineer working with Jira on single issue breakdown task. "+
+			"Someone already thought about how to split current issue, use that info.\n\n"+
+			"# Instructions:\n"+
 			"- Use Context and specifically comments section to convert proposed issues into JSON data.\n"+
 			"- Make sure to not make circular dependencies between issues.\n"+
 			"- Convert suggested issues {{.TargetIssueType}} into specific format json data.\n"+
-			"- Each element should contain: number_int, subject, description, blocked_by_numbers.\n"+
+			"- Each element should contain: number_int (int), subject (text), description (text), blocked_by_numbers (array of integers).\n"+
 			"- Where blocked_by_numbers is array of integers.\n"+
 			"- Use example data structure for your answer.\n"+
-			"- Do not use any other tags in JSON.\n"+
+			"- Do not use any other tags in JSON.\n\n"+
 			ai.ForceJson+"\n"+promptExend,
 		gollm.WithPromptOptions(
-			gollm.WithSystemPrompt("You are software engineer working with Jira on single issue breakdown task.", ""),
 			gollm.WithDirectives("Convert given context content into issues as JSON structure that be used to create new Jira issues."),
 			gollm.WithOutput("JSON"),
 			gollm.WithContext(knowledge),
@@ -108,7 +109,7 @@ func getIssues(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, knowled
 		return Answer{}, "", err
 	}
 
-	log.Println(prompt.String())
+	//log.Println(prompt.String())
 
 	ctx := context.Background()
 	templateResponse, validationErr, err := llmNorm.GenerateJSON(ctx, prompt)
