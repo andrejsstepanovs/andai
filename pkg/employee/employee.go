@@ -86,14 +86,14 @@ func (i *Employee) Work() (bool, error) {
 	for j, step := range i.job.Steps {
 		fmt.Printf("Step: %d\n", j+1)
 		step.Prompt = i.appendHistoryToPrompt(step)
-		output, err := i.processStep(step)
+		executionOutput, err := i.executeWorkflowStep(step)
 		if err != nil {
 			log.Printf("Failed to action step: %v", err)
 			return false, err
 		}
-		i.CommentOutput(step, output)
+		i.CommentOutput(step, executionOutput)
 		if step.Remember {
-			i.history = append(i.history, output)
+			i.history = append(i.history, executionOutput)
 		}
 		fmt.Println("Success")
 	}
@@ -101,8 +101,19 @@ func (i *Employee) Work() (bool, error) {
 	return true, nil
 }
 
-func (i *Employee) processStep(step models.Step) (exec.Output, error) {
-	log.Printf("%s - %s", step.Command, step.Action)
+// executeWorkflowStep processes a single workflow step for an employee's task.
+// It handles different types of commands (next, git, create-issues, merge-into-parent, ai, aider)
+// and manages the execution context and results. The method maintains state through the employee's
+// history for steps marked as "remember".
+//
+// Parameters:
+//   - workflowStep: The workflow step configuration to execute
+//
+// Returns:
+//   - Output: The execution results including command, stdout and stderr
+//   - error: Any error that occurred during execution
+func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, error) {
+	log.Printf("%s - %s", workflowStep.Command, workflowStep.Action)
 
 	comments, err := i.getComments()
 	if err != nil {
@@ -154,9 +165,9 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 		}
 		fmt.Printf("Need to create: %q Tracker ID: %d", step.Action, trackerID)
 
-		out, issues, deps, err := processor.GenerateIssues(i.llmNorm, models.IssueTypeName(step.Action), contextFile)
+		executionOutput, issues, deps, err := processor.GenerateIssues(i.llmNorm, models.IssueTypeName(workflowStep.Action), contextFile)
 		if err != nil {
-			return out, err
+			return executionOutput, err
 		}
 
 		err = i.model.CreateChildIssuesWithDependencies(trackerID, i.issue, issues, deps)
@@ -188,15 +199,15 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 		}
 		log.Printf("Merged current branch: %q into parent branch: %q", currentBranchName, parentBranchName)
 
-		txt := fmt.Sprintf("Merged #%d branch %q into %q", i.issue.Id, currentBranchName, parentBranchName)
-		err = i.AddCommentToParent(txt)
+		commentText := fmt.Sprintf("Merged #%d branch %q into %q", i.issue.Id, currentBranchName, parentBranchName)
+		err = i.AddCommentToParent(commentText)
 		if err != nil {
 			log.Printf("Failed to add comment to parent: %v", err)
 			return out, err
 		}
 
-		txt = fmt.Sprintf("Merged #%d branch %q into parent %q", i.issue.Id, currentBranchName, parentBranchName)
-		err = i.AddComment(txt)
+		commentText = fmt.Sprintf("Merged #%d branch %q into parent %q", i.issue.Id, currentBranchName, parentBranchName)
+		err = i.AddComment(commentText)
 		if err != nil {
 			log.Printf("Failed to add comment: %v", err)
 			return out, err
@@ -227,9 +238,9 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			if len(commits) > 0 {
 				lastSha = commits[len(commits)-1]
 			}
-			commitOut, err := processor.AiderExecute("Commit any uncommitted changes", step)
+			commitResult, err := processor.AiderExecute("Commit any uncommitted changes", workflowStep)
 			if err != nil {
-				return commitOut, err
+				return commitResult, err
 			}
 			commits, err = i.workbench.GetBranchCommits()
 			if err != nil {
@@ -247,14 +258,14 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 			}
 			return commitOut, nil
 		case "architect":
-			architectOut, err := processor.AiderExecute(contextFile, step)
+			architectResult, err := processor.AiderExecute(contextFile, workflowStep)
 			if err != nil {
-				return architectOut, err
+				return architectResult, err
 			}
 			// because architect is running with --yes flag he is proceeding with code changes. We clean it after the run.
 			_, err = exec.Exec("git", "reset", "--hard")
 			if err != nil {
-				return architectOut, err
+				return architectResult, err
 			}
 			_, err = exec.Exec("git", "clean", "-fd", ".aider.tags.cache.v3")
 			if err != nil {
