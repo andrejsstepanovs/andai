@@ -36,23 +36,12 @@ func processIssue(model *model.Model, llmNorm *ai.AI, issue redmine.Issue, proje
 	}
 	log.Printf("Project %d: %s", project.Id, project.Name)
 
-	projectRepo, err := model.DBGetRepository(*project)
+	wb, err := getProjectContext(model, project, projects)
 	if err != nil {
-		return false, fmt.Errorf("failed to get redmine repository err: %v", err)
+		return false, err
 	}
-	log.Printf("Repository %d: %s", projectRepo.ID, projectRepo.RootURL)
-
-	projectConfig := projects.Find(project.Identifier)
-	git, err := worker.FindProjectGit(projectConfig, projectRepo)
-	if err != nil {
-		return false, fmt.Errorf("failed to find project git err: %v", err)
-	}
-	log.Printf("Project Repository Opened %s", git.GetPath())
-
-	wb := &workbench.Workbench{
-		Git:   git,
-		Issue: issue,
-	}
+	wb.Issue = issue
+	log.Printf("Project Repository Opened %s", wb.Git.GetPath())
 
 	work := employee.NewEmployee(
 		model,
@@ -95,6 +84,24 @@ import (
 	"github.com/andrejsstepanovs/andai/pkg/worker"
 	"github.com/spf13/cobra"
 )
+
+// AI: Helper function to get project context and setup workbench
+func getProjectContext(model *model.Model, project *redmine.Project, projects models.Projects) (*workbench.Workbench, error) {
+	projectRepo, err := model.DBGetRepository(*project)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get redmine repository err: %v", err)
+	}
+
+	projectConfig := projects.Find(project.Identifier)
+	git, err := worker.FindProjectGit(projectConfig, projectRepo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find project git err: %v", err)
+	}
+
+	return &workbench.Workbench{
+		Git: git,
+	}, nil
+}
 
 func newNextCommand(model *model.Model, llmNorm *ai.AI, projects models.Projects, workflow models.Workflow) *cobra.Command {
 	return &cobra.Command{
