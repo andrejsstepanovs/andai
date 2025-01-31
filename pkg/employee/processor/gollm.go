@@ -3,6 +3,7 @@ package processor
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/andrejsstepanovs/andai/pkg/ai"
@@ -14,9 +15,22 @@ import (
 )
 
 func GenerateIssues(llm *ai.AI, targetIssueTypeName models.IssueTypeName, knowledgeFile string) (exec.Output, map[int]redmine.Issue, map[int][]int, error) {
-	createIssues, err := getIssues(llm, targetIssueTypeName, knowledgeFile)
-	if err != nil {
-		return exec.Output{}, nil, nil, err
+	var (
+		err              error
+		query            string
+		validationPrompt string
+	)
+	var createIssues Answer
+	for i := 0; i < 5; i++ {
+		createIssues, query, err = getIssues(llm, targetIssueTypeName, knowledgeFile, validationPrompt)
+		if err != nil {
+			return exec.Output{}, nil, nil, err
+		}
+		if query == "" {
+			break
+		}
+		log.Println("Failed to validate. Trying again.")
+		validationPrompt = fmt.Sprintf("Your last answer was not good: ----\n\n%s\n\n----. Try again and this time make sure your answer (JSON) is valid!", query)
 	}
 
 	items := make(map[int]redmine.Issue)
@@ -36,7 +50,7 @@ func GenerateIssues(llm *ai.AI, targetIssueTypeName models.IssueTypeName, knowle
 	return exec.Output{}, items, deps, nil
 }
 
-func getIssues(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, knowledgeFile string) (Answer, error) {
+func getIssues(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, knowledgeFile, promptExend string) (Answer, string, error) {
 	example := Answer{
 		Issues: []AnswerIssues{
 			{
@@ -60,12 +74,12 @@ func getIssues(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, knowled
 	}
 	jsonResp, err := json.Marshal(example)
 	if err != nil {
-		return Answer{}, err
+		return Answer{}, "", err
 	}
 
 	knowledge, err := utils.GetFileContents(knowledgeFile)
 	if err != nil {
-		return Answer{}, err
+		return Answer{}, "", err
 	}
 
 	templatePrompt := gollm.NewPromptTemplate("IssuePlanToJson", "",
@@ -77,7 +91,7 @@ func getIssues(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, knowled
 			"- Where blocked_by_numbers is array of integers.\n"+
 			"- Use example data structure for your answer.\n"+
 			"- Do not use any other tags in JSON.\n"+
-			ai.ForceJson,
+			ai.ForceJson+"\n"+promptExend,
 		gollm.WithPromptOptions(
 			gollm.WithSystemPrompt("You are software engineer working with Jira on single issue breakdown task.", ""),
 			gollm.WithDirectives("Convert given context content into issues as JSON structure that be used to create new Jira issues."),
@@ -91,27 +105,30 @@ func getIssues(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, knowled
 		"TargetIssueType": targetIssueTypeName,
 	})
 	if err != nil {
-		log.Fatalf("Failed to execute prompt template: %v", err)
+		return Answer{}, "", err
 	}
 
 	log.Println(prompt.String())
 
 	ctx := context.Background()
-	templateResponse, err := llmNorm.GenerateJSON(ctx, prompt)
+	templateResponse, validationErr, err := llmNorm.GenerateJSON(ctx, prompt)
 	if err != nil {
-		log.Fatalf("Failed to generate template response: %v", err)
+		return Answer{}, "", err
+	}
+	if validationErr != nil {
+		return Answer{}, validationErr.Error(), nil
 	}
 
 	picked := Answer{}
 	err = json.Unmarshal([]byte(templateResponse.Stdout), &picked)
 	if err != nil {
-		return picked, err
+		return picked, err.Error(), err
 	}
 
 	err = picked.Validate()
 	if err != nil {
-		return picked, err
+		return picked, err.Error(), err
 	}
 
-	return picked, nil
+	return picked, "", nil
 }
