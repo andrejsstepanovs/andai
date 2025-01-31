@@ -1,8 +1,8 @@
 package processor
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/andrejsstepanovs/andai/pkg/ai"
@@ -13,37 +13,10 @@ import (
 	"github.com/teilomillet/gollm"
 )
 
-func GollmCreateIssue(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, knowledgeFile string) (exec.Output, map[int]redmine.Issue, map[int][]int, error) {
-	out, err := getIdeaResponse(llmNorm, targetIssueTypeName, knowledgeFile)
+func GenerateIssues(llm *ai.AI, targetIssueTypeName models.IssueTypeName, knowledgeFile string) (exec.Output, map[int]redmine.Issue, map[int][]int, error) {
+	createIssues, err := getIssues(llm, targetIssueTypeName, knowledgeFile)
 	if err != nil {
 		return exec.Output{}, nil, nil, err
-	}
-
-	log.Println("######## OUTPUT ##########")
-	log.Println(out.Stdout)
-	log.Println("##################")
-
-	taskPrompt, err := getTaskPrompt(targetIssueTypeName, out.Stdout)
-	if err != nil {
-		return exec.Output{}, nil, nil, err
-	}
-
-	promptExtension := ""
-	var createIssues Answer
-	tries := 4
-	for {
-		tries--
-		if tries == 0 {
-			return exec.Output{}, nil, nil, fmt.Errorf("failed to get issues from LlmNorm")
-		}
-
-		out, createIssues, promptExtension, err = getIssuesFromLLM(taskPrompt, promptExtension)
-		if err != nil {
-			return exec.Output{}, nil, nil, err
-		}
-		if promptExtension == "" {
-			break
-		}
 	}
 
 	items := make(map[int]redmine.Issue)
@@ -60,43 +33,79 @@ func GollmCreateIssue(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, 
 		deps[issue.ID] = append(deps[issue.ID], issue.BlockedBy...)
 	}
 
-	return out, items, deps, nil
+	return exec.Output{}, items, deps, nil
 }
 
-// second string is LlmNorm response json parsing error
-func __getIssuesFromLLM(taskPrompt string, promptExtension string) (exec.Output, Answer, string, error) {
-	if promptExtension != "" {
-		format := "%s\n\n\nYou failed last time with error: %s.\n" +
-			"Try again and be more careful this time!"
-		taskPrompt = fmt.Sprintf(format, taskPrompt, promptExtension)
+func getIssues(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, knowledgeFile string) (Answer, error) {
+	example := Answer{
+		Issues: []AnswerIssues{
+			{
+				ID:          1,
+				Subject:     "Issue Title",
+				Description: "# Acceptance Criteria:\n- Point 1\n- Point 2:\n-- Subpoint 1\n-- Subpoint 2\n",
+			},
+			{
+				ID:          2,
+				Subject:     "Issue Title",
+				Description: "# Acceptance Criteria:\n- Point 1\n- Point 2:\n-- Subpoint 1\n-- Subpoint 2\n",
+				BlockedBy:   []int{1},
+			},
+			{
+				ID:          3,
+				Subject:     "Issue Title",
+				Description: "# Acceptance Criteria:\n- Point 1\n- Point 2:\n-- Subpoint 1\n-- Subpoint 2\n",
+				BlockedBy:   []int{2},
+			},
+		},
 	}
-	taskFile, err := utils.BuildPromptTextTmpFile(taskPrompt)
+	jsonResp, err := json.Marshal(example)
 	if err != nil {
-		log.Printf("Failed to build prompt tmp file: %v", err)
-		return exec.Output{}, Answer{}, "", err
+		return Answer{}, err
 	}
-	prompt := fmt.Sprintf("Analyze given file %s and reformat it into JSON. Answer with raw JSON!", taskFile)
 
-	out, err := exec.Exec("bobik", "zalando", "once", "llm", "quiet", prompt)
+	knowledge, err := utils.GetFileContents(knowledgeFile)
 	if err != nil {
-		return out, Answer{}, "", err
+		return Answer{}, err
+	}
+
+	templatePrompt := gollm.NewPromptTemplate("IssuePlanToJson", "",
+		"# Instructions:\n"+
+			"- Use Context and specifically comments section to convert proposed issues into JSON data.\n"+
+			"- Convert suggested issues {{.TargetIssueType}} into specific format json data.\n"+
+			"- Each element should contain: number_int, subject, description, blocked_by_numbers.\n"+
+			"- Where blocked_by_numbers is array of integers.\n"+
+			"- Use example data structure for your answer.\n"+
+			"- Do not use any other tags in JSON.\n"+
+			ai.ForceJson,
+		gollm.WithPromptOptions(
+			gollm.WithSystemPrompt("You are software engineer working with Jira on single issue breakdown task.", ""),
+			gollm.WithDirectives("Convert given context content into issues as JSON structure that be used to create new Jira issues."),
+			gollm.WithOutput("JSON"),
+			gollm.WithContext(knowledge),
+			gollm.WithExamples([]string{string(jsonResp)}...),
+		),
+	)
+
+	prompt, err := templatePrompt.Execute(map[string]interface{}{
+		"TargetIssueType": targetIssueTypeName,
+	})
+	if err != nil {
+		log.Fatalf("Failed to execute prompt template: %v", err)
+	}
+
+	log.Println(prompt.String())
+
+	ctx := context.Background()
+	templateResponse, err := llmNorm.GenerateJSON(ctx, prompt)
+	if err != nil {
+		log.Fatalf("Failed to generate template response: %v", err)
 	}
 
 	picked := Answer{}
-	jojo := out.Stdout
-	err = json.Unmarshal([]byte(jojo), &picked)
+	err = json.Unmarshal([]byte(templateResponse.Stdout), &picked)
 	if err != nil {
-		jojo = gollm.CleanResponse(jojo)
-		err = json.Unmarshal([]byte(jojo), &picked)
-		if err != nil {
-			return out, picked, err.Error(), nil
-		}
+		return picked, err
 	}
 
-	err = picked.Validate()
-	if err != nil {
-		return out, picked, err.Error(), nil
-	}
-
-	return out, picked, "", nil
+	return picked, nil
 }
