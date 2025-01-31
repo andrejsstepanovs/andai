@@ -113,7 +113,23 @@ func getIssueRelations(model *model.Model, issue redmine.Issue) (
 	"github.com/spf13/cobra"
 )
 
-// AI: Helper function to get project context and setup workbench
+// getProjectContext initializes and returns a workbench for a Redmine project.
+// It performs the following setup steps:
+//   - Retrieves the project's repository information from the database
+//   - Finds the project configuration using the project identifier
+//   - Initializes git access for the project repository
+//
+// Parameters:
+//   - model: Redmine model providing API and database access
+//   - project: Redmine project to set up context for
+//   - projects: Configuration containing all available project definitions
+//
+// Returns:
+//   - *workbench.Workbench: Initialized workbench with git access
+//   - error: Any errors encountered during setup
+//
+// The returned workbench provides the git context needed for processing issues
+// within the project's repository.
 func getProjectContext(model *model.Model, project *redmine.Project, projects models.Projects) (*workbench.Workbench, error) {
 	projectRepo, err := model.DBGetRepository(*project)
 	if err != nil {
