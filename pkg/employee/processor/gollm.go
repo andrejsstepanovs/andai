@@ -108,5 +108,10 @@ func getIssues(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, knowled
 		return picked, err
 	}
 
+	err = picked.Validate()
+	if err != nil {
+		return picked, err
+	}
+
 	return picked, nil
 }
