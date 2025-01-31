@@ -77,6 +77,21 @@ services:
     depends_on:
       - database-grappler
 
+# AndAI project
+  database-andai:
+    <<: *database_base
+    volumes:
+      - database_data_andai:/var/lib/mysql
+
+  redmine-andai:
+    <<: *redmine_base
+    environment:
+      - DB_HOST=database-andai
+    volumes:
+      - /home/astepanovs/andaicpy/andai:/var/repositories/andai
+    depends_on:
+      - database-andai
+
 # Test project
   database-test:
     <<: *database_base
@@ -141,4 +156,5 @@ volumes:
   database_data_lco:
   database_data_test:
   database_data_grappler:
+  database_data_andai:
 
