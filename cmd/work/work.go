@@ -9,6 +9,21 @@
 // The package exposes commands for working with Redmine issues through the cobra CLI framework.
 package work
 
+import (
+	"fmt"
+	"log"
+
+	"github.com/andrejsstepanovs/andai/pkg/ai"
+	"github.com/andrejsstepanovs/andai/pkg/employee"
+	"github.com/andrejsstepanovs/andai/pkg/employee/actions"
+	"github.com/andrejsstepanovs/andai/pkg/models"
+	model "github.com/andrejsstepanovs/andai/pkg/redmine"
+	"github.com/andrejsstepanovs/andai/pkg/workbench"
+	"github.com/andrejsstepanovs/andai/pkg/worker"
+	"github.com/mattn/go-redmine"
+	"github.com/spf13/cobra"
+)
+
 // processIssue handles the workflow execution for a single Redmine issue.
 // It performs the following steps:
 //   - Retrieves all issue relationships (parent, children, siblings)
@@ -46,7 +61,7 @@ func processIssue(model *model.Model, aiClient *ai.AI, issue redmine.Issue, proj
 	log.Printf("Issue %d: %s", issue.Id, issue.Subject)
 	project, err := model.API().Project(issue.Project.Id)
 	if err != nil {
-		return false, fmt.Errorf("failed to get redmine project (ID: %d) for issue #%d: %w", 
+		return false, fmt.Errorf("failed to get redmine project (ID: %d) for issue #%d: %w",
 			issue.Project.Id, issue.Id, err)
 	}
 	log.Printf("Project %d: %s", project.Id, project.Name)
@@ -57,6 +72,7 @@ func processIssue(model *model.Model, aiClient *ai.AI, issue redmine.Issue, proj
 	}
 	workbench.Issue = issue
 	log.Printf("Project Repository Opened %s", workbench.Git.GetPath())
+	projectConfig := projects.Find(project.Identifier)
 
 	emp := employee.NewEmployee(
 		model,
@@ -88,12 +104,6 @@ func processIssue(model *model.Model, aiClient *ai.AI, issue redmine.Issue, proj
 	return success, nil
 }
 
-import (
-	"fmt"
-	"log"
-
-	"github.com/andrejsstepanovs/andai/pkg/ai"
-
 // getIssueRelations retrieves all related issues for a given Redmine issue.
 // It fetches four different types of related issues:
 //   - Parent: The direct parent issue that this issue is a subtask of
@@ -116,7 +126,7 @@ import (
 // If any API call fails, the function returns an error immediately.
 func getIssueRelations(model *model.Model, targetIssue redmine.Issue) (
 	*redmine.Issue, // parent
-	[]redmine.Issue, // parents 
+	[]redmine.Issue, // parents
 	[]redmine.Issue, // children
 	[]redmine.Issue, // siblings
 	error,
@@ -143,14 +153,6 @@ func getIssueRelations(model *model.Model, targetIssue redmine.Issue) (
 
 	return directParent, ancestorIssues, childIssues, siblingIssues, nil
 }
-	"github.com/andrejsstepanovs/andai/pkg/employee"
-	"github.com/andrejsstepanovs/andai/pkg/employee/actions"
-	"github.com/andrejsstepanovs/andai/pkg/models"
-	model "github.com/andrejsstepanovs/andai/pkg/redmine"
-	"github.com/andrejsstepanovs/andai/pkg/workbench"
-	"github.com/andrejsstepanovs/andai/pkg/worker"
-	"github.com/spf13/cobra"
-)
 
 // getProjectContext initializes and returns a workbench for a Redmine project.
 // It performs the following setup steps:
@@ -172,15 +174,11 @@ func getIssueRelations(model *model.Model, targetIssue redmine.Issue) (
 func getProjectContext(model *model.Model, project *redmine.Project, projects models.Projects) (*workbench.Workbench, error) {
 	repository, err := model.DBGetRepository(*project)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get repository for project %s (ID: %d): %w", 
+		return nil, fmt.Errorf("failed to get repository for project %s (ID: %d): %w",
 			project.Name, project.Id, err)
 	}
 
 	configuration := projects.Find(project.Identifier)
-	if configuration == nil {
-		return nil, fmt.Errorf("project configuration not found for identifier %q",
-			project.Identifier)
-	}
 
 	git, err := worker.FindProjectGit(configuration, repository)
 	if err != nil {
@@ -232,7 +230,7 @@ func newNextCommand(model *model.Model, aiClient *ai.AI, projects models.Project
 			for _, issue := range workableIssues {
 				success, err := processIssue(model, aiClient, issue, projects, workflow)
 				if err != nil {
-					return fmt.Errorf("failed to process issue #%d (%s): %w", 
+					return fmt.Errorf("failed to process issue #%d (%s): %w",
 						issue.Id, issue.Subject, err)
 				}
 
