@@ -217,20 +217,20 @@ func newNextCommand(model *model.Model, aiClient *ai.AI, projects models.Project
 		RunE: func(_ *cobra.Command, _ []string) error {
 			log.Println("Searching for next issue")
 
-			issues, err := model.APIGetWorkableIssues(workflow)
+			workableIssues, err := model.APIGetWorkableIssues(workflow)
 			if err != nil {
 				log.Printf("Failed to retrieve workable issues: %v", err)
 				return fmt.Errorf("failed to retrieve workable issues from Redmine: %w", err)
 			}
 
-			if len(issues) == 0 {
+			if len(workableIssues) == 0 {
 				log.Println("No workable issues found in current workflow state")
 				return nil
 			}
 
-			log.Printf("Found %d workable issues to process", len(issues))
-			for _, issue := range issues {
-				success, err := processIssue(model, llmNorm, issue, projects, workflow)
+			log.Printf("Found %d workable issues to process", len(workableIssues))
+			for _, issue := range workableIssues {
+				success, err := processIssue(model, aiClient, issue, projects, workflow)
 				if err != nil {
 					return fmt.Errorf("failed to process issue #%d (%s): %w", 
 						issue.Id, issue.Subject, err)
