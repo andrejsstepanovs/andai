@@ -69,7 +69,14 @@ func NewEmployee(
 	}
 }
 
-func (i *Employee) Work() (bool, error) {
+// ExecuteWorkflow processes all workflow steps defined for the current issue state.
+// It prepares the workplace, executes each step sequentially, and maintains execution history.
+// Steps are executed in order and their outputs may be preserved in history if marked as "remember".
+//
+// Returns:
+//   - bool: true if all steps completed successfully
+//   - error: any error encountered during execution
+func (i *Employee) ExecuteWorkflow() (bool, error) {
 	log.Printf("Working on %q %q (ID: %d)", i.state.Name, i.issueType.Name, i.issue.Id)
 
 	var parentIssueID *int
@@ -83,8 +90,8 @@ func (i *Employee) Work() (bool, error) {
 	}
 
 	fmt.Printf("Total steps: %d\n", len(i.job.Steps))
-	for j, step := range i.job.Steps {
-		fmt.Printf("Step: %d\n", j+1)
+	for stepIndex, step := range i.job.Steps {
+		fmt.Printf("Step: %d\n", stepIndex+1)
 		step.Prompt = i.appendHistoryToPrompt(step)
 		executionOutput, err := i.executeWorkflowStep(step)
 		if err != nil {
