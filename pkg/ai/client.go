@@ -33,7 +33,7 @@ func NewAI(provider, model, apiKey, temperature string) (*AI, error) {
 
 	registry := providers.NewProviderRegistry()
 	for providerName, endpoint := range map[string]string{
-		"zalando":    "https://zllm.data.zalan.do/v1/",
+		"zalando":    "https://zllm.data.zalan.do/v1/chat/completions",
 		"deepseek":   "https://api.deepseek.com/chat/completions",
 		"openrouter": "https://openrouter.ai/api/v1/chat/completions",
 		"mistral":    "https://api.mistral.ai/v1/chat/completions",
