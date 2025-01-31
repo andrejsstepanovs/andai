@@ -138,6 +138,23 @@ func getProjectContext(model *model.Model, project *redmine.Project, projects mo
 	}, nil
 }
 
+// newNextCommand creates a cobra command that processes the next available workable Redmine issue.
+//
+// The command:
+//   - Searches for issues that are ready to be worked on based on the workflow configuration
+//   - Processes the first workable issue found through the following steps:
+//     1. Retrieves all issue relationships (parent, children, siblings)
+//     2. Sets up project context and git workbench
+//     3. Executes the configured workflow for the issue
+//     4. Transitions the issue to its next status based on execution success
+//
+// Parameters:
+//   - model: Redmine model for API and database operations
+//   - llmNorm: AI client for LLM operations
+//   - projects: Configuration for all available projects
+//   - workflow: Workflow configuration defining states and transitions
+//
+// Returns a cobra.Command configured to execute the next issue processing workflow.
 func newNextCommand(model *model.Model, llmNorm *ai.AI, projects models.Projects, workflow models.Workflow) *cobra.Command {
 	return &cobra.Command{
 		Use:   "next",
