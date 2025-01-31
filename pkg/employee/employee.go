@@ -164,6 +164,9 @@ func (i *Employee) processStep(step models.Step) (exec.Output, error) {
 		return exec.Output{Stdout: fmt.Sprintf("Created %d Issues", len(issues))}, nil
 	case "merge-into-parent":
 		currentBranchName := i.workbench.GetIssueBranchName(i.issue)
+		if i.parent == nil {
+			return exec.Output{}, fmt.Errorf("parent issue is not set for %d, branch: %s", i.issue.Id, currentBranchName)
+		}
 		parentBranchName := i.workbench.GetIssueBranchName(*i.parent)
 		log.Printf("Merging current branch: %q into parent branch: %q", currentBranchName, parentBranchName)
 
