@@ -2,6 +2,7 @@ package ai
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"strconv"
 	"strings"
@@ -103,4 +104,24 @@ func (a *AI) Generate(ctx context.Context, prompt *llm.Prompt, opts ...llm.Gener
 		Stdout: resp,
 	}
 	return out, nil
+}
+
+func (a *AI) GenerateJSON(ctx context.Context, prompt *llm.Prompt) (exec.Output, error) {
+	templateResponse, err := a.Generate(ctx, prompt, gollm.WithJSONSchemaValidation())
+	if err != nil {
+		log.Fatalf("Failed to generate template response: %v", err)
+	}
+
+	var picked []string
+	responseJson := templateResponse.Stdout
+	if responseJson != "[]" {
+		responseJson = gollm.CleanResponse(responseJson)
+		err = json.Unmarshal([]byte(responseJson), &picked)
+		if err != nil {
+			log.Println(templateResponse.Stdout)
+			return exec.Output{Stderr: err.Error()}, err
+		}
+	}
+
+	return exec.Output{Stdout: responseJson}, nil
 }

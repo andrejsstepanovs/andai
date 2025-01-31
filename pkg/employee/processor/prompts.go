@@ -13,6 +13,8 @@ import (
 	"github.com/teilomillet/gollm"
 )
 
+const ForceJson = "No yapping. Answer only with JSON content. Don't explain your choice (no explanation). No other explanations or unrelated text is necessary. Be careful generating JSON, it needs to be valid."
+
 func getIdeaResponse(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, knowledgeFile string) (exec.Output, error) {
 	templatePrompt := gollm.NewPromptTemplate(
 		"ThinkIssueSplit",
@@ -49,7 +51,7 @@ func getIdeaResponse(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, k
 	return llmNorm.Generate(ctx, prompt, gollm.WithJSONSchemaValidation())
 }
 
-func getTaskPrompt(targetIssueTypeName models.IssueTypeName, solution string) (string, error) {
+func getTaskPrompt(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, solution string) (Answer, error) {
 	example := Answer{
 		Issues: []AnswerIssues{
 			{
@@ -71,27 +73,54 @@ func getTaskPrompt(targetIssueTypeName models.IssueTypeName, solution string) (s
 			},
 		},
 	}
-
-	jsonTxt, err := json.Marshal(example)
+	jsonResp, err := json.Marshal(example)
 	if err != nil {
-		return "", err
+		log.Fatalln(err)
 	}
-	exampleJSON := string(jsonTxt)
 
-	format := "# Your task is:\nConvert solution issues %s into specific format json data.\n\n" +
-		"<selected_solutions>\n%s\n</selected_solutions>" +
-		"## Instructions:" +
-		"- Use selected_solutions tag text and convert it into JSON data.\n" +
-		"- I expect your answer to have following JSON structure (example):\n" +
-		"```json\n%s\n```\n" +
-		"- It is really important that Answer contains only raw JSON with tags: " +
-		"issues that contains array of elements.\n" +
-		"- Each element should contain: number_int, subject, description, blocked_by_numbers.\n" +
-		"- Where blocked_by_numbers is array of integers.\n" +
-		"- Do not use any other tags in JSON.\n"
+	templatePrompt := gollm.NewPromptTemplate(
+		"IssuePlanToJson",
+		"Converts solution issues into JSON reponse",
+		"# Your task is:\n"+
+			"Convert solution issues {{.TargetIssueType}} into specific format json data.\n\n"+
+			"## Instructions:"+
+			"- Use selected_solutions tag text and convert it into JSON data.\n"+
+			//"- I expect your answer to have following JSON structure (example):\n" +
+			//"```json\n%s\n```\n" +
+			"- It is really important that Answer contains only raw JSON with tags: "+
+			"issues that contains array of elements.\n"+
+			"- Each element should contain: number_int, subject, description, blocked_by_numbers.\n"+
+			"- Where blocked_by_numbers is array of integers.\n"+
+			"- Do not use any other tags in JSON.\n"+
+			ForceJson,
+		gollm.WithPromptOptions(
+			gollm.WithContext("You convert content into json structure."),
+			gollm.WithOutput("JSON"),
+			gollm.WithExamples([]string{string(jsonResp)}...),
+		),
+	)
 
-	taskPrompt := fmt.Sprintf(format, targetIssueTypeName, solution, exampleJSON)
-	return taskPrompt, err
+	prompt, err := templatePrompt.Execute(map[string]interface{}{
+		"TargetIssueType": targetIssueTypeName,
+	})
+
+	if err != nil {
+		log.Fatalf("Failed to execute prompt template: %v", err)
+	}
+
+	ctx := context.Background()
+	templateResponse, err := llmNorm.GenerateJSON(ctx, prompt)
+	if err != nil {
+		log.Fatalf("Failed to generate template response: %v", err)
+	}
+
+	picked := Answer{}
+	err = json.Unmarshal([]byte(templateResponse.Stdout), &picked)
+	if err != nil {
+		return picked, err
+	}
+
+	return picked, nil
 }
 
 // second string is LlmNorm response json parsing error
