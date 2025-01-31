@@ -74,7 +74,26 @@ import (
 
 	"github.com/andrejsstepanovs/andai/pkg/ai"
 
-// AI: Helper function to get all issue relations (parent, parents, children, siblings)
+// getIssueRelations retrieves all related issues for a given Redmine issue.
+// It fetches four different types of related issues:
+//   - Parent: The direct parent issue that this issue is a subtask of
+//   - Parents: All ancestor issues in the hierarchy chain
+//   - Children: All direct subtasks/child issues
+//   - Siblings: Other issues that share the same parent
+//
+// Parameters:
+//   - model: Redmine model providing API access
+//   - issue: The Redmine issue to get relations for
+//
+// Returns:
+//   - *redmine.Issue: Direct parent issue or nil if none exists
+//   - []redmine.Issue: All ancestor issues in hierarchy
+//   - []redmine.Issue: All child issues/subtasks
+//   - []redmine.Issue: All sibling issues
+//   - error: Any errors encountered while retrieving relations
+//
+// The function makes separate API calls to fetch each type of relation.
+// If any API call fails, the function returns an error immediately.
 func getIssueRelations(model *model.Model, issue redmine.Issue) (
 	*redmine.Issue, // parent
 	[]redmine.Issue, // parents 
