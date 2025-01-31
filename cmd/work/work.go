@@ -9,24 +9,9 @@ func processIssue(model *model.Model, llmNorm *ai.AI, issue redmine.Issue, proje
 		issue.Subject,
 	)
 
-	parent, err := model.APIGetParent(issue)
+	parent, parents, children, siblings, err := getIssueRelations(model, issue)
 	if err != nil {
-		return false, fmt.Errorf("failed to get redmine parent issue err: %v", err)
-	}
-
-	parents, err := model.APIGetAllParents(issue)
-	if err != nil {
-		return false, fmt.Errorf("failed to get redmine all parent issues err: %v", err)
-	}
-
-	children, err := model.APIGetChildren(issue)
-	if err != nil {
-		return false, fmt.Errorf("failed to get redmine issue relations err: %v", err)
-	}
-
-	siblings, err := model.APIGetIssueSiblings(issue)
-	if err != nil {
-		return false, fmt.Errorf("failed to get redmine issue siblings err: %v", err)
+		return false, err
 	}
 
 	log.Printf("Issue %d: %s", issue.Id, issue.Subject)
@@ -76,6 +61,37 @@ import (
 	"log"
 
 	"github.com/andrejsstepanovs/andai/pkg/ai"
+
+// AI: Helper function to get all issue relations (parent, parents, children, siblings)
+func getIssueRelations(model *model.Model, issue redmine.Issue) (
+	*redmine.Issue, // parent
+	[]redmine.Issue, // parents 
+	[]redmine.Issue, // children
+	[]redmine.Issue, // siblings
+	error,
+) {
+	parent, err := model.APIGetParent(issue)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to get redmine parent issue err: %v", err)
+	}
+
+	parents, err := model.APIGetAllParents(issue)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to get redmine all parent issues err: %v", err)
+	}
+
+	children, err := model.APIGetChildren(issue)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to get redmine issue relations err: %v", err)
+	}
+
+	siblings, err := model.APIGetIssueSiblings(issue)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to get redmine issue siblings err: %v", err)
+	}
+
+	return parent, parents, children, siblings, nil
+}
 	"github.com/andrejsstepanovs/andai/pkg/employee"
 	"github.com/andrejsstepanovs/andai/pkg/employee/actions"
 	"github.com/andrejsstepanovs/andai/pkg/models"
