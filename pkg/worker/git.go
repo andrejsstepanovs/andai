@@ -63,19 +63,52 @@ func (g *Git) Open() error {
 	return nil
 }
 
-// GetAllBranchCommitHashes same as `git log --no-walk`
-func (g *Git) GetAllBranchCommitHashes() ([]string, error) {
-	commit, err := g.repo.CommitObject(g.headRef.Hash())
+// GetLastCommits returns the last n commit hashes. First commit is the most recent one.
+func (g *Git) GetLastCommits(count int) ([]string, error) {
+	commitIter, err := g.repo.Log(&git.LogOptions{
+		From: g.headRef.Hash(),
+	})
 	if err != nil {
-		log.Printf("failed to get commit object: %v", err)
+		log.Printf("failed to get commit iterator: %v", err)
 		return nil, err
 	}
 
 	var hashes []string
-	hashes = append(hashes, commit.Hash.String())
+	for i := 0; i < count; i++ {
+		commit, err := commitIter.Next()
+		if err != nil {
+			log.Printf("failed to get commit: %v", err)
+			break
+		}
+
+		hashes = append(hashes, commit.Hash.String())
+	}
 
 	return hashes, nil
 }
+
+// GetCurrentBranchName returns the current branch name
+func (g *Git) GetCurrentBranchName() (string, error) {
+	ref, err := g.repo.Head()
+	if err != nil {
+		log.Printf("failed to get HEAD reference: %v", err)
+		return "", err
+	}
+	if ref.Name().IsBranch() {
+		return ref.Name().Short(), nil
+	}
+
+	return "", errors.New("not on a branch")
+}
+
+//func (g *Git) GetBranchRef(branch string) (*plumbing.Reference, error) {
+//	branchRefName := plumbing.NewBranchReferenceName(branch)
+//	branchRef, err := g.repo.Reference(branchRefName, false)
+//	if err != nil {
+//		return nil, fmt.Errorf("failed to get branch reference: %v", err)
+//	}
+//	return branchRef, nil
+//}
 
 func (g *Git) GetLastCommitHash() (string, error) {
 	commit, err := g.repo.CommitObject(g.headRef.Hash())
@@ -90,6 +123,16 @@ func (g *Git) GetLastCommitHash() (string, error) {
 func (g *Git) BranchName(issueID int) string {
 	id := strconv.Itoa(issueID)
 	return fmt.Sprintf("%s-%s", BranchPrefix, id)
+}
+
+func (g *Git) DeleteBranch(branchName string) error {
+	branchRefName := plumbing.NewBranchReferenceName(branchName)
+	err := g.repo.Storer.RemoveReference(branchRefName)
+	if err != nil {
+		log.Printf("failed to delete branch %s: %v", branchName, err)
+		return fmt.Errorf("failed to delete branch %s: %v", branchName, err)
+	}
+	return nil
 }
 
 func (g *Git) CheckoutBranch(branchName string) error {

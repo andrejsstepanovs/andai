@@ -1,6 +1,7 @@
 package worker_test
 
 import (
+	"crypto/rand"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,90 +10,85 @@ import (
 	"github.com/andrejsstepanovs/andai/pkg/worker"
 	gitlib "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewGit(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "git-test-*")
 	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
+	os.RemoveAll(tmpDir)
 
-	fmt.Println(tmpDir)
-	// Initialize git repository
-	repo, err := gitlib.PlainInit(tmpDir, false)
-	require.NoError(t, err)
+	t.Run("init git repo", func(t *testing.T) {
+		defer os.RemoveAll(tmpDir)
 
-	// Create an initial commit so we have a HEAD reference
+		repo, err := gitlib.PlainInit(tmpDir, false)
+		require.NoError(t, err)
+
+		hash1 := commit(t, repo, tmpDir, "Initial commit to main")
+		hash2 := commit(t, repo, tmpDir, "Second commit to main")
+
+		// TEST getting last commit hash
+		g := worker.NewGit(tmpDir)
+		err = g.Open()
+		require.NoError(t, err)
+
+		hash, err := g.GetLastCommitHash()
+		require.NoError(t, err)
+		require.Equal(t, hash2, hash)
+		_ = hash1
+
+		// TEST getting all branch commit hashes
+		err = g.CheckoutBranch("BRANCH-1")
+		require.NoError(t, err)
+
+		hash3 := commit(t, repo, tmpDir, "Branch commit 1")
+		hash4 := commit(t, repo, tmpDir, "Branch commit 2")
+
+		// TEST getting all branch commits
+		err = g.Open()
+		require.NoError(t, err)
+		err = g.CheckoutBranch("BRANCH-1")
+		require.NoError(t, err)
+
+		hashes, err := g.GetLastCommits(2)
+		require.NoError(t, err)
+
+		require.Len(t, hashes, 2)
+		require.Equal(t, hash4, hashes[0])
+		require.Equal(t, hash3, hashes[1])
+
+		_, err = g.GetLastCommits(200)
+		require.NoError(t, err)
+	})
+}
+
+func commit(t *testing.T, repo *gitlib.Repository, dir string, commitMessage string) string {
+	// Create an initial main commit so we have a HEAD reference
 	wt, err := repo.Worktree()
 	require.NoError(t, err)
 
 	// Create a test file and commit it
-	testFile := filepath.Join(tmpDir, "test.txt")
+	testFileName := randomString("test.txt")
+	testFile := filepath.Join(dir, testFileName)
 	err = os.WriteFile(testFile, []byte("test content"), 0644)
 	require.NoError(t, err)
 
-	_, err = wt.Add("test.txt")
+	_, err = wt.Add(testFileName)
 	require.NoError(t, err)
 
 	co := &gitlib.CommitOptions{Author: &object.Signature{}}
 
-	hash1, err := wt.Commit("Initial commit", co)
-	_ = hash1
+	hash1, err := wt.Commit(commitMessage, co)
 	require.NoError(t, err)
 
-	// TEST 1
-	g := worker.NewGit(tmpDir)
-	err = g.Open()
-	assert.NoError(t, err)
+	return hash1.String()
+}
 
-	hash, err := g.GetLastCommitHash()
-	assert.NoError(t, err)
-	assert.NotEmpty(t, hash)
-
-	// TEST 2
-	// checkout new branch
-	err = g.CheckoutBranch("test-branch2")
-	assert.NoError(t, err)
-
-	wt, err = repo.Worktree()
-	require.NoError(t, err)
-	// make 2 commits
-
-	// commit 1
-	testFile = filepath.Join(tmpDir, "test2.txt")
-	err = os.WriteFile(testFile, []byte("test content 2"), 0644)
-	require.NoError(t, err)
-
-	_, err = wt.Add("test2.txt")
-	require.NoError(t, err)
-
-	hash2, err := wt.Commit("Commit within branch 1", co)
-	_ = hash2
-	require.NoError(t, err)
-
-	// commit 2
-	testFile = filepath.Join(tmpDir, "test3.txt")
-	err = os.WriteFile(testFile, []byte("test content 3"), 0644)
-	require.NoError(t, err)
-
-	_, err = wt.Add("test3.txt")
-	require.NoError(t, err)
-
-	hash3, err := wt.Commit("Commit within branch 2", co)
-	_ = hash3
-	require.NoError(t, err)
-
-	err = g.Open()
-	assert.NoError(t, err)
-
-	hashes, err := g.GetAllBranchCommitHashes()
-	require.NoError(t, err)
-
-	assert.Len(t, hashes, 1)
-
-	// WRONG. where 1 commit?
-	assert.Equal(t, hash3.String(), hashes[0])
-	//assert.Equal(t, hash3.String(), hashes[1])
-	//assert.Equal(t, hash3, hashes[2])
+func randomString(postfix string) string {
+	b := make([]byte, 12)
+	_, err := rand.Read(b)
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("%x", b)[2:12] + "-" + postfix
 }

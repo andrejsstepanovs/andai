@@ -220,6 +220,13 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 			return out, err
 		}
 
+		// delete the branch after merge
+		err = i.workbench.Git.DeleteBranch(currentBranchName)
+		if err != nil {
+			log.Printf("Failed to delete branch: %s err: %v", currentBranchName, err)
+			return out, err
+		}
+
 		return exec.Output{Stdout: "Merged"}, nil
 	case "ai":
 		promptFile, err := knowledge.BuildPromptTmpFile()
@@ -235,26 +242,21 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 	case "aid", "aider":
 		switch workflowStep.Action {
 		case "commit":
-			commits, err := i.workbench.GetBranchCommits()
+			lastSha, err := i.workbench.GetLastCommit()
 			if err != nil {
-				log.Printf("Failed to get branch commits: %v", err)
 				return exec.Output{}, err
 			}
-			lastSha := ""
-			if len(commits) > 0 {
-				lastSha = commits[len(commits)-1]
-			}
+
 			commitResult, err := processor.AiderExecute("Commit any uncommitted changes", workflowStep)
 			if err != nil {
 				return commitResult, err
 			}
-			commits, err = i.workbench.GetBranchCommits()
+
+			commits, err := i.workbench.GetCommitsSinceInReverseOrder(lastSha)
 			if err != nil {
-				log.Printf("Failed to get last commit sha: %v", err)
-				return commitResult, nil
+				return commitResult, fmt.Errorf("failed to get commits since %q: %v", lastSha, err)
 			}
-			if len(commits) > 0 && lastSha != commits[len(commits)-1] {
-				sha := commits[len(commits)-1]
+			for _, sha := range commits {
 				format := "%d. Commit [%s](/projects/%s/repository/%s/revisions/%s/diff)"
 				txt := fmt.Sprintf(format, 1, sha, i.project.Identifier, i.project.Identifier, sha)
 				err = i.AddComment(txt)
@@ -262,6 +264,7 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 					return commitResult, err
 				}
 			}
+
 			return commitResult, nil
 		case "architect":
 			architectResult, err := processor.AiderExecute(contextFile, workflowStep)
@@ -283,7 +286,7 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 			if err != nil {
 				return out, err
 			}
-			commits, getShaErr := i.workbench.GetBranchCommits()
+			commits, getShaErr := i.workbench.GetBranchCommits(1)
 			if getShaErr != nil {
 				log.Printf("Failed to get last commit sha: %v", getShaErr)
 				return out, nil

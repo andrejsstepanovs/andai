@@ -1,6 +1,7 @@
 package workbench
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -16,13 +17,14 @@ type Workbench struct {
 }
 
 type git interface {
-	GetAllBranchCommitHashes() ([]string, error)
+	GetLastCommits(count int) ([]string, error)
 	GetLastCommitHash() (string, error)
 	BranchName(issueID int) string
 	CheckoutBranch(name string) error
 	GetPath() string
 	SetPath(path string)
 	Reload()
+	DeleteBranch(string) error
 }
 
 func (i *Workbench) PrepareWorkplace(parentIssueID *int) error {
@@ -90,17 +92,44 @@ func (i *Workbench) GetIssueBranchName(issue redmine.Issue) string {
 	return i.Git.BranchName(issue.Id)
 }
 
-// GetBranchCommits last is newest
-func (i *Workbench) GetBranchCommits() ([]string, error) {
-	i.Git.Reload()
-	commits, err := i.Git.GetAllBranchCommitHashes()
+func (i *Workbench) DeleteBranch(branch string) error {
+	return i.Git.DeleteBranch(branch)
+}
+
+// GetLastCommit returns the last commit hash
+func (i *Workbench) GetLastCommit() (string, error) {
+	return i.Git.GetLastCommitHash()
+}
+
+func (i *Workbench) GetCommitsSinceInReverseOrder(sinceSha string) ([]string, error) {
+	// from newest to oldest
+	allCommits, err := i.GetBranchCommits(100)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get branch commits err: %v", err)
+		return nil, errors.New("failed to get last commits")
+	}
+
+	commits := make([]string, 0)
+	for _, sha := range allCommits {
+		if sha == sinceSha { // until we find the last commit
+			break
+		}
+		commits = append(commits, sha)
 	}
 
 	// reverse the order of commits
 	for i, j := 0, len(commits)-1; i < j; i, j = i+1, j-1 {
 		commits[i], commits[j] = commits[j], commits[i]
+	}
+
+	return commits, nil
+}
+
+// GetBranchCommits last is newest. First commit is the newest one.
+func (i *Workbench) GetBranchCommits(count int) ([]string, error) {
+	i.Git.Reload()
+	commits, err := i.Git.GetLastCommits(count)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get branch commits err: %v", err)
 	}
 	return commits, nil
 }
