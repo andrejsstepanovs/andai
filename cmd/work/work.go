@@ -51,6 +51,11 @@ func newNextCommand(model *model.Model, llmNorm *ai.AI, projects models.Projects
 					return fmt.Errorf("failed to get redmine all parent issues err: %v", err)
 				}
 
+				closedChildrenIDs, err := model.DBGetClosedChildrenIDs(issue.Id)
+				if err != nil {
+					return fmt.Errorf("failed to get redmine children ids err: %v", err)
+				}
+
 				children, err := model.APIGetChildren(issue)
 				if err != nil {
 					return fmt.Errorf("failed to get redmine issue relations err: %v", err)
@@ -92,6 +97,7 @@ func newNextCommand(model *model.Model, llmNorm *ai.AI, projects models.Projects
 					issue,
 					parent,
 					parents,
+					closedChildrenIDs,
 					children,
 					siblings,
 					*project,

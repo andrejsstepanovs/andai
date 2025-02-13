@@ -10,6 +10,7 @@ import (
 
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	redminemodels "github.com/andrejsstepanovs/andai/pkg/redmine/models"
+	"github.com/andrejsstepanovs/andai/pkg/workbench"
 	"github.com/mattn/go-redmine"
 )
 
@@ -18,15 +19,17 @@ const (
 )
 
 type Knowledge struct {
-	Issue      redmine.Issue
-	Parent     *redmine.Issue
-	Parents    []redmine.Issue
-	Children   []redmine.Issue
-	Siblings   []redmine.Issue
-	Project    models.Project
-	IssueTypes models.IssueTypes
-	Comments   redminemodels.Comments
-	Step       models.Step
+	Issue             redmine.Issue
+	Parent            *redmine.Issue
+	Parents           []redmine.Issue
+	ClosedChildrenIDs []int
+	Children          []redmine.Issue // not closed children
+	Siblings          []redmine.Issue
+	Workbench         *workbench.Workbench
+	Project           models.Project
+	IssueTypes        models.IssueTypes
+	Comments          redminemodels.Comments
+	Step              models.Step
 }
 
 func (k Knowledge) BuildPromptTmpFile() (string, error) {
@@ -121,6 +124,8 @@ func (k Knowledge) getContext(context string) (string, error) {
 		return k.getSiblings()
 	case models.ContextChildren:
 		return k.getChildren()
+	case models.ContextAffectedFiles:
+		return k.getChangedFiles()
 	case models.ContextIssueTypes:
 		return k.getIssueTypes()
 	default:
@@ -226,10 +231,6 @@ func (k Knowledge) getChildren() (string, error) {
 	}
 	childrenContext := make([]string, 0)
 	for _, child := range k.Children {
-		fmt.Println("#################")
-		fmt.Println(child.Status)
-		fmt.Println("#################")
-
 		childIssueContext, err := k.getIssueContext(child)
 		if err != nil {
 			log.Printf("Failed to get single child issue context: %v", err)
@@ -240,6 +241,43 @@ func (k Knowledge) getChildren() (string, error) {
 	}
 	issueContext := k.TagContent("children_issues", strings.Join(childrenContext, "\n"), 1)
 	return issueContext, nil
+}
+
+// getChangedFiles returns files that were changed in the branch (not perfect yet, relies on count of closed children)
+func (k Knowledge) getChangedFiles() (string, error) {
+	if len(k.ClosedChildrenIDs) == 0 {
+		return "", nil
+	}
+	commits, err := k.Workbench.GetBranchCommits(len(k.ClosedChildrenIDs))
+	if err != nil {
+		log.Printf("Failed to get branch commits: %v", err)
+		return "", err
+	}
+
+	filesMap := make(map[string]struct{})
+	for _, commit := range commits {
+		files, err := k.Workbench.GetAffectedFiles(commit)
+		if err != nil {
+			log.Printf("Failed to get affected files for commit %q: %v", commit, err)
+			return "", err
+		}
+		for _, file := range files {
+			filesMap[file] = struct{}{}
+		}
+	}
+
+	files := make([]string, 0)
+	for file := range filesMap {
+		files = append(files, file)
+	}
+
+	if len(files) == 0 {
+		return "", nil
+	}
+
+	filesContext := strings.Join(files, "\n")
+
+	return k.TagContent("affected_files", filesContext, 1), nil
 }
 
 func (k Knowledge) getIssueTypes() (string, error) {

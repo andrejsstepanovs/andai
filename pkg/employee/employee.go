@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/andrejsstepanovs/andai/pkg/ai"
@@ -19,21 +20,22 @@ import (
 var NegativeOutcomeErr = errors.New("negative outcome")
 
 type Employee struct {
-	model      *model.Model
-	llmNorm    *ai.AI
-	issue      redmine.Issue
-	parent     *redmine.Issue
-	parents    []redmine.Issue
-	children   []redmine.Issue
-	siblings   []redmine.Issue
-	project    redmine.Project
-	projectCfg models.Project
-	workbench  *workbench.Workbench
-	state      models.State
-	issueType  models.IssueType
-	issueTypes models.IssueTypes
-	job        models.Job
-	history    []exec.Output
+	model             *model.Model
+	llmNorm           *ai.AI
+	issue             redmine.Issue
+	parent            *redmine.Issue
+	parents           []redmine.Issue
+	closedChildrenIDs []int
+	children          []redmine.Issue
+	siblings          []redmine.Issue
+	project           redmine.Project
+	projectCfg        models.Project
+	workbench         *workbench.Workbench
+	state             models.State
+	issueType         models.IssueType
+	issueTypes        models.IssueTypes
+	job               models.Job
+	history           []exec.Output
 }
 
 // AI: NewEmployee creates an Employee instance configured to work on a specific Redmine issue.
@@ -45,6 +47,7 @@ func NewEmployee(
 	issue redmine.Issue,
 	parentIssue *redmine.Issue,
 	parentIssues []redmine.Issue,
+	closedChildrenIDs []int,
 	childIssues []redmine.Issue,
 	siblingIssues []redmine.Issue,
 	project redmine.Project,
@@ -55,20 +58,21 @@ func NewEmployee(
 	issueTypes models.IssueTypes,
 ) *Employee {
 	return &Employee{
-		model:      model,
-		llmNorm:    llm,
-		issue:      issue,
-		parent:     parentIssue,
-		parents:    parentIssues,
-		children:   childIssues,
-		siblings:   siblingIssues,
-		project:    project,
-		projectCfg: projectConfig,
-		workbench:  workbench,
-		state:      state,
-		issueType:  issueType,
-		issueTypes: issueTypes,
-		job:        issueType.Jobs.Get(models.StateName(issue.Status.Name)),
+		model:             model,
+		llmNorm:           llm,
+		issue:             issue,
+		parent:            parentIssue,
+		parents:           parentIssues,
+		closedChildrenIDs: closedChildrenIDs,
+		children:          childIssues,
+		siblings:          siblingIssues,
+		project:           project,
+		projectCfg:        projectConfig,
+		workbench:         workbench,
+		state:             state,
+		issueType:         issueType,
+		issueTypes:        issueTypes,
+		job:               issueType.Jobs.Get(models.StateName(issue.Status.Name)),
 	}
 }
 
@@ -136,15 +140,17 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 	}
 
 	knowledge := utils.Knowledge{
-		Issue:      i.issue,
-		Parent:     i.parent,
-		Parents:    i.parents,
-		Children:   i.children,
-		Siblings:   i.siblings,
-		Project:    i.projectCfg,
-		IssueTypes: i.issueTypes,
-		Comments:   comments,
-		Step:       workflowStep,
+		Issue:             i.issue,
+		Parent:            i.parent,
+		Parents:           i.parents,
+		ClosedChildrenIDs: i.closedChildrenIDs,
+		Children:          i.children,
+		Siblings:          i.siblings,
+		Workbench:         i.workbench,
+		Project:           i.projectCfg,
+		IssueTypes:        i.issueTypes,
+		Comments:          comments,
+		Step:              workflowStep,
 	}
 
 	contextFile, err := knowledge.BuildIssueKnowledgeTmpFile()
@@ -154,7 +160,7 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 
 	if contextFile != "" {
 		log.Printf("Context file: %q\n", contextFile)
-		//defer os.Remove(contextFile)
+		defer os.Remove(contextFile)
 
 		contents, err := utils.GetFileContents(contextFile)
 		if err != nil {

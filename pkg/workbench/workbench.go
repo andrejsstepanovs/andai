@@ -17,6 +17,7 @@ type Workbench struct {
 }
 
 type git interface {
+	GetAffectedFiles(sha string) ([]string, error)
 	GetLastCommits(count int) ([]string, error)
 	GetLastCommitHash() (string, error)
 	BranchName(issueID int) string
@@ -122,6 +123,10 @@ func (i *Workbench) GetCommitsSinceInReverseOrder(sinceSha string) ([]string, er
 	}
 
 	return commits, nil
+}
+
+func (i *Workbench) GetAffectedFiles(sha string) ([]string, error) {
+	return i.Git.GetAffectedFiles(sha)
 }
 
 // GetBranchCommits last is newest. First commit is the newest one.

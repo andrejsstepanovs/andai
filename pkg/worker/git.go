@@ -63,6 +63,32 @@ func (g *Git) Open() error {
 	return nil
 }
 
+func (g *Git) GetAffectedFiles(sha string) ([]string, error) {
+	commit, err := g.repo.CommitObject(plumbing.NewHash(sha))
+	if err != nil {
+		log.Printf("failed to get commit object: %v", err)
+		return nil, err
+	}
+
+	files := make(map[string]struct{})
+
+	stats, err := commit.Stats()
+	if err != nil {
+		log.Printf("failed to get commit stats: %v", err)
+		return nil, err
+	}
+	for _, stat := range stats {
+		files[stat.Name] = struct{}{}
+	}
+
+	var fileNames []string
+	for file := range files {
+		fileNames = append(fileNames, file)
+	}
+
+	return fileNames, nil
+}
+
 // GetLastCommits returns the last n commit hashes. First commit is the most recent one.
 func (g *Git) GetLastCommits(count int) ([]string, error) {
 	commitIter, err := g.repo.Log(&git.LogOptions{

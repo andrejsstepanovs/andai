@@ -239,6 +239,7 @@ func (s *Settings) validateStepContexts() error {
 					case ContextParent:
 					case ContextParents:
 					case ContextIssueTypes:
+					case ContextAffectedFiles:
 					default:
 						return fmt.Errorf("issue %q state %q job (%d) does not have valid context: %q", issueTypeName, stateName, k, context)
 					}

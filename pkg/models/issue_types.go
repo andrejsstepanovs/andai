@@ -32,6 +32,9 @@ const ContextParents = "parents"
 // ContextIssueTypes is a special context that explains what each issue represents
 const ContextIssueTypes = "issue_types"
 
+// ContextAffectedFiles provides all files that were touched in children and siblings branches.
+const ContextAffectedFiles = "affected-files"
+
 type IssueTypeName string
 
 type IssueTypes map[IssueTypeName]IssueType
