@@ -58,7 +58,7 @@ func (s *Settings) validateStates(issueTypeNames map[IssueTypeName]bool) error {
 
 func (s *Settings) validateSteps(issueTypeNames map[IssueTypeName]bool) error {
 	for _, types := range s.Workflow.IssueTypes {
-		for _, job := range types.Jobs {
+		for jobName, job := range types.Jobs {
 			for _, step := range job.Steps {
 				switch step.Command {
 				case "git":
@@ -77,14 +77,15 @@ func (s *Settings) validateSteps(issueTypeNames map[IssueTypeName]bool) error {
 					case "commit":
 					case "architect":
 					case "code":
+					case "evaluate":
 					default:
-						return fmt.Errorf("%s step action %s is not valid", step.Command, step.Action)
+						return fmt.Errorf("%q step action %q is not valid for %q in %q", step.Command, step.Action, types.Name, jobName)
 					}
 				}
 
 				if step.Command == "create-issues" {
 					if _, ok := issueTypeNames[IssueTypeName(step.Action)]; !ok {
-						return fmt.Errorf("%q step action %q is not a valid issue type", step.Command, step.Action)
+						return fmt.Errorf("%q step action %q is not a valid issue type for %q in %q", step.Command, step.Action, types.Name, jobName)
 					}
 				}
 			}

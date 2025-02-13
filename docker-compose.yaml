@@ -92,6 +92,21 @@ services:
     depends_on:
       - database-andai
 
+# Streamlit project
+  database-streamlit:
+    <<: *database_base
+    volumes:
+      - database_data_streamlit:/var/lib/mysql
+
+  redmine-streamlit:
+    <<: *redmine_base
+    environment:
+      - DB_HOST=database-streamlit
+    volumes:
+      - /home/astepanovs/www/streamlit-proto:/var/repositories/streamlit
+    depends_on:
+      - database-streamlit
+
 # Test project
   database-test:
     <<: *database_base
@@ -157,4 +172,5 @@ volumes:
   database_data_test:
   database_data_grappler:
   database_data_andai:
+  database_data_streamlit:
 

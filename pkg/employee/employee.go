@@ -281,6 +281,8 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 				return architectResult, err
 			}
 			return architectResult, nil
+		case "evaluate":
+			panic("not implemented")
 		case "code":
 			out, err := processor.AiderExecute(contextFile, workflowStep)
 			if err != nil {
