@@ -45,7 +45,7 @@ func (n *NextTransition) LogPrint() {
 		log.Printf("Next transition: %s", n.Success.Target)
 	} else {
 		log.Printf("Next transition for Success: %s", n.Success.Target)
-		log.Printf("Next transition for Failure: %s", n.Success.Target)
+		log.Printf("Next transition for Failure: %s", n.Failure.Target)
 	}
 }
 

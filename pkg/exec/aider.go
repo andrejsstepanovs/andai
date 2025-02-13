@@ -42,6 +42,10 @@ var (
 		"--auto-commits",
 	}
 
+	aiderChatArgs = []string{
+		"--chat",
+	}
+
 	aiderArchitectArgs = []string{
 		"--architect",
 		"--no-auto-commits",
@@ -53,6 +57,7 @@ var (
 
 	aiderArchitectParams = map[string]string{}
 	aiderCodeParams      = map[string]string{}
+	aiderChatParams      = map[string]string{}
 	aiderCommitParams    = map[string]string{}
 )
 
@@ -71,6 +76,9 @@ func AiderCommand(contextFile string, step models.Step) string {
 	case "code":
 		params = aiderCodeParams
 		args = aiderCodeArgs
+	case "chat":
+		params = aiderChatParams
+		args = aiderChatArgs
 	default:
 		panic("unknown step action")
 	}

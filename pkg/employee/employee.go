@@ -1,6 +1,7 @@
 package employee
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -14,6 +15,8 @@ import (
 	"github.com/andrejsstepanovs/andai/pkg/workbench"
 	"github.com/mattn/go-redmine"
 )
+
+var NegativeOutcomeErr = errors.New("negative outcome")
 
 type Employee struct {
 	model      *model.Model
@@ -95,6 +98,10 @@ func (i *Employee) ExecuteWorkflow() (bool, error) {
 		step.Prompt = i.appendHistoryToPrompt(step)
 		executionOutput, err := i.executeWorkflowStep(step)
 		if err != nil {
+			if errors.Is(err, NegativeOutcomeErr) {
+				log.Printf("Negative outcome, skipping remaining steps and moving issue to negative path state.")
+				return false, nil
+			}
 			log.Printf("Failed to action step: %v", err)
 			return false, err
 		}
@@ -183,6 +190,16 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 			return exec.Output{}, err
 		}
 		return exec.Output{Stdout: fmt.Sprintf("Created %d Issues", len(issues))}, nil
+	case "evaluate":
+		_, success, err := processor.EvaluateOutcome(i.llmNorm, contextFile)
+		if err != nil {
+			log.Printf("Failed to create new issues: %v", err)
+			return exec.Output{}, err
+		}
+		if success {
+			return exec.Output{Stdout: "Positive outcome"}, nil
+		}
+		return exec.Output{Stdout: "Negative"}, NegativeOutcomeErr
 	case "merge-into-parent":
 		currentBranchName := i.workbench.GetIssueBranchName(i.issue)
 		if i.parent == nil {
@@ -281,8 +298,6 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 				return architectResult, err
 			}
 			return architectResult, nil
-		case "evaluate":
-			panic("not implemented")
 		case "code":
 			out, err := processor.AiderExecute(contextFile, workflowStep)
 			if err != nil {

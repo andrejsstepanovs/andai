@@ -65,11 +65,12 @@ func (s *Settings) validateSteps(issueTypeNames map[IssueTypeName]bool) error {
 				case "next":
 				case "create-issues":
 				case "merge-into-parent":
+				case "evaluate":
 				case "ai":
 				case "aid":
 				case "aider":
 				default:
-					return fmt.Errorf("step command %s is not valid", step.Command)
+					return fmt.Errorf("step command %q is not valid", step.Command)
 				}
 
 				if step.Command == "aider" || step.Command == "aid" {
@@ -77,7 +78,6 @@ func (s *Settings) validateSteps(issueTypeNames map[IssueTypeName]bool) error {
 					case "commit":
 					case "architect":
 					case "code":
-					case "evaluate":
 					default:
 						return fmt.Errorf("%q step action %q is not valid for %q in %q", step.Command, step.Action, types.Name, jobName)
 					}
@@ -108,7 +108,7 @@ func (s *Settings) validateLlmModels() error {
 		switch model.Name {
 		case LlmModelNormal:
 		default:
-			return fmt.Errorf("llm model %s is not valid", model.Name)
+			return fmt.Errorf("llm model %q is not valid", model.Name)
 		}
 	}
 	return nil
@@ -140,7 +140,7 @@ func (s *Settings) validateTriggers(issueTypeNames map[IssueTypeName]bool, state
 			case TriggerTransitionWhoChildren:
 				continue
 			default:
-				return fmt.Errorf("trigger transition 'who': %s is not valid", triggerIf.TriggerTransition.Who)
+				return fmt.Errorf("trigger transition 'who': %q is not valid", triggerIf.TriggerTransition.Who)
 			}
 		}
 	}
@@ -240,7 +240,7 @@ func (s *Settings) validateStepContexts() error {
 					case ContextParents:
 					case ContextIssueTypes:
 					default:
-						return fmt.Errorf("issue %q state %q job (%d) does not have valid context %s", issueTypeName, stateName, k, context)
+						return fmt.Errorf("issue %q state %q job (%d) does not have valid context: %q", issueTypeName, stateName, k, context)
 					}
 				}
 			}

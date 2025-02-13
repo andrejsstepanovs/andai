@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/andrejsstepanovs/andai/pkg/ai"
 	"github.com/andrejsstepanovs/andai/pkg/employee/utils"
@@ -13,6 +14,46 @@ import (
 	"github.com/mattn/go-redmine"
 	"github.com/teilomillet/gollm"
 )
+
+func EvaluateOutcome(llm *ai.AI, knowledgeFile string) (exec.Output, bool, error) {
+	knowledge, err := utils.GetFileContents(knowledgeFile)
+	if err != nil {
+		return exec.Output{}, false, err
+	}
+
+	templatePrompt := gollm.NewPromptTemplate("EvaluateOutcome", "",
+		"Your task is to evaluate final outcome of the conversation. "+
+			"It is either positive or negative. There is no in between.\n\n"+
+			"# Instructions:\n"+
+			"- Use Context and specifically last comment section to evaluate final outcome of the topic.\n"+
+			"- It can be either positive or negative.\n"+
+			"- In case of positive outcome, answer with 1 word \"Positive\".\n"+
+			"- In case of negative outcome, answer with 1 word \"Negative\".\n"+
+			"- Do not explain why you came to this conclusion or any other information about your thinking process.\n"+
+			"- Answer with 1 word (\"Positive\" or \"Negative\")!\n",
+		gollm.WithPromptOptions(
+			gollm.WithOutput("1 word"),
+			gollm.WithContext(knowledge),
+		),
+	)
+
+	prompt, err := templatePrompt.Execute(map[string]interface{}{})
+	if err != nil {
+		return exec.Output{}, false, err
+	}
+
+	ctx := context.Background()
+
+	out, err := llm.Generate(ctx, prompt)
+	if err != nil {
+		return exec.Output{}, false, err
+	}
+
+	if strings.Trim(strings.TrimSpace(out.Stdout), "\"") == "Positive" {
+		return out, true, nil
+	}
+	return out, false, nil
+}
 
 func GenerateIssues(llm *ai.AI, targetIssueTypeName models.IssueTypeName, knowledgeFile string) (exec.Output, map[int]redmine.Issue, map[int][]int, error) {
 	var (
