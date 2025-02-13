@@ -226,6 +226,10 @@ func (k Knowledge) getChildren() (string, error) {
 	}
 	childrenContext := make([]string, 0)
 	for _, child := range k.Children {
+		fmt.Println("#################")
+		fmt.Println(child.Status)
+		fmt.Println("#################")
+
 		childIssueContext, err := k.getIssueContext(child)
 		if err != nil {
 			log.Printf("Failed to get single child issue context: %v", err)
