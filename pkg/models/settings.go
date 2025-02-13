@@ -10,7 +10,7 @@ type Settings struct {
 	LlmModels LlmModels `yaml:"llm_models"`
 }
 
-func (s *Settings) validateStates() error {
+func (s *Settings) validateStates(issueTypeNames map[IssueTypeName]bool) error {
 	if len(s.Workflow.States) == 0 {
 		return fmt.Errorf("workflow states are required")
 	}
@@ -34,6 +34,12 @@ func (s *Settings) validateStates() error {
 		}
 		if state.IsClosed {
 			closedExists = true
+		}
+
+		for _, aiState := range state.UseAI {
+			if _, ok := issueTypeNames[aiState]; !ok {
+				return fmt.Errorf("%q state ai: %q is not a valid issue type", state.Name, aiState)
+			}
 		}
 	}
 
@@ -260,9 +266,6 @@ func (s *Settings) validateIssueTypes(stateNames map[StateName]bool) (map[IssueT
 }
 
 func (s *Settings) Validate() error {
-	if err := s.validateStates(); err != nil {
-		return err
-	}
 
 	stateNames := make(map[StateName]bool)
 	for _, state := range s.Workflow.States {
@@ -271,6 +274,10 @@ func (s *Settings) Validate() error {
 
 	issueTypeNames, err := s.validateIssueTypes(stateNames)
 	if err != nil {
+		return err
+	}
+
+	if err := s.validateStates(issueTypeNames); err != nil {
 		return err
 	}
 
