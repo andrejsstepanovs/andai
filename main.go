@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/andrejsstepanovs/andai/cmd/issue"
+	"github.com/andrejsstepanovs/andai/cmd/nothing"
 	"github.com/andrejsstepanovs/andai/cmd/ping"
 	"github.com/andrejsstepanovs/andai/cmd/setup"
 	"github.com/andrejsstepanovs/andai/cmd/validate"
@@ -47,6 +48,7 @@ func main() {
 	}
 
 	rootCmd.AddCommand(
+		nothing.NothingCmd(),
 		validate.SetupValidateCmd(settings),
 		ping.SetupPingCmd(dependencies),
 		setup.Cmd(dependencies, settings),

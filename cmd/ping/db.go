@@ -14,7 +14,7 @@ func newDBPingCommand(redmine *redmine.Model) *cobra.Command {
 		Use:   "db",
 		Short: "Ping database connection",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			fmt.Println("Ping DB")
+			fmt.Println("Pinging Database")
 
 			users, err := redmine.DBGetAllUsers()
 			if err != nil {

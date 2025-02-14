@@ -77,10 +77,14 @@ RUN chsh -s $(which zsh)
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY build/ /var/usr/local/bin/
+# copy executables
+COPY build/ /usr/local/bin/
+
+# copy project configuration files
+COPY .andai.*.yaml /app/
 
 # Set working directory
 WORKDIR /app
 
 SHELL ["/bin/zsh", "-c"]
-CMD ["/bin/zsh"]
+ENTRYPOINT ["andai"]

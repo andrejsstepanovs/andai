@@ -134,8 +134,8 @@ docker: build.linux ## Build docker image
 	--build-arg DEP_BASE_VERSION=${DEP_BASE_VERSION} .
 	@echo docker build of image $(ENGINE_DOCKER_IMAGE):$(VERSION) complete
 
-.PHONY: configure
-configure: build
+.PHONY: configure-local
+configure-local: build
 	@PROJECT=$(PROJECT) $(BUILD_PATH)/andai validate config && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping db && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai setup auto-increments && \
@@ -148,9 +148,39 @@ configure: build
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping llm && \
 	echo "Configure Success"
 
+.PHONY: configure
+configure: build
+	@docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai validate config && \
+	docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai ping db && \
+	docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai setup auto-increments && \
+	docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai setup admin && \
+	docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai setup settings && \
+	docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai setup token && \
+	docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai ping api && \
+	docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai setup projects && \
+	docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai setup workflow && \
+	docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai ping llm && \
+	echo "Configure Success"
+
 # make start PROJECT=lco
 .PHONY: start
-start: build
+start: build build-docker
+	@PROJECT=$(PROJECT) $(BUILD_PATH)/andai validate config && \
+	docker-compose -f docker-compose.yaml up -d --wait redmine-$(PROJECT) andai-$(PROJECT) && \
+	while ! docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai ping db 2>&1 | grep -q "Success"; do sleep 2; done
+	@echo "DB Ready (but probably not yet fully configured)"
+	sleep 10
+	@echo "Configuring... (ignore errors for a while)"
+	sleep 2
+	while ! PROJECT=$(PROJECT) $(MAKE) configure; do sleep 2; done
+	@echo "Start Success"
+	@echo "##################################################"
+	@echo "Redmine Project URLs:"
+	@echo "http://localhost:10083/projects/$(PROJECT)"
+	@echo "http://localhost:10083/projects/$(PROJECT)/issues"
+
+.PHONY: start-local
+start-local: build
 	@PROJECT=$(PROJECT) $(BUILD_PATH)/andai validate config && \
 	docker-compose -f docker-compose.yaml up -d redmine-$(PROJECT) && \
 	while ! PROJECT=$(PROJECT) $(BUILD_PATH)/andai ping db 2>/dev/null; do sleep 2; done
@@ -165,12 +195,23 @@ start: build
 	@echo "http://localhost:10083/projects/$(PROJECT)"
 	@echo "http://localhost:10083/projects/$(PROJECT)/issues"
 
-.PHONY: work
-work:
+.PHONY: build-docker
+build-docker: build
+	docker build -t $(ENGINE_DOCKER_IMAGE):$(VERSION) -t $(ENGINE_DOCKER_IMAGE):latest .
+
+.PHONY: work-local
+work-local:
 	@PROJECT=$(PROJECT) $(BUILD_PATH)/andai validate config && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work triggers && \
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work next
 	PROJECT=$(PROJECT) $(BUILD_PATH)/andai work triggers
+
+.PHONY: work
+work:
+	@docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai validate config && \
+	docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai work triggers && \
+	docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai work next
+	docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai work triggers
 
 # run this command like so:
 # while ; do
@@ -184,13 +225,19 @@ issue:
 .PHONY: rm
 rm:
 	echo "Stopping and removing volumes."
-	docker-compose down -v --remove-orphans
+	docker-compose -f docker-compose.yaml rm -s -v -f andai-$(PROJECT)
+	docker-compose -f docker-compose.yaml rm -s -v -f redmine-$(PROJECT)
+	docker-compose -f docker-compose.yaml rm -s -v -f phpmyadmin # optional
+	docker-compose -f docker-compose.yaml rm -s -v -f database-$(PROJECT)
 	@echo "Done!"
 
 .PHONY: stop
 stop:
 	echo "Stopping."
-	docker-compose down
+	docker-compose -f docker-compose.yaml stop andai-$(PROJECT)
+	docker-compose -f docker-compose.yaml stop redmine-$(PROJECT)
+	docker-compose -f docker-compose.yaml stop database-$(PROJECT)
+	docker-compose -f docker-compose.yaml stop phpmyadmin # optional
 	@echo "Done!"
 
 

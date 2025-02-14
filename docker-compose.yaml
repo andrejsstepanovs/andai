@@ -33,7 +33,7 @@ services:
 
   redmine_template: &redmine_base
     build: ./docker-redmine/
-    image: sameersbn/redmine:6.0.2
+    image: sameersbn/redmine:6.0.3
     env_file:
       - .redmine.env
     ports:
@@ -45,6 +45,46 @@ services:
       #- ./repositories:/var/repositories  # This will be overridden in each instance
     networks:
       - redmine_network
+
+  andai_template: &andai_base
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    volumes:
+#      - ./www:/var/www
+    image: andai:latest # build it first with `make build-docker`
+    tty: true
+    stdin_open: true
+    networks:
+      - redmine_network
+    command: ["nothing", "execute"] # sleep infinity
+    environment:
+      - TERM=xterm-256color
+      - SHELL=/bin/zsh
+      - PROJECT=test
+
+#      - CODER_REDMINE_API_KEY=${CODER_REDMINE_API_KEY}
+#      - OPENAI_API_KEY=${OPENAI_API_KEY}
+#      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+#      - GITHUB_ACCESS_TOKEN=${GITHUB_ACCESS_TOKEN}
+#      - REDMINE_URL=http://redmine
+#
+#      - REDMINE_ARCHITECT_LOGIN=${REDMINE_ARCHITECT_LOGIN}
+#      - REDMINE_ARCHITECT_PASSWORD=${REDMINE_ARCHITECT_PASSWORD}
+#      - REDMINE_ARCHITECT_API_KEY=${REDMINE_ARCHITECT_API_KEY}
+#
+#      - REDMINE_CODER_LOGIN=${REDMINE_CODER_LOGIN}
+#      - REDMINE_CODER_PASSWORD=${REDMINE_CODER_PASSWORD}
+#      - REDMINE_CODER_API_KEY=${REDMINE_CODER_API_KEY}
+#
+#      - REDMINE_CODER_JUNIOR_LOGIN=${REDMINE_CODER_JUNIOR_LOGIN}
+#      - REDMINE_CODER_JUNIOR_PASSWORD=${REDMINE_CODER_JUNIOR_PASSWORD}
+#      - REDMINE_CODER_JUNIOR_API_KEY=${REDMINE_CODER_JUNIOR_API_KEY}
+#
+#      - LM_STUDIO_API_BASE=${LM_STUDIO_API_BASE}
+#      - LM_STUDIO_API_KEY=${LM_STUDIO_API_KEY}
+#      - OLLAMA_API_BASE=${OLLAMA_API_BASE}
+
 
 # LCO project
   database-lco:
@@ -118,50 +158,18 @@ services:
     environment:
       - DB_HOST=database-test
     volumes:
-#      - ./data/redmine/data:/home/redmine/data
-      - /var/tmp:/var/repositories
+      - /tmp/test:/var/repositories/test
     depends_on:
       - database-test
 
-#  dev:
-#    build:
-#      context: agents/
-#      dockerfile: Dockerfile
-#    volumes:
-#      - ./www:/var/www
-#    tty: true
-#    stdin_open: true
-#    container_name: ubuntu-dev
-#    hostname: ubuntu-dev
-#    networks:
-#      - redmine_network
-#    depends_on:
-#      - redmine
-#    command: tail -f /dev/null
-#    environment:
-#      - TERM=xterm-256color
-#      - SHELL=/bin/zsh
-#      - CODER_REDMINE_API_KEY=${CODER_REDMINE_API_KEY}
-#      - OPENAI_API_KEY=${OPENAI_API_KEY}
-#      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-#      - GITHUB_ACCESS_TOKEN=${GITHUB_ACCESS_TOKEN}
-#      - REDMINE_URL=http://redmine
-#
-#      - REDMINE_ARCHITECT_LOGIN=${REDMINE_ARCHITECT_LOGIN}
-#      - REDMINE_ARCHITECT_PASSWORD=${REDMINE_ARCHITECT_PASSWORD}
-#      - REDMINE_ARCHITECT_API_KEY=${REDMINE_ARCHITECT_API_KEY}
-#
-#      - REDMINE_CODER_LOGIN=${REDMINE_CODER_LOGIN}
-#      - REDMINE_CODER_PASSWORD=${REDMINE_CODER_PASSWORD}
-#      - REDMINE_CODER_API_KEY=${REDMINE_CODER_API_KEY}
-#
-#      - REDMINE_CODER_JUNIOR_LOGIN=${REDMINE_CODER_JUNIOR_LOGIN}
-#      - REDMINE_CODER_JUNIOR_PASSWORD=${REDMINE_CODER_JUNIOR_PASSWORD}
-#      - REDMINE_CODER_JUNIOR_API_KEY=${REDMINE_CODER_JUNIOR_API_KEY}
-#
-#      - LM_STUDIO_API_BASE=${LM_STUDIO_API_BASE}
-#      - LM_STUDIO_API_KEY=${LM_STUDIO_API_KEY}
-#      - OLLAMA_API_BASE=${OLLAMA_API_BASE}
+  andai-test:
+    <<: *andai_base
+    environment:
+      - PROJECT=test
+    volumes:
+      - /tmp/test:/var/repositories/test
+    depends_on:
+      - redmine-test
 
 networks:
   redmine_network:
