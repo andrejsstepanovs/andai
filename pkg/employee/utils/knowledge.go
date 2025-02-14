@@ -295,8 +295,10 @@ func (k Knowledge) getIssueTypes() (string, error) {
 
 func (k Knowledge) getCommentsContext(comments redminemodels.Comments) (string, error) {
 	promptTemplate := "{{ range .Comments }}" +
+		"\n<comment_{{.Number}}>\n" +
 		"### Comment {{.Number}} (Created: {{.CreatedAt}})\n" +
 		"{{.Text}}" +
+		"\n</comment_{{.Number}}>" +
 		"{{ end }}"
 
 	data := map[string]interface{}{
