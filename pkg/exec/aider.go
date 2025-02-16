@@ -82,17 +82,13 @@ func AiderCommand(contextFile string, step models.Step, config models.Aider) str
 		panic("unknown step action")
 	}
 
+	params["--config"] = config.Config
+	params["--map-tokens"] = config.MapTokens
+
 	if contextFile != "" {
 		params["--message-file"] = contextFile
 	} else {
 		params["--message"] = step.Prompt.ForCli()
-	}
-
-	if config.Config != "" {
-		params["--config"] = config.Config
-	}
-	if config.MapTokens != "" {
-		params["--map-tokens"] = config.MapTokens
 	}
 
 	paramsCli := make([]string, 0, len(params))
