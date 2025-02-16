@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newNextCommand(model *model.Model, llmNorm *ai.AI, projects models.Projects, workflow models.Workflow) *cobra.Command {
+func newNextCommand(model *model.Model, llmNorm *ai.AI, projects models.Projects, workflow models.Workflow, aiderConfig models.Aider) *cobra.Command {
 	return &cobra.Command{
 		Use:   "next",
 		Short: "Work with redmine",
@@ -103,6 +103,7 @@ func newNextCommand(model *model.Model, llmNorm *ai.AI, projects models.Projects
 					*project,
 					projectConfig,
 					wb,
+					aiderConfig,
 					workflow.States.Get(models.StateName(issue.Status.Name)),
 					workflow.IssueTypes.Get(models.IssueTypeName(issue.Tracker.Name)),
 					workflow.IssueTypes,

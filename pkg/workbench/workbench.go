@@ -28,7 +28,7 @@ type git interface {
 	DeleteBranch(string) error
 }
 
-func (i *Workbench) PrepareWorkplace(parentIssueID *int) error {
+func (i *Workbench) GoToRepo() error {
 	err := i.changeDirectory()
 	if err != nil {
 		log.Printf("Failed to change directory: %v", err)
@@ -36,6 +36,15 @@ func (i *Workbench) PrepareWorkplace(parentIssueID *int) error {
 	}
 
 	i.Git.Reload()
+	return nil
+}
+
+func (i *Workbench) PrepareWorkplace(parentIssueID *int) error {
+	err := i.GoToRepo()
+	if err != nil {
+		log.Printf("Failed to change directory: %v", err)
+		return err
+	}
 
 	if parentIssueID != nil {
 		branchName := i.GetIssueBranchName(redmine.Issue{Id: *parentIssueID})

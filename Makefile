@@ -160,6 +160,7 @@ configure: build
 	docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai setup projects && \
 	docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai setup workflow && \
 	docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai ping llm && \
+	docker-compose -f docker-compose.yaml exec andai-$(PROJECT) andai ping aider && \
 	echo "Configure Success"
 
 # make start PROJECT=lco

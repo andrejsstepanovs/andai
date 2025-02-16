@@ -50,7 +50,7 @@ func main() {
 	rootCmd.AddCommand(
 		nothing.NothingCmd(),
 		validate.SetupValidateCmd(settings),
-		ping.SetupPingCmd(dependencies),
+		ping.SetupPingCmd(dependencies, settings),
 		setup.Cmd(dependencies, settings),
 		work.Cmd(dependencies, settings),
 		issue.Cmd(dependencies, settings),

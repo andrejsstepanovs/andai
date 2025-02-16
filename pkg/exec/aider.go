@@ -35,7 +35,6 @@ var (
 
 	aiderDefaultParams = map[string]string{
 		"--map-refresh": "auto", // auto,always,files,manual
-		"--map-tokens":  "2048",
 	}
 
 	aiderCodeArgs = []string{
@@ -61,7 +60,7 @@ var (
 	aiderCommitParams    = map[string]string{}
 )
 
-func AiderCommand(contextFile string, step models.Step) string {
+func AiderCommand(contextFile string, step models.Step, config models.Aider) string {
 	var (
 		params map[string]string
 		args   []string
@@ -87,6 +86,13 @@ func AiderCommand(contextFile string, step models.Step) string {
 		params["--message-file"] = contextFile
 	} else {
 		params["--message"] = step.Prompt.ForCli()
+	}
+
+	if config.Config != "" {
+		params["--config"] = config.Config
+	}
+	if config.MapTokens != "" {
+		params["--map-tokens"] = config.MapTokens
 	}
 
 	paramsCli := make([]string, 0, len(params))

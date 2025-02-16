@@ -30,6 +30,7 @@ type Employee struct {
 	siblings          []redmine.Issue
 	project           redmine.Project
 	projectCfg        models.Project
+	aiderConfig       models.Aider
 	workbench         *workbench.Workbench
 	state             models.State
 	issueType         models.IssueType
@@ -38,7 +39,7 @@ type Employee struct {
 	history           []exec.Output
 }
 
-// AI: NewEmployee creates an Employee instance configured to work on a specific Redmine issue.
+// NewEmployee creates an Employee instance configured to work on a specific Redmine issue.
 // It initializes the employee with all necessary context including issue relationships,
 // project details, and workflow configuration.
 func NewEmployee(
@@ -53,6 +54,7 @@ func NewEmployee(
 	project redmine.Project,
 	projectConfig models.Project,
 	workbench *workbench.Workbench,
+	aiderConfig models.Aider,
 	state models.State,
 	issueType models.IssueType,
 	issueTypes models.IssueTypes,
@@ -69,6 +71,7 @@ func NewEmployee(
 		project:           project,
 		projectCfg:        projectConfig,
 		workbench:         workbench,
+		aiderConfig:       aiderConfig,
 		state:             state,
 		issueType:         issueType,
 		issueTypes:        issueTypes,
@@ -270,7 +273,7 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 				return exec.Output{}, err
 			}
 
-			commitResult, err := processor.AiderExecute("Commit any uncommitted changes", workflowStep)
+			commitResult, err := processor.AiderExecute("Commit any uncommitted changes", workflowStep, i.aiderConfig)
 			if err != nil {
 				return commitResult, err
 			}
@@ -290,7 +293,7 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 
 			return commitResult, nil
 		case "architect":
-			architectResult, err := processor.AiderExecute(contextFile, workflowStep)
+			architectResult, err := processor.AiderExecute(contextFile, workflowStep, i.aiderConfig)
 			if err != nil {
 				return architectResult, err
 			}
@@ -305,7 +308,7 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 			}
 			return architectResult, nil
 		case "code":
-			out, err := processor.AiderExecute(contextFile, workflowStep)
+			out, err := processor.AiderExecute(contextFile, workflowStep, i.aiderConfig)
 			if err != nil {
 				return out, err
 			}
@@ -337,8 +340,6 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 	default:
 		return exec.Output{}, fmt.Errorf("unknown step command: %q", workflowStep.Command)
 	}
-
-	return exec.Output{}, nil
 }
 
 // appendHistoryToPrompt combines previous execution outputs with the current step prompt.

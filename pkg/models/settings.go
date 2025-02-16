@@ -8,6 +8,7 @@ type Settings struct {
 	Workflow  Workflow  `yaml:"workflow"`
 	Projects  Projects  `yaml:"projects"`
 	LlmModels LlmModels `yaml:"llm_models"`
+	Aider     Aider     `yaml:"aider"`
 }
 
 func (s *Settings) validateStates(issueTypeNames map[IssueTypeName]bool) error {
@@ -90,6 +91,16 @@ func (s *Settings) validateSteps(issueTypeNames map[IssueTypeName]bool) error {
 				}
 			}
 		}
+	}
+	return nil
+}
+
+func (s *Settings) validateAider() error {
+	if s.Aider.MapTokens == "" {
+		return fmt.Errorf("aider map_tokens is required")
+	}
+	if s.Aider.Config == "" {
+		return fmt.Errorf("aider config is required")
 	}
 	return nil
 }
@@ -268,7 +279,6 @@ func (s *Settings) validateIssueTypes(stateNames map[StateName]bool) (map[IssueT
 }
 
 func (s *Settings) Validate() error {
-
 	stateNames := make(map[StateName]bool)
 	for _, state := range s.Workflow.States {
 		stateNames[state.Name] = true
@@ -306,6 +316,10 @@ func (s *Settings) Validate() error {
 	}
 
 	if err := s.validateSteps(issueTypeNames); err != nil {
+		return err
+	}
+
+	if err := s.validateAider(); err != nil {
 		return err
 	}
 
