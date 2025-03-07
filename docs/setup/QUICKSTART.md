@@ -97,6 +97,13 @@ Improve README.md documentation
 
 After that observe terminal command that is running `andai`. It should pick up this ticket and start working on it.
 
+## Stop and cleanup
+```bash
+docker-compose down
+rm -rf /tmp/test
+```
+Be aware that `docker-compose down` will destroy images. If you want to stop and continue then use `docker-compose stop`.
+
 ## Follow up
 
 Now that you created simple setup, and it is working as expected, 
