@@ -1,0 +1,75 @@
+issues:
+  exclude-rules:
+  - text: "Line contains TODO/BUG/FIXME"
+    linters:
+    - godox
+  - text: "G104: Errors unhandled"
+    linters:
+    - gosec
+  - text: 'G201: SQL string formatting'
+    linters:
+    - gosec
+  - text: 'package-comments: should have a package comment'
+    linters:
+    - revive
+  - path: 'credentials/token_loader'
+    text: 'G304: Potential file inclusion via variable'
+    linters:
+    - gosec
+  - path: 'testutils'
+    text: 'G304: Potential file inclusion via variable'
+    linters:
+      - gosec
+  - text: 'ST1000: at least one file in a package should have a package comment'
+    linters:
+    - stylecheck
+  - text: "exported (type|method|function|var) (.+) should have comment or be unexported"
+    linters:
+    - revive
+  - path: '(.+)_test.go'
+    text: 'unused-parameter'
+    linters:
+      - revive
+  exclude-use-default: false
+
+linters:
+  disable-all: true
+  enable:
+  - bodyclose
+  - cyclop
+  - goconst
+  - godox
+  - gofmt
+  - goimports
+  - gosec
+  - gosimple
+  - govet
+  - ineffassign
+  - misspell
+  - prealloc
+  - revive
+  - staticcheck
+  - stylecheck
+  - typecheck
+  - unconvert
+  - unparam
+  - unused
+  - whitespace
+
+linters-settings:
+  goimports:
+    local-prefixes: github.bus.zalan.do/rubik/lounge-campaign-orchestrator
+  cyclop:
+    max-complexity: 16
+  gosec:
+    config:
+      # Maximum allowed permissions mode for os.WriteFile and io.WriteFile
+      # Default: "0600"
+      G306: "0644"
+
+run:
+  build-tags:
+  - integration
+  timeout: 10m
+# By some reason `make docker` fails with this option enabled
+#  modules-download-mode: readonly

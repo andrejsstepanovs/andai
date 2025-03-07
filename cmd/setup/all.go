@@ -1,0 +1,88 @@
+package setup
+
+import (
+	"log"
+	"time"
+
+	"github.com/andrejsstepanovs/andai/pkg/deps"
+	"github.com/andrejsstepanovs/andai/pkg/models"
+	model "github.com/andrejsstepanovs/andai/pkg/redmine"
+	_ "github.com/go-sql-driver/mysql" // mysql driver
+	"github.com/spf13/cobra"
+)
+
+func newSetupAllCommand(deps *deps.AppDependencies) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "all",
+		Short: "Setup everything",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			settings, err := deps.Config.Load()
+			if err != nil {
+				return err
+			}
+
+			log.Println("Setup ALL")
+			return Setup(deps.Model, settings.Projects, settings.Workflow)
+		},
+	}
+	return cmd
+}
+
+func Setup(model *model.Model, projectsConf models.Projects, workflowConfig models.Workflow) error {
+	maxTries := 7
+	for {
+		err := setupAll(model, projectsConf, workflowConfig)
+		if err == nil {
+			break
+		}
+		log.Printf("Error: %v\n", err)
+		time.Sleep(3 * time.Second)
+		maxTries--
+		if maxTries == 0 {
+			return err
+		}
+	}
+	return nil
+}
+
+func setupAll(model *model.Model, projectsConf models.Projects, workflowConfig models.Workflow) error {
+	err := setupAutoIncrement(model)
+	if err != nil {
+		return err
+	}
+	log.Println("Auto increments OK")
+
+	err = setupAdmin(model)
+	if err != nil {
+		return err
+	}
+	log.Println("Admin OK")
+
+	err = setupSettings(model)
+	if err != nil {
+		return err
+	}
+	log.Println("Settings OK")
+
+	err = setupToken(model)
+	if err != nil {
+		return err
+	}
+	log.Println("Token OK")
+
+	// could ping now
+
+	err = setupProjects(model, projectsConf)
+	if err != nil {
+		return err
+	}
+	log.Println("Projects OK")
+
+	err = setupWorkflow(model, workflowConfig)
+	if err != nil {
+		return err
+	}
+	log.Println("Workflow OK")
+
+	return nil
+}

@@ -1,0 +1,19 @@
+quiet: False
+disable-version-string: False
+with-expecter: False
+mockname: "{{.InterfaceName | firstUpper}}"
+filename: "{{.InterfaceName | snakecase | lower}}.go"
+outpkg: "mocks"
+dir: "{{.InterfaceDir}}/mocks"
+
+packages:
+  github.com/andrejsstepanovs/andai/pkg/redmine:
+    config:
+      recursive: True
+      all: True
+      unroll-variadic: False
+  github.com/andrejsstepanovs/andai/pkg/workbench:
+    config:
+      recursive: True
+      all: True
+      unroll-variadic: False

@@ -1,0 +1,6 @@
+.andai.*.yaml
+.idea
+data
+.bin
+build
+.aider.tags.cache.v3

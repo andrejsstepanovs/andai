@@ -1,0 +1,28 @@
+x-project-volumes: &project-volumes
+  - /tmp/test-repo/:/var/repositories/test-repo
+  - ./:/app/ # config files are located here. Used if running andai in docker.
+
+services:
+  database:
+    image: mariadb:11.2
+    env_file:
+      - ../.redmine.env
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./database:/var/lib/mysql
+    command:
+      - mariadbd
+      - --transaction-isolation=READ-COMMITTED
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+
+  redmine:
+    image: sameersbn/redmine:6.0.3
+    env_file:
+      - .redmine.env
+    ports:
+      - "10083:80"
+    volumes: *project-volumes
+    depends_on:
+      - database
