@@ -1,0 +1,36 @@
+redmine:
+  db: redmine:redmine@tcp(0.0.0.0:3306)/redmine # things from docker-compose
+  url: "http://localhost:10083"
+  api_key: "2159cef2fb6c82c4f66981f199798781e161c694"
+  repositories: "/var/repositories/"
+
+llm_models:
+  - name: "normal"
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+    api_key: "sk-aaaaaaaaaaaaaaaaaaaa"
+
+aider:
+  config: "/tmp/.aider.conf.yml"
+  map_tokens: 100
+  timeout: "1m"
+
+projects:
+  - identifier: "test"
+    name: "Test"
+    description: "Test description"
+    git_path: "/test/.git"
+    git_local_dir: "/test/.git"
+    final_branch: "main"
+    wiki: Test Wiki
+    commands:
+      test: "make test"
+      lint: "make lint"
+
+workflow:
+  states:
+    Initial:
+      is_default: True
+      is_first: True
+    Done:
+      is_closed: True

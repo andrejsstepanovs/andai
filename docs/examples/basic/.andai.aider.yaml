@@ -1,0 +1,5 @@
+model: "openai/gemini-2.0-flash-001"
+openai-api-key: "*****"
+openai-api-base: "https://generativelanguage.googleapis.com/v1beta/openai"
+
+subtree-only: true
