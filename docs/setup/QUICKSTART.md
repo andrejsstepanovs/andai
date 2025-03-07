@@ -1,6 +1,27 @@
 # Quick Start
 
-Quick start guide to get you up and running.
+We will create new `andai` project config folder in `/tmp/test`
+
+```bash
+mkdir /tmp/test
+touch /tmp/test/.andai.aider.yaml
+touch /tmp/test/.andai.project.yaml
+touch /tmp/test/docker-compose.yaml
+touch /tmp/test/.redmine.env
+
+➜  test tree -a /tmp/test
+/tmp/test
+├── .andai.aider.yaml
+├── .andai.project.yaml
+├── docker-compose.yaml
+└── .redmine.env
+
+0 directories, 4 files
+```
+
+Follow it up with copy & paste file contents from `/docs/examples/basic` folder.
+
+That config is using anthropic API key with sonnet model.
 
 ## Target project
 
@@ -14,34 +35,33 @@ git add README.md
 git commit -m "Initial commit"
 ```
 
-## Find a place for AndAI configurations
-
-Figure out location where you will be running andai from. It will require config files to be located there.
-It is recommended to create new small local git repository for this purpose (not mandatory).
-
-Create new folder with files (copy contents of these files from `/docs/examples`):
-- `docker-compose.yml`
-- `.redmine.env`
-- `.andai.project.yaml`
-- `.andai.aider.yaml`
-
 ## Start Ticketing system
 
 Now that you have configuration files in place, you can start ticketing system.
-`cd` into this folder and run `docker-compose up -d`.
+
+```bash
+cd /tmp/test
+docker-compose up -d
+```
 
 This will create new redmine (ticketing system) instance with database.
 
 *(!) Do not configure it. `AndAI` will handle it in next step.*
 
-## Configure ticketing system
+It will take few seconds until redmine is up and running.
 
+## andai binary
+Copy `andai` binary there as well or add it to PATH so its available from everywhere.
+
+## Configure ticketing system
 Now it's time to start using `AndAI` binary.
 There are multiple commands that are focusing on setup tasks and ping commands to make sure that all is configured correctly and ready for work.
 
 ```bash
-# this command will set everything up and start the work on tickets
-andai lets go
+cd /tmp/test/
+
+# check that .andai.project.yaml is valid
+andai validate config
 
 # this command will only set things up
 andai setup all
@@ -56,6 +76,12 @@ andai work next
 andai work loop
 ```
 
+Alternative (all in one):
+```bash
+cd /tmp/test/
+andai lets go
+```
+
 ## Create Ticket
 
 Open Redmine in browser. If you used provided configuration files, it should be available at `http://localhost:10083`.
@@ -66,7 +92,7 @@ We do not care about ACL and other security issues, because this is local setup 
 
 Let's create simple ticket like:
 ```
-Improve README.md documentation.
+Improve README.md documentation
 ```
 
 After that observe terminal command that is running `andai`. It should pick up this ticket and start working on it.

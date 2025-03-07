@@ -6,7 +6,7 @@ services:
   database:
     image: mariadb:11.2
     env_file:
-      - ../.redmine.env
+      - .redmine.env
     ports:
       - "3306:3306"
     volumes:

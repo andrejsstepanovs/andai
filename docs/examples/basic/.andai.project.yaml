@@ -1,9 +1,9 @@
 llm_models:
-    - name: "normal"
-      model: "gemini-2.0-flash-001"
-      provider: "google"
-      api_key: "*****"
-      temperature: 0.2
+  - name: "normal"
+    model: "claude-3-7-sonnet-latest"
+    provider: "anthropic"
+    api_key: "sk-*****"
+    temperature: 0.2
 
 # redmine is running within docker and this config can stay hardcoded. Keep api-key as is. It plays no role in anything.
 redmine:
@@ -13,15 +13,16 @@ redmine:
   repositories: "/var/repositories/"
 
 aider:
+  #map_tokens: 1024
   timeout: "180m"
-  config: "/path-to-here/.andai.aider.yaml" # configure aider model in that file
+  config: "/tmp/test/.andai.aider.yaml" # configure aider model in that file
 
 projects:
   - identifier: "test"
     name: "Test Project"
     description: "Test project"
     git_path: "/test-repo/.git" # path to git repo from within redmine container
-    git_local_dir: "/home/user/test-repo/.git" # path to git repo on local machine or if run from within container - path to git repo from within container
+    git_local_dir: "/tmp/test-repo/.git" # path to git repo on local machine or if run from within container - path to git repo from within container
     final_branch: "main" # branch where final code will be merged into. Can be anything. If branch does not exist, it will be created.
     wiki: |
       # My Test Project
