@@ -101,6 +101,7 @@ After that observe terminal command that is running `andai`. It should pick up t
 ```bash
 docker-compose down
 rm -rf /tmp/test
+rm -rf /tmp/test-repo
 ```
 Be aware that `docker-compose down` will destroy images. If you want to stop and continue then use `docker-compose stop`.
 
