@@ -127,9 +127,6 @@ workflow:
       success: true
       target: Done
 
-    - source: Done
-      target: QA
-
   issue_types:
     Story:
       description: |
