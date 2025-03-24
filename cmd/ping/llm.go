@@ -27,7 +27,7 @@ func newLLMPingCommand(deps *deps.AppDependencies) *cobra.Command {
 }
 
 func pingLLM(llm *ai.AI) error {
-	resp, err := llm.Simple("Answer with 1 word")
+	resp, err := llm.Simple("Answer with 1 word: 'Yes'")
 	if err != nil {
 		log.Println("Failed to get response from LlmNorm")
 	}

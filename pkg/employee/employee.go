@@ -304,7 +304,6 @@ func (i *Employee) runProjectCmd(workflowStep models.Step) (exec.Output, error) 
 	if err != nil {
 		if command.IgnoreError {
 			fmt.Printf("Ignoring error: %v\n", err)
-			err = nil
 		} else {
 			return ret, err
 		}
@@ -379,6 +378,7 @@ func (i *Employee) summarizeTask(workflowStep models.Step, contextFile string, i
 	contextContent, err := utils.GetFileContents(contextFile)
 	if err != nil {
 		log.Printf("Failed to get file contents: %v", err)
+		return "", fmt.Errorf("failed to get file contents: %w", err)
 	}
 
 	filesContent := make([]string, 0)

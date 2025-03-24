@@ -3,6 +3,7 @@ package utils_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/andrejsstepanovs/andai/pkg/employee/utils"
@@ -22,16 +23,21 @@ func TestFindFilesInText(t *testing.T) {
 	}
 
 	for _, file := range testFiles {
-		path := filepath.Join(tempDir, file)
+		path := filepath.Join(tempDir, filepath.Clean(file))
 		dir := filepath.Dir(path)
 
 		// Create directory if needed
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0750); err != nil {
 			t.Fatalf("Failed to create test directory: %v", err)
 		}
 
-		// Create empty file
-		f, err := os.Create(path)
+		// Validate path is within test directory
+		if !strings.HasPrefix(path, tempDir) {
+			t.Fatalf("Path %s is outside test directory", path)
+		}
+
+		// Create empty file using secure path
+		f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0600) //nolint:gosec
 		if err != nil {
 			t.Fatalf("Failed to create test file: %v", err)
 		}
@@ -209,9 +215,8 @@ func TestExtractCandidates(t *testing.T) {
 		expected []string
 	}{
 		{
-			name:     "Empty string",
-			content:  "",
-			expected: []string{},
+			name:    "Empty string",
+			content: "",
 		},
 		{
 			name:     "Simple words",
@@ -356,6 +361,68 @@ func TestPathExists(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			exists := finder.PathExists(tt.path)
 			assert.Equal(t, tt.expected, exists)
+		})
+	}
+}
+
+func TestExtractCandidatesLine(t *testing.T) {
+	finder := utils.NewFileFinder([]string{})
+
+	tests := []struct {
+		name     string
+		content  string
+		expected []string
+	}{
+		{
+			name:    "Empty string",
+			content: "",
+		},
+		{
+			name:     "Simple words",
+			content:  "word1 word2 word3",
+			expected: []string{"word1", "word2", "word3"},
+		},
+		{
+			name:     "Double quotes",
+			content:  "before \"quoted text\" after",
+			expected: []string{"after", "before", "quoted text"},
+		},
+		{
+			name:     "Single quotes",
+			content:  "before 'quoted text' after",
+			expected: []string{"after", "before", "quoted text"},
+		},
+		{
+			name:     "Backticks",
+			content:  "before `quoted text` after",
+			expected: []string{"after", "before", "quoted text"},
+		},
+		{
+			name:     "Mixed quotes",
+			content:  "\"double\" 'single' `backtick`",
+			expected: []string{"backtick", "double", "single"},
+		},
+		{
+			name:     "Nested quotes not supported",
+			content:  "\"outer 'inner' text\"",
+			expected: []string{"outer 'inner' text"},
+		},
+		{
+			name:     "Unclosed quotes",
+			content:  "before \"unclosed",
+			expected: []string{"before"},
+		},
+		{
+			name:     "Path-like strings",
+			content:  "/path/to/file ./relative/path.txt ../parent/path",
+			expected: []string{"../parent/path", "./relative/path.txt", "/path/to/file"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results := finder.ExtractCandidates(tt.content)
+			assert.Equal(t, tt.expected, results)
 		})
 	}
 }

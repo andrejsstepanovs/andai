@@ -95,106 +95,97 @@ func (f *FileFinder) ExtractCandidates(content string) []string {
 	return candidates
 }
 
-// ExtractCandidates splits text into potential path candidates
+// ExtractCandidates splits a line of text into potential path candidates.
+// It handles quoted strings (with double quotes, single quotes, or backticks)
+// and extracts potential filesystem paths.
+func (f *FileFinder) handleQuote(char rune, current *strings.Builder, inQuote *bool, quoteChar *rune, candidates *[]string) bool {
+	if *inQuote && *quoteChar == char {
+		// End of quote
+		*candidates = append(*candidates, current.String())
+		current.Reset()
+		*inQuote = false
+		return true
+	} else if !*inQuote {
+		// Start of quote
+		*inQuote = true
+		*quoteChar = char
+		current.Reset()
+		return true
+	}
+	return false
+}
+
+// processWord adds a word to candidates if it's not empty
+func (f *FileFinder) processWord(word string, candidates *[]string) {
+	if word != "" {
+		*candidates = append(*candidates, word)
+	}
+}
+
+// processCandidate handles splitting and processing of a single candidate
+func (f *FileFinder) processCandidate(candidate string) []string {
+	var processed []string
+
+	// Split by colon for line/column numbers
+	parts := strings.Split(candidate, ":")
+	for _, part := range parts {
+		if part != "" {
+			processed = append(processed, part)
+		}
+	}
+	// Keep original candidate too
+	processed = append(processed, candidate)
+	return processed
+}
+
+// uniqueAndSort deduplicates and sorts candidates
+func (f *FileFinder) uniqueAndSort(candidates []string) []string {
+	unique := make(map[string]struct{})
+	for _, candidate := range candidates {
+		unique[candidate] = struct{}{}
+	}
+
+	result := make([]string, 0, len(unique))
+	for candidate := range unique {
+		result = append(result, candidate)
+	}
+	sort.Strings(result)
+	return result
+}
+
 func (f *FileFinder) ExtractCandidatesLine(content string) []string {
 	var candidates []string
 	var current strings.Builder
-	var inQuote, inSingleQuote, inBacktick bool
+	var inQuote bool
 	var quoteChar rune
 
 	// Process content character by character
 	for _, char := range content {
 		switch {
-		case char == '"' && !inSingleQuote && !inBacktick:
-			if inQuote && quoteChar == '"' {
-				// End of double quote
-				candidates = append(candidates, current.String())
-				current.Reset()
-				inQuote = false
-			} else if !inQuote {
-				// Start of double quote
-				inQuote = true
-				quoteChar = '"'
-				current.Reset()
-			} else {
+		case char == '"' || char == '\'' || char == '`':
+			if !f.handleQuote(char, &current, &inQuote, &quoteChar, &candidates) {
 				current.WriteRune(char)
 			}
-
-		case char == '\'' && !inQuote && !inBacktick:
-			if inSingleQuote && quoteChar == '\'' {
-				// End of single quote
-				candidates = append(candidates, current.String())
-				current.Reset()
-				inSingleQuote = false
-			} else if !inSingleQuote {
-				// Start of single quote
-				inSingleQuote = true
-				quoteChar = '\''
-				current.Reset()
-			} else {
-				current.WriteRune(char)
-			}
-
-		case char == '`' && !inQuote && !inSingleQuote:
-			if inBacktick && quoteChar == '`' {
-				// End of backtick
-				candidates = append(candidates, current.String())
-				current.Reset()
-				inBacktick = false
-			} else if !inBacktick {
-				// Start of backtick
-				inBacktick = true
-				quoteChar = '`'
-				current.Reset()
-			} else {
-				current.WriteRune(char)
-			}
-
-		case unicode.IsSpace(char) && !inQuote && !inSingleQuote && !inBacktick:
-			// Space outside quotes means end of current word
-			if current.Len() > 0 {
-				candidates = append(candidates, current.String())
-				current.Reset()
-			}
-
+		case unicode.IsSpace(char) && !inQuote:
+			f.processWord(current.String(), &candidates)
+			current.Reset()
 		default:
-			// Add character to current word
 			current.WriteRune(char)
 		}
 	}
 
-	// Don't forget the last word if not in quotes
-	if current.Len() > 0 && !inQuote && !inSingleQuote && !inBacktick {
-		candidates = append(candidates, current.String())
+	// Handle last word if not in quotes
+	if current.Len() > 0 && !inQuote {
+		f.processWord(current.String(), &candidates)
 	}
 
-	// Process candidates for paths with line numbers and error messages
-	processedCandidates := make([]string, 0)
+	// Process all candidates
+	var processedCandidates []string
 	for _, candidate := range candidates {
-		// Check if the candidate looks like a file path with line/column numbers
-		parts := strings.Split(candidate, ":")
-		for _, part := range parts {
-			if part != "" {
-				processedCandidates = append(processedCandidates, part)
-			}
-		}
-		// Also keep the original candidate
-		processedCandidates = append(processedCandidates, candidate)
+		processedCandidates = append(processedCandidates, f.processCandidate(candidate)...)
 	}
 
-	uniquedCandidates := make(map[string]struct{})
-	for _, candidate := range processedCandidates {
-		uniquedCandidates[candidate] = struct{}{}
-	}
-
-	response := make([]string, 0, len(uniquedCandidates))
-	for candidate := range uniquedCandidates {
-		response = append(response, candidate)
-	}
-	// sort alphabetically
-	sort.Strings(response)
-
-	return response
+	return f.uniqueAndSort(processedCandidates)
 }
 
 // ResolvePath attempts to convert a path string to an absolute path

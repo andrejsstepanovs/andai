@@ -24,8 +24,14 @@ projects:
     final_branch: "main"
     wiki: Test Wiki
     commands:
-      test: "make test"
-      lint: "make lint"
+      - name: "test"
+        command: [ "make", "test" ]
+        ignore_err: True
+        ignore_stdout_if_no_stderr: True
+      - name: "lint"
+        command: ["make", "lint"]
+        ignore_err: True
+        success_if_no_output: True
 
 workflow:
   states:

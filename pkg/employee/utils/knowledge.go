@@ -116,68 +116,50 @@ func (k Knowledge) BuildIssueKnowledgeTmpFile() (string, error) {
 	return tempFile.Name(), nil
 }
 
-func (k Knowledge) getContext(context string) (string, error) {
+func (k Knowledge) getLastNComments(n int, tag string) (string, error) {
+	if len(k.Comments) == 0 {
+		return "", nil
+	}
+	count := 1
+	for i := 2; i <= n; i++ {
+		if len(k.Comments) >= i {
+			count = i
+		}
+	}
+	lastComments := k.Comments[len(k.Comments)-count:]
+	return k.getComments(lastComments, tag)
+}
+
+func (k Knowledge) getCommentContext(context string) (string, error) {
 	switch context {
 	case models.ContextLastComment:
 		if len(k.Comments) == 0 {
 			return "", nil
 		}
-		c := k.Comments[len(k.Comments)-1]
-		return k.getComments(redminemodels.Comments{c}, "last-comment")
+		return k.getComments(redminemodels.Comments{k.Comments[len(k.Comments)-1]}, "last-comment")
 	case models.ContextTwoComment:
-		if len(k.Comments) == 0 {
-			return "", nil
-		}
-		count := 1
-		if len(k.Comments) >= 2 {
-			count = 2
-		}
-		lastComments := k.Comments[len(k.Comments)-count:]
-		return k.getComments(lastComments, "last-2-comments")
+		return k.getLastNComments(2, "last-2-comments")
 	case models.ContextThreeComment:
-		if len(k.Comments) == 0 {
-			return "", nil
-		}
-		count := 1
-		if len(k.Comments) >= 3 {
-			count = 3
-		} else if len(k.Comments) >= 2 {
-			count = 2
-		}
-		lastComments := k.Comments[len(k.Comments)-count:]
-		return k.getComments(lastComments, "last-3-comments")
+		return k.getLastNComments(3, "last-3-comments")
 	case models.ContextFourComment:
-		if len(k.Comments) == 0 {
-			return "", nil
-		}
-		count := 1
-		if len(k.Comments) >= 4 {
-			count = 4
-		} else if len(k.Comments) >= 3 {
-			count = 3
-		} else if len(k.Comments) >= 2 {
-			count = 2
-		}
-		lastComments := k.Comments[len(k.Comments)-count:]
-		return k.getComments(lastComments, "last-4-comments")
+		return k.getLastNComments(4, "last-4-comments")
 	case models.ContextFifeComment:
-		if len(k.Comments) == 0 {
-			return "", nil
-		}
-		count := 1
-		if len(k.Comments) >= 5 {
-			count = 5
-		} else if len(k.Comments) >= 4 {
-			count = 4
-		} else if len(k.Comments) >= 3 {
-			count = 3
-		} else if len(k.Comments) >= 2 {
-			count = 2
-		}
-		lastComments := k.Comments[len(k.Comments)-count:]
-		return k.getComments(lastComments, "last-5-comments")
+		return k.getLastNComments(5, "last-5-comments")
 	case models.ContextComments:
 		return k.getComments(k.Comments, "comments")
+	default:
+		return "", fmt.Errorf("unknown comment context: %q", context)
+	}
+}
+
+func (k Knowledge) getContext(context string) (string, error) {
+	// Handle comment-related contexts
+	if strings.Contains(context, "Comment") {
+		return k.getCommentContext(context)
+	}
+
+	// Handle other contexts
+	switch context {
 	case models.ContextTicket:
 		return k.getIssue()
 	case models.ContextProject:

@@ -90,7 +90,7 @@ func (s *Settings) validateStep(
 	case "merge-into-parent":
 	case "project-cmd":
 	case "summarize-task":
-	case "commit":
+	case "commit": //nolint:goconst
 	case "evaluate":
 	case "ai":
 	case "bash":

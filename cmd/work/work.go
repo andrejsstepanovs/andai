@@ -25,6 +25,11 @@ func newLoopCommand(deps *deps.AppDependencies) *cobra.Command {
 }
 
 func Loop(deps *deps.AppDependencies) error {
+	// AI: Initialize tracking variables for incremental sleep
+	lastSuccessfulTask := time.Now()
+	consecutiveEmptyChecks := 0
+	currentSleepDuration := time.Duration(0) // Start with no sleep
+
 	for {
 		settings, err := deps.Config.Load()
 		if err != nil {
@@ -39,9 +44,55 @@ func Loop(deps *deps.AppDependencies) error {
 		if err != nil {
 			return fmt.Errorf("failed to work next err: %v", err)
 		}
-		if !wasWorking {
-			log.Println("No workable issues found")
-			time.Sleep(5 * time.Second)
+
+		if wasWorking {
+			lastSuccessfulTask = time.Now()
+			consecutiveEmptyChecks = 0
+			if currentSleepDuration > 0 {
+				log.Printf("Resetting sleep duration to 0 after completing work")
+			}
+			currentSleepDuration = time.Duration(0) // Reset sleep duration after work
+		} else {
+			consecutiveEmptyChecks++
+			timeSinceLastSuccess := time.Since(lastSuccessfulTask)
+
+			switch {
+			case consecutiveEmptyChecks < 2:
+				if currentSleepDuration > 0 {
+					log.Printf("First empty check - resetting sleep duration to 0")
+				}
+				currentSleepDuration = 0 // No sleep for first empty check
+			case timeSinceLastSuccess > 5*time.Minute:
+				newDuration := 30 * time.Second
+				if currentSleepDuration != newDuration {
+					log.Printf("Increasing sleep to %v (idle > 5min, %d consecutive empty checks)",
+						newDuration, consecutiveEmptyChecks)
+				}
+				currentSleepDuration = newDuration
+			case timeSinceLastSuccess > 1*time.Minute:
+				newDuration := 15 * time.Second
+				if currentSleepDuration != newDuration {
+					log.Printf("Increasing sleep to %v (idle > 1min, %d consecutive empty checks)",
+						newDuration, consecutiveEmptyChecks)
+				}
+				currentSleepDuration = newDuration
+			default:
+				newDuration := 5 * time.Second
+				if currentSleepDuration != newDuration {
+					log.Printf("Setting default sleep to %v (%d consecutive empty checks)",
+						newDuration, consecutiveEmptyChecks)
+				}
+				currentSleepDuration = newDuration
+			}
+
+			if currentSleepDuration > 0 {
+				log.Printf("No workable issues found. Sleeping for %v (idle for %v, %d consecutive empty checks)",
+					currentSleepDuration,
+					time.Since(lastSuccessfulTask).Round(time.Second),
+					consecutiveEmptyChecks)
+				time.Sleep(currentSleepDuration)
+				continue // Skip the rest of the loop after sleeping
+			}
 		}
 	}
 }
