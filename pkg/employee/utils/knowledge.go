@@ -154,7 +154,7 @@ func (k Knowledge) getCommentContext(context string) (string, error) {
 
 func (k Knowledge) getContext(context string) (string, error) {
 	// Handle comment-related contexts
-	if strings.Contains(context, "Comment") {
+	if strings.Contains(strings.ToLower(context), "comments") {
 		return k.getCommentContext(context)
 	}
 
