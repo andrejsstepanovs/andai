@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/andrejsstepanovs/andai/pkg/deps"
+	"github.com/andrejsstepanovs/andai/internal/deps"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/spf13/cobra"
 )

@@ -11,8 +11,8 @@ import (
 	"github.com/andrejsstepanovs/andai/cmd/setup"
 	"github.com/andrejsstepanovs/andai/cmd/validate"
 	"github.com/andrejsstepanovs/andai/cmd/work"
-	"github.com/andrejsstepanovs/andai/pkg/config"
-	"github.com/andrejsstepanovs/andai/pkg/deps"
+	"github.com/andrejsstepanovs/andai/internal/config"
+	"github.com/andrejsstepanovs/andai/internal/deps"
 	"github.com/spf13/cobra"
 )
 

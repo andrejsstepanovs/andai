@@ -1,7 +1,7 @@
 package validate
 
 import (
-	"github.com/andrejsstepanovs/andai/pkg/deps"
+	"github.com/andrejsstepanovs/andai/internal/deps"
 	"github.com/spf13/cobra"
 )
 

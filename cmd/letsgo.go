@@ -5,7 +5,7 @@ import (
 	"github.com/andrejsstepanovs/andai/cmd/work"
 	"github.com/spf13/cobra"
 
-	"github.com/andrejsstepanovs/andai/pkg/deps"
+	"github.com/andrejsstepanovs/andai/internal/deps"
 )
 
 func LetsGo(deps *deps.AppDependencies) *cobra.Command {

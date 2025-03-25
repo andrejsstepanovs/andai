@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/andrejsstepanovs/andai/pkg/deps"
-	"github.com/andrejsstepanovs/andai/pkg/redmine"
-	"github.com/andrejsstepanovs/andai/pkg/redmine/models"
+	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal/redmine"
+	"github.com/andrejsstepanovs/andai/internal/redmine/models"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

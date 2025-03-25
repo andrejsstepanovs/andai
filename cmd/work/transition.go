@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/andrejsstepanovs/andai/pkg/deps"
-	"github.com/andrejsstepanovs/andai/pkg/models"
-	model "github.com/andrejsstepanovs/andai/pkg/redmine"
+	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal/models"
+	model "github.com/andrejsstepanovs/andai/internal/redmine"
 	"github.com/mattn/go-redmine"
 	"github.com/spf13/cobra"
 )

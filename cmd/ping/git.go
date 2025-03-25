@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/andrejsstepanovs/andai/pkg/deps"
-	"github.com/andrejsstepanovs/andai/pkg/models"
-	"github.com/andrejsstepanovs/andai/pkg/redmine"
-	"github.com/andrejsstepanovs/andai/pkg/worker"
+	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal/models"
+	"github.com/andrejsstepanovs/andai/internal/redmine"
+	"github.com/andrejsstepanovs/andai/internal/worker"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/spf13/cobra"
 )

@@ -3,7 +3,7 @@ package setup
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/andrejsstepanovs/andai/pkg/deps"
+	"github.com/andrejsstepanovs/andai/internal/deps"
 )
 
 func Cmd(deps *deps.AppDependencies) *cobra.Command {

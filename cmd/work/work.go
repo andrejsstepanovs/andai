@@ -5,12 +5,12 @@ import (
 	"log"
 	"time"
 
-	"github.com/andrejsstepanovs/andai/pkg/deps"
-	"github.com/andrejsstepanovs/andai/pkg/employee"
-	"github.com/andrejsstepanovs/andai/pkg/employee/actions"
-	"github.com/andrejsstepanovs/andai/pkg/models"
-	"github.com/andrejsstepanovs/andai/pkg/workbench"
-	"github.com/andrejsstepanovs/andai/pkg/worker"
+	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal/employee"
+	"github.com/andrejsstepanovs/andai/internal/employee/actions"
+	"github.com/andrejsstepanovs/andai/internal/models"
+	"github.com/andrejsstepanovs/andai/internal/workbench"
+	"github.com/andrejsstepanovs/andai/internal/worker"
 	"github.com/spf13/cobra"
 )
 
