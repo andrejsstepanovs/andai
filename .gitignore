@@ -5,3 +5,4 @@ build
 .aider.tags.cache.v3
 .aider.chat.history.md
 .aider.tags.cache.v4/*
+.aider.input.history

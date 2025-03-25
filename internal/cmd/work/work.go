@@ -10,6 +10,7 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/employee/actions"
 	"github.com/andrejsstepanovs/andai/internal/exec"
 	"github.com/andrejsstepanovs/andai/internal/settings"
+	"github.com/mattn/go-redmine"
 	"github.com/spf13/cobra"
 )
 
@@ -145,13 +146,27 @@ func workNext(deps *internal.AppDependencies, params *settings.Settings) (bool, 
 
 		closedChildrenIDs, err := deps.Model.DBGetClosedChildrenIDs(issue.Id)
 		if err != nil {
-			return false, fmt.Errorf("failed to get redmine children ids err: %v", err)
+			return false, fmt.Errorf("failed to get redmine closed children ids err: %v", err)
 		}
 
-		children, err := deps.Model.APIGetChildren(issue)
-		if err != nil {
-			return false, fmt.Errorf("failed to get redmine issue relations err: %v", err)
+		closedChildren := make([]redmine.Issue, 0, len(closedChildrenIDs))
+		for _, childID := range closedChildrenIDs {
+			childIssue, err := deps.Model.API().Issue(childID)
+			if err != nil {
+				log.Printf("WARN: Failed to get details for closed child issue %d: %v", childID, err)
+				continue
+			}
+			closedChildren = append(closedChildren, *childIssue)
 		}
+
+		openChildren, err := deps.Model.APIGetChildren(issue)
+		if err != nil {
+			return false, fmt.Errorf("failed to get redmine open children err: %v", err)
+		}
+
+		allChildren := make([]redmine.Issue, 0, len(openChildren)+len(closedChildren))
+		allChildren = append(allChildren, openChildren...)
+		allChildren = append(allChildren, closedChildren...)
 
 		siblings, err := deps.Model.APIGetIssueSiblings(issue)
 		if err != nil {
@@ -190,7 +205,7 @@ func workNext(deps *internal.AppDependencies, params *settings.Settings) (bool, 
 			parent,
 			parents,
 			closedChildrenIDs,
-			children,
+			allChildren,
 			siblings,
 			*project,
 			projectConfig,
