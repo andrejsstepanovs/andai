@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/spf13/cobra"
 )
 
-func newPingAllCommand(deps *deps.AppDependencies) *cobra.Command {
+func newPingAllCommand(deps *internal.AppDependencies) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "all",
 		Short: "Ping (open) Git repository",

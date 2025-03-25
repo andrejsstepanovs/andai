@@ -11,8 +11,8 @@ import (
 	"github.com/andrejsstepanovs/andai/cmd/setup"
 	"github.com/andrejsstepanovs/andai/cmd/validate"
 	"github.com/andrejsstepanovs/andai/cmd/work"
+	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/andrejsstepanovs/andai/internal/config"
-	"github.com/andrejsstepanovs/andai/internal/deps"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +26,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	dependencies, err := deps.NewAppDependencies(projectConfig)
+	dependencies, err := internal.NewAppDependencies(projectConfig)
 	if err != nil {
 		log.Println("Error creating dependencies:", err)
 		os.Exit(1)

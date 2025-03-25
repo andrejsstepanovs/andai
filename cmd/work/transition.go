@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/andrejsstepanovs/andai/internal/models"
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
 	"github.com/mattn/go-redmine"
 	"github.com/spf13/cobra"
 )
 
-func newTriggersCommand(deps *deps.AppDependencies) *cobra.Command {
+func newTriggersCommand(deps *internal.AppDependencies) *cobra.Command {
 	return &cobra.Command{
 		Use:   "triggers",
 		Short: "Checks last issue status change and applies workflow triggers",

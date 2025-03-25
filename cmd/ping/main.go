@@ -1,11 +1,11 @@
 package ping
 
 import (
-	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/spf13/cobra"
 )
 
-func SetupPingCmd(deps *deps.AppDependencies) *cobra.Command {
+func SetupPingCmd(deps *internal.AppDependencies) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ping",
 		Short: "Ping environment",

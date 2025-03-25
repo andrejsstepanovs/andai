@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/andrejsstepanovs/andai/internal/ai"
-	"github.com/andrejsstepanovs/andai/internal/deps"
 	"github.com/spf13/cobra"
 )
 
-func newLLMPingCommand(deps *deps.AppDependencies) *cobra.Command {
+func newLLMPingCommand(deps *internal.AppDependencies) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "llm",
 		Short: "Test LLM connection",

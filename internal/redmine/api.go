@@ -72,7 +72,7 @@ func (c *Model) APISaveWiki(project redmine.Project, content string) error {
 func (c *Model) APISaveProject(project redmine.Project) (redmine.Project, error) {
 	current, err := c.API().Projects()
 	if err != nil {
-		return redmine.Project{}, fmt.Errorf("redmine ApiInterface projects err: %v", err)
+		return redmine.Project{}, fmt.Errorf("redmine APIInterface projects err: %v", err)
 	}
 
 	for _, p := range current {

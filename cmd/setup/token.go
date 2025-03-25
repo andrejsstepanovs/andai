@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/andrejsstepanovs/andai/internal/redmine"
 	"github.com/andrejsstepanovs/andai/internal/redmine/models"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func newGetTokenCommand(deps *deps.AppDependencies) *cobra.Command {
+func newGetTokenCommand(deps *internal.AppDependencies) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
 		Short: "Set (or get) redmine admin token",

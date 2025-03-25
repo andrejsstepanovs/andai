@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/andrejsstepanovs/andai/internal/ai"
-	"github.com/andrejsstepanovs/andai/internal/deps"
 	"github.com/andrejsstepanovs/andai/internal/employee/utils"
 	"github.com/andrejsstepanovs/andai/internal/exec"
 	"github.com/andrejsstepanovs/andai/internal/models"
@@ -18,7 +18,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newPingAiderCommand(deps *deps.AppDependencies) *cobra.Command {
+func newPingAiderCommand(deps *internal.AppDependencies) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "aider",
 		Short: "Ping aider connection",

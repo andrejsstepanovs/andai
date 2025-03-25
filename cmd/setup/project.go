@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/andrejsstepanovs/andai/internal/models"
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newProjectsCommand(deps *deps.AppDependencies) *cobra.Command {
+func newProjectsCommand(deps *internal.AppDependencies) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "projects",
 		Short: "Save (Update) projects",

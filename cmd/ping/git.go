@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/andrejsstepanovs/andai/internal/models"
 	"github.com/andrejsstepanovs/andai/internal/redmine"
 	"github.com/andrejsstepanovs/andai/internal/worker"
@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newGitPingCommand(deps *deps.AppDependencies) *cobra.Command {
+func newGitPingCommand(deps *internal.AppDependencies) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "git",
 		Short: "Ping (open) repository",

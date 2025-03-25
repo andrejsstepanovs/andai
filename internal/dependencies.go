@@ -1,4 +1,4 @@
-package deps
+package internal
 
 import (
 	"database/sql"

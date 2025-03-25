@@ -4,12 +4,12 @@ import (
 	"log"
 	"strings"
 
-	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/mattn/go-redmine"
 	"github.com/spf13/cobra"
 )
 
-func newCreateCommand(deps *deps.AppDependencies) *cobra.Command {
+func newCreateCommand(deps *internal.AppDependencies) *cobra.Command {
 	return &cobra.Command{
 		Use:   "create",
 		Short: "Creates new Issue. First param Issue Type, Second param Issue Subject, Third param Issue Description",

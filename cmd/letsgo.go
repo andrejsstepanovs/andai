@@ -5,10 +5,10 @@ import (
 	"github.com/andrejsstepanovs/andai/cmd/work"
 	"github.com/spf13/cobra"
 
-	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal"
 )
 
-func LetsGo(deps *deps.AppDependencies) *cobra.Command {
+func LetsGo(deps *internal.AppDependencies) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "lets",
 		Short: "Setup and Run the workflow loop",

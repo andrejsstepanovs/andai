@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/andrejsstepanovs/andai/internal/employee"
 	"github.com/andrejsstepanovs/andai/internal/employee/actions"
 	"github.com/andrejsstepanovs/andai/internal/models"
@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newLoopCommand(deps *deps.AppDependencies) *cobra.Command {
+func newLoopCommand(deps *internal.AppDependencies) *cobra.Command {
 	return &cobra.Command{
 		Use:   "loop",
 		Short: "Work forever",
@@ -24,7 +24,7 @@ func newLoopCommand(deps *deps.AppDependencies) *cobra.Command {
 	}
 }
 
-func Loop(deps *deps.AppDependencies) error {
+func Loop(deps *internal.AppDependencies) error {
 	// AI: Initialize tracking variables for incremental sleep
 	lastSuccessfulTask := time.Now()
 	consecutiveEmptyChecks := 0
@@ -97,7 +97,7 @@ func Loop(deps *deps.AppDependencies) error {
 	}
 }
 
-func newNextCommand(deps *deps.AppDependencies) *cobra.Command {
+func newNextCommand(deps *internal.AppDependencies) *cobra.Command {
 	return &cobra.Command{
 		Use:   "next",
 		Short: "Work with redmine",
@@ -114,7 +114,7 @@ func newNextCommand(deps *deps.AppDependencies) *cobra.Command {
 	}
 }
 
-func workNext(deps *deps.AppDependencies, settings *models.Settings) (bool, error) {
+func workNext(deps *internal.AppDependencies, settings *models.Settings) (bool, error) {
 	issues, err := deps.Model.APIGetWorkableIssues(settings.Workflow)
 	if err != nil {
 		log.Println("Failed to get workable issue")

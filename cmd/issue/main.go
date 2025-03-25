@@ -3,10 +3,10 @@ package issue
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal"
 )
 
-func Cmd(deps *deps.AppDependencies) *cobra.Command {
+func Cmd(deps *internal.AppDependencies) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "issue",
 		Short: "Manages issues",

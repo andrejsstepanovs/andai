@@ -12,7 +12,7 @@ type DatabaseInterface interface {
 	Exec(query string, args ...any) (sql.Result, error)
 }
 
-type ApiInterface interface {
+type APIInterface interface {
 	Users() ([]redmine.User, error)
 	WikiPage(projectID int, title string) (*redmine.WikiPage, error)
 	CreateWikiPage(projectID int, wikiPage redmine.WikiPage) (*redmine.WikiPage, error)
@@ -33,17 +33,17 @@ type ApiInterface interface {
 
 type Model struct {
 	db  DatabaseInterface
-	api ApiInterface
+	api APIInterface
 }
 
-func NewModel(db DatabaseInterface, api ApiInterface) *Model {
+func NewModel(db DatabaseInterface, api APIInterface) *Model {
 	return &Model{
 		api: api,
 		db:  db,
 	}
 }
 
-func (c *Model) API() ApiInterface {
+func (c *Model) API() APIInterface {
 	return c.api
 }
 

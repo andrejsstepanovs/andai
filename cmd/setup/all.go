@@ -4,14 +4,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/andrejsstepanovs/andai/internal/models"
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/spf13/cobra"
 )
 
-func newSetupAllCommand(deps *deps.AppDependencies) *cobra.Command {
+func newSetupAllCommand(deps *internal.AppDependencies) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "all",
 		Short: "Setup everything",

@@ -5,7 +5,7 @@ import (
 	"log"
 	"sort"
 
-	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/andrejsstepanovs/andai/internal/models"
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newWorkflowCommand(deps *deps.AppDependencies) *cobra.Command {
+func newWorkflowCommand(deps *internal.AppDependencies) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "workflow",
 		Short: "Setup Redmine workflow",

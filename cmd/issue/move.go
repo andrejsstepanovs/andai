@@ -6,7 +6,7 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/andrejsstepanovs/andai/internal/deps"
+	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/andrejsstepanovs/andai/internal/employee/actions"
 	"github.com/andrejsstepanovs/andai/internal/models"
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newMoveCommand(deps *deps.AppDependencies) *cobra.Command {
+func newMoveCommand(deps *internal.AppDependencies) *cobra.Command {
 	return &cobra.Command{
 		Use:   "move",
 		Short: "Move Issue to next successful or failed step. First param - issue Subject, Second param - success|fail",
@@ -61,7 +61,7 @@ func newMoveCommand(deps *deps.AppDependencies) *cobra.Command {
 	}
 }
 
-func newMoveChildrenCommand(deps *deps.AppDependencies) *cobra.Command {
+func newMoveChildrenCommand(deps *internal.AppDependencies) *cobra.Command {
 	return &cobra.Command{
 		Use:   "move-children",
 		Short: "Moves All Issue children to next successful or failed step. First param - issue Subject, Second param - success|fail",
