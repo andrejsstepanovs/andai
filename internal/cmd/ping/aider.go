@@ -13,7 +13,6 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/redmine"
 	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/andrejsstepanovs/andai/internal/workbench"
-	"github.com/andrejsstepanovs/andai/internal/worker"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/spf13/cobra"
 )
@@ -57,7 +56,7 @@ func pingAider(redmine *redmine.Model, projects settings.Projects, aider setting
 	}
 
 	projectConfig := projects.Find(project.Identifier)
-	git, err := worker.FindProjectGit(projectConfig, projectRepo)
+	git, err := exec.FindProjectGit(projectConfig, projectRepo)
 	if err != nil {
 		return fmt.Errorf("failed to find project git err: %v", err)
 	}

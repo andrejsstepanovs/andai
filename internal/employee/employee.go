@@ -16,7 +16,6 @@ import (
 	redminemodels "github.com/andrejsstepanovs/andai/internal/redmine/models"
 	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/andrejsstepanovs/andai/internal/workbench"
-	"github.com/andrejsstepanovs/andai/internal/worker"
 	"github.com/mattn/go-redmine"
 )
 
@@ -235,7 +234,7 @@ func (i *Employee) findMentionedFiles(contextFile string) (exec.Output, error) {
 		return exec.Output{}, err
 	}
 
-	allPossiblePaths, err := worker.GetAllPossiblePaths(i.projectCfg, i.projectRepo, false)
+	allPossiblePaths, err := exec.GetAllPossiblePaths(i.projectCfg, i.projectRepo, false)
 	if err != nil {
 		log.Printf("Failed to get all possible paths: %v", err)
 		return exec.Output{}, err

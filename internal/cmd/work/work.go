@@ -8,9 +8,9 @@ import (
 	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/andrejsstepanovs/andai/internal/employee"
 	"github.com/andrejsstepanovs/andai/internal/employee/actions"
+	"github.com/andrejsstepanovs/andai/internal/exec"
 	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/andrejsstepanovs/andai/internal/workbench"
-	"github.com/andrejsstepanovs/andai/internal/worker"
 	"github.com/spf13/cobra"
 )
 
@@ -173,7 +173,7 @@ func workNext(deps *internal.AppDependencies, params *settings.Settings) (bool, 
 		log.Printf("Repository %d: %s", projectRepo.ID, projectRepo.RootURL)
 
 		projectConfig := params.Projects.Find(project.Identifier)
-		git, err := worker.FindProjectGit(projectConfig, projectRepo)
+		git, err := exec.FindProjectGit(projectConfig, projectRepo)
 		if err != nil {
 			return false, fmt.Errorf("failed to find project git err: %v", err)
 		}

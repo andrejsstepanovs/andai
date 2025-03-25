@@ -1,4 +1,4 @@
-package worker_test
+package exec_test
 
 import (
 	"crypto/rand"
@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/andrejsstepanovs/andai/internal/worker"
+	"github.com/andrejsstepanovs/andai/internal/exec"
 	gitlib "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/stretchr/testify/require"
@@ -28,7 +28,7 @@ func TestNewGit(t *testing.T) {
 		hash2 := commit(t, repo, tmpDir, "Second commit to main")
 
 		// TEST getting last commit hash
-		g := worker.NewGit(tmpDir)
+		g := exec.NewGit(tmpDir)
 		err = g.Open()
 		require.NoError(t, err)
 

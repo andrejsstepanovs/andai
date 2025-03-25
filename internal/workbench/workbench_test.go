@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/andrejsstepanovs/andai/internal/worker"
+	"github.com/andrejsstepanovs/andai/internal/exec"
 )
 
 func TestWorkbench_PrepareWorkplace(t *testing.T) {
@@ -48,7 +48,7 @@ func TestWorkbench_PrepareWorkplace(t *testing.T) {
 		{
 			name: "successful preparation with .git directory",
 			setup: func() (*Workbench, string) {
-				g := worker.NewGit(tmpDir)
+				g := exec.NewGit(tmpDir)
 				err := g.Open()
 				require.NoError(t, err)
 
@@ -64,7 +64,7 @@ func TestWorkbench_PrepareWorkplace(t *testing.T) {
 		{
 			name: "successful preparation with project root directory",
 			setup: func() (*Workbench, string) {
-				g := worker.NewGit(tmpDir)
+				g := exec.NewGit(tmpDir)
 				err := g.Open()
 				require.NoError(t, err)
 
@@ -125,7 +125,7 @@ func TestWorkbench_changeDirectory(t *testing.T) {
 			name: "change to valid directory",
 			setup: func() *Workbench {
 				return &Workbench{
-					Git: &worker.Git{},
+					Git: &exec.Git{},
 				}
 			},
 			wantErr: false,
@@ -134,7 +134,7 @@ func TestWorkbench_changeDirectory(t *testing.T) {
 			name: "attempt to change to non-existent directory",
 			setup: func() *Workbench {
 				return &Workbench{
-					Git: &worker.Git{},
+					Git: &exec.Git{},
 				}
 			},
 			wantErr: true,

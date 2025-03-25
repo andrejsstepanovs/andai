@@ -8,10 +8,10 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/andrejsstepanovs/andai/internal/exec"
 	redminemodels "github.com/andrejsstepanovs/andai/internal/redmine/models"
 	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/andrejsstepanovs/andai/internal/workbench"
-	"github.com/andrejsstepanovs/andai/internal/worker"
 	"github.com/mattn/go-redmine"
 )
 
@@ -200,7 +200,7 @@ func (k Knowledge) getComments(comments redminemodels.Comments, tag string) (str
 	cleanComments := make(redminemodels.Comments, 0)
 	kickCommentsIfMatch := [][]string{
 		{"Merged", "branch", "into"},
-		{"Branch", worker.BranchPrefix, "Commit"},
+		{"Branch", exec.BranchPrefix, "Commit"},
 	}
 	for _, c := range comments {
 		kickComment := false

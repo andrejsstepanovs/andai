@@ -5,9 +5,9 @@ import (
 	"log"
 
 	"github.com/andrejsstepanovs/andai/internal"
+	"github.com/andrejsstepanovs/andai/internal/exec"
 	"github.com/andrejsstepanovs/andai/internal/redmine"
 	"github.com/andrejsstepanovs/andai/internal/settings"
-	"github.com/andrejsstepanovs/andai/internal/worker"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/spf13/cobra"
 )
@@ -51,7 +51,7 @@ func pingGit(model *redmine.Model, projects settings.Projects) error {
 				log.Printf("Repository %d: %s", projectRepo.ID, projectRepo.RootURL)
 
 				projectConfig := projects.Find(project.Identifier)
-				git, err := worker.FindProjectGit(projectConfig, projectRepo)
+				git, err := exec.FindProjectGit(projectConfig, projectRepo)
 				if err != nil {
 					return fmt.Errorf("failed to find project git err: %v", err)
 				}
