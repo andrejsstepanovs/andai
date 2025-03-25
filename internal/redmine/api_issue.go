@@ -90,22 +90,37 @@ func (c *Model) APIGetProjectIssues(project redmine.Project) ([]redmine.Issue, e
 	return projectIssues, nil
 }
 
-func (c *Model) APIGetWorkableIssues(workflow models.Workflow) ([]redmine.Issue, error) {
-	projects, err := c.APIGetProjects()
+func (c *Model) getValidProjects() ([]redmine.Project, error) {
+	allProjects, err := c.APIGetProjects()
 	if err != nil {
 		return nil, fmt.Errorf("error redmine issue status: %v", err)
 	}
 
-	for _, project := range projects {
+	projects := make([]redmine.Project, 0)
+	for _, project := range allProjects {
 		isPublic, err := c.DBProjectPublic(project.Id)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get redmine project public err: %v", err)
 		}
+
 		if !isPublic {
 			log.Printf("Skipping not public project %q", project.Identifier)
 			continue
 		}
 
+		projects = append(projects, project)
+	}
+
+	return projects, nil
+}
+
+func (c *Model) APIGetWorkableIssues(workflow models.Workflow) ([]redmine.Issue, error) {
+	projects, err := c.getValidProjects()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, project := range projects {
 		projectIssues, err := c.APIGetProjectIssues(project)
 		if err != nil {
 			return nil, fmt.Errorf("error redmine issues of project: %v", err)
