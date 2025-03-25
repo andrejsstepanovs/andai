@@ -7,12 +7,12 @@ outpkg: "mocks"
 dir: "{{.InterfaceDir}}/mocks"
 
 packages:
-  github.com/andrejsstepanovs/andai/pkg/redmine:
+  github.com/andrejsstepanovs/andai/internal/redmine:
     config:
       recursive: True
       all: True
       unroll-variadic: False
-  github.com/andrejsstepanovs/andai/pkg/workbench:
+  github.com/andrejsstepanovs/andai/internal/workbench:
     config:
       recursive: True
       all: True

@@ -9,6 +9,20 @@ type Git struct {
 	mock.Mock
 }
 
+// BranchName provides a mock function with given fields: issueID
+func (_m *Git) BranchName(issueID int) string {
+	ret := _m.Called(issueID)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(int) string); ok {
+		r0 = rf(issueID)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
 // CheckoutBranch provides a mock function with given fields: name
 func (_m *Git) CheckoutBranch(name string) error {
 	ret := _m.Called(name)
@@ -23,6 +37,96 @@ func (_m *Git) CheckoutBranch(name string) error {
 	return r0
 }
 
+// DeleteBranch provides a mock function with given fields: _a0
+func (_m *Git) DeleteBranch(_a0 string) error {
+	ret := _m.Called(_a0)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// GetAffectedFiles provides a mock function with given fields: sha
+func (_m *Git) GetAffectedFiles(sha string) ([]string, error) {
+	ret := _m.Called(sha)
+
+	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]string, error)); ok {
+		return rf(sha)
+	}
+	if rf, ok := ret.Get(0).(func(string) []string); ok {
+		r0 = rf(sha)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(sha)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetLastCommitHash provides a mock function with given fields:
+func (_m *Git) GetLastCommitHash() (string, error) {
+	ret := _m.Called()
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func() (string, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetLastCommits provides a mock function with given fields: count
+func (_m *Git) GetLastCommits(count int) ([]string, error) {
+	ret := _m.Called(count)
+
+	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int) ([]string, error)); ok {
+		return rf(count)
+	}
+	if rf, ok := ret.Get(0).(func(int) []string); ok {
+		r0 = rf(count)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(count)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetPath provides a mock function with given fields:
 func (_m *Git) GetPath() string {
 	ret := _m.Called()
@@ -35,6 +139,11 @@ func (_m *Git) GetPath() string {
 	}
 
 	return r0
+}
+
+// Reload provides a mock function with given fields:
+func (_m *Git) Reload() {
+	_m.Called()
 }
 
 // SetPath provides a mock function with given fields: path
