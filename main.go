@@ -12,14 +12,14 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/cmd/setup"
 	"github.com/andrejsstepanovs/andai/internal/cmd/validate"
 	"github.com/andrejsstepanovs/andai/internal/cmd/work"
-	"github.com/andrejsstepanovs/andai/internal/models/config"
+	"github.com/andrejsstepanovs/andai/internal/models"
 	"github.com/spf13/cobra"
 )
 
 func main() {
 	project := os.Getenv("PROJECT")
 
-	projectConfig := config.NewConfig(project, ".")
+	projectConfig := models.NewConfig(project, ".")
 	_, err := projectConfig.Load()
 	if err != nil {
 		log.Println("Error loading config:", err)

@@ -6,21 +6,20 @@ import (
 
 	"github.com/andrejsstepanovs/andai/internal/ai"
 	"github.com/andrejsstepanovs/andai/internal/models"
-	"github.com/andrejsstepanovs/andai/internal/models/config"
 	"github.com/andrejsstepanovs/andai/internal/redmine"
 	apiredmine "github.com/mattn/go-redmine"
 	"github.com/spf13/viper"
 )
 
 type AppDependencies struct {
-	Config  *config.Config
+	Config  *models.Config
 	Model   *redmine.Model
 	LlmNorm *ai.AI
 }
 
 var Container *AppDependencies
 
-func NewAppDependencies(config *config.Config) (*AppDependencies, error) {
+func NewAppDependencies(config *models.Config) (*AppDependencies, error) {
 	if Container != nil {
 		return Container, nil
 	}

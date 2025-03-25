@@ -1,4 +1,4 @@
-package config
+package models
 
 import (
 	"errors"
@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/andrejsstepanovs/andai/internal/models"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
@@ -35,22 +34,22 @@ func NewConfig(project, basePath string) *Config {
 	return conf
 }
 
-func (c *Config) Load() (*models.Settings, error) {
+func (c *Config) Load() (*Settings, error) {
 	configFile, err := c.findConfigFile()
 	if err != nil {
 		log.Println("Error finding config file:", err)
-		return &models.Settings{}, err
+		return &Settings{}, err
 	}
 
 	settings, err := c.getSettings(configFile)
 	if err != nil {
 		log.Println("Error getting settings:", err)
-		return &models.Settings{}, err
+		return &Settings{}, err
 	}
 
 	err = settings.Validate()
 	if err != nil {
-		return &models.Settings{}, fmt.Errorf("settings validation err: %w", err)
+		return &Settings{}, fmt.Errorf("settings validation err: %w", err)
 	}
 
 	return settings, nil
@@ -87,19 +86,19 @@ func (c *Config) findConfigFile() (string, error) {
 	return viper.ConfigFileUsed(), nil
 }
 
-func (c *Config) getSettings(configFile string) (*models.Settings, error) {
+func (c *Config) getSettings(configFile string) (*Settings, error) {
 	log.Println("Using config file to load workflow:", configFile)
 	content, err := os.ReadFile(configFile) // nolint:gosec
 	if err != nil {
 		log.Println("Error reading file:", err)
-		return &models.Settings{}, err
+		return &Settings{}, err
 	}
 
-	var settings models.Settings
+	var settings Settings
 	err = yaml.Unmarshal(content, &settings)
 	if err != nil {
 		log.Printf("error unmarshaling YAML: %v\n", err)
-		return &models.Settings{}, err
+		return &Settings{}, err
 	}
 
 	return &settings, nil
