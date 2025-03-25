@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"github.com/andrejsstepanovs/andai/internal"
-	"github.com/andrejsstepanovs/andai/internal/models"
 	"github.com/andrejsstepanovs/andai/internal/redmine"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/andrejsstepanovs/andai/internal/worker"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/spf13/cobra"
@@ -34,7 +34,7 @@ func newGitPingCommand(deps *internal.AppDependencies) *cobra.Command {
 	return cmd
 }
 
-func pingGit(model *redmine.Model, projects models.Projects) error {
+func pingGit(model *redmine.Model, projects settings.Projects) error {
 	allProjects, err := model.API().Projects()
 	if err != nil {
 		return fmt.Errorf("failed to get redmine project err: %v", err)

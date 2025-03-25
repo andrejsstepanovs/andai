@@ -10,7 +10,7 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/ai"
 	"github.com/andrejsstepanovs/andai/internal/employee/utils"
 	"github.com/andrejsstepanovs/andai/internal/exec"
-	"github.com/andrejsstepanovs/andai/internal/models"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/mattn/go-redmine"
 	"github.com/teilomillet/gollm"
 )
@@ -61,7 +61,7 @@ func EvaluateOutcome(llm *ai.AI, knowledgeFile string) (exec.Output, bool, error
 	return out, false, nil
 }
 
-func GenerateIssues(llm *ai.AI, targetIssueTypeName models.IssueTypeName, knowledgeFile string) (exec.Output, map[int]redmine.Issue, map[int][]int, error) {
+func GenerateIssues(llm *ai.AI, targetIssueTypeName settings.IssueTypeName, knowledgeFile string) (exec.Output, map[int]redmine.Issue, map[int][]int, error) {
 	var (
 		err              error
 		query            string
@@ -97,7 +97,7 @@ func GenerateIssues(llm *ai.AI, targetIssueTypeName models.IssueTypeName, knowle
 	return exec.Output{}, items, deps, nil
 }
 
-func getIssues(llmNorm *ai.AI, targetIssueTypeName models.IssueTypeName, knowledgeFile, promptExend string) (Answer, string, error) {
+func getIssues(llmNorm *ai.AI, targetIssueTypeName settings.IssueTypeName, knowledgeFile, promptExend string) (Answer, string, error) {
 	example := Answer{
 		Issues: []AnswerIssues{
 			{

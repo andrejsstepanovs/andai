@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/andrejsstepanovs/andai/internal/models"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/mattn/go-redmine"
 )
@@ -114,7 +114,7 @@ func (c *Model) getValidProjects() ([]redmine.Project, error) {
 	return projects, nil
 }
 
-func (c *Model) APIGetWorkableIssues(workflow models.Workflow) ([]redmine.Issue, error) {
+func (c *Model) APIGetWorkableIssues(workflow settings.Workflow) ([]redmine.Issue, error) {
 	projects, err := c.getValidProjects()
 	if err != nil {
 		return nil, err
@@ -259,7 +259,7 @@ func (c *Model) issueDependencies(projectIssues []redmine.Issue) (map[int][]int,
 	return dependencies, nil
 }
 
-func (c *Model) getCorrectIssue(issues []redmine.Issue, priorities models.Priorities, states models.States) []redmine.Issue {
+func (c *Model) getCorrectIssue(issues []redmine.Issue, priorities settings.Priorities, states settings.States) []redmine.Issue {
 	valid := make([]redmine.Issue, 0)
 	for _, priority := range priorities {
 		//fmt.Printf("PRIORITY: %q @ %q\n", priority.Type, priority.State)

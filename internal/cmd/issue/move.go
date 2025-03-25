@@ -8,8 +8,8 @@ import (
 
 	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/andrejsstepanovs/andai/internal/employee/actions"
-	"github.com/andrejsstepanovs/andai/internal/models"
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/mattn/go-redmine"
 	"github.com/spf13/cobra"
 )
@@ -110,7 +110,7 @@ func newMoveChildrenCommand(deps *internal.AppDependencies) *cobra.Command {
 	}
 }
 
-func findIssue(model *model.Model, args []string, workflow models.Workflow) (redmine.Issue, bool, models.StateName, error) {
+func findIssue(model *model.Model, args []string, workflow settings.Workflow) (redmine.Issue, bool, settings.StateName, error) {
 	if len(args) < 2 {
 		log.Println("Not enough arguments")
 		return redmine.Issue{}, false, "", errors.New("not enough arguments")
@@ -152,11 +152,11 @@ func findIssue(model *model.Model, args []string, workflow models.Workflow) (red
 		return redmine.Issue{}, false, "", nil
 	}
 
-	toTarget := models.StateName("")
+	toTarget := settings.StateName("")
 	success, err := strconv.ParseBool(args[1])
 	if err != nil {
-		toTarget = models.StateName(args[1])
-		transitions := workflow.Transitions.GetTransitions(models.StateName(foundIssue.Status.Name))
+		toTarget = settings.StateName(args[1])
+		transitions := workflow.Transitions.GetTransitions(settings.StateName(foundIssue.Status.Name))
 		found := false
 		for _, transition := range transitions {
 			if transition.Target == toTarget {

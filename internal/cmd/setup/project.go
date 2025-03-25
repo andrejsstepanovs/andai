@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"github.com/andrejsstepanovs/andai/internal"
-	"github.com/andrejsstepanovs/andai/internal/models"
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/mattn/go-redmine"
 	"github.com/spf13/cobra"
@@ -36,7 +36,7 @@ func newProjectsCommand(deps *internal.AppDependencies) *cobra.Command {
 	return cmd
 }
 
-func setupProjects(model *model.Model, projectsConf models.Projects) error {
+func setupProjects(model *model.Model, projectsConf settings.Projects) error {
 	for _, p := range projectsConf {
 		log.Printf("Processing: %s (%s)\n", p.Name, p.Identifier)
 

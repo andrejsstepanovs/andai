@@ -6,13 +6,13 @@ import (
 
 	"github.com/andrejsstepanovs/andai/internal/ai"
 	"github.com/andrejsstepanovs/andai/internal/exec"
-	"github.com/andrejsstepanovs/andai/internal/models"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 )
 
 // AiderExecute executes the command and returns the output.
 // If contextFile is provided step.Prompt will be ignored. (don't worry, it should be part of contextFile).
 // If you want to use step.Prompt, provide empty string for contextFile.
-func AiderExecute(contextFile string, step models.Step, aiderConfig models.Aider) (exec.Output, error) {
+func AiderExecute(contextFile string, step settings.Step, aiderConfig settings.Aider) (exec.Output, error) {
 	if contextFile != "" {
 		log.Printf("Context file: %q\n", contextFile)
 	}

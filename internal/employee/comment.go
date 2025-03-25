@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/andrejsstepanovs/andai/internal/exec"
-	"github.com/andrejsstepanovs/andai/internal/models"
 	redminemodels "github.com/andrejsstepanovs/andai/internal/redmine/models"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 )
 
 func (i *Employee) getComments() (redminemodels.Comments, error) {
@@ -42,7 +42,7 @@ func (i *Employee) AddComment(text string) error {
 	return nil
 }
 
-func (i *Employee) RememberOutput(step models.Step, output exec.Output) {
+func (i *Employee) RememberOutput(step settings.Step, output exec.Output) {
 	logCommand := fmt.Sprintf("%s %s", step.Command, step.Action)
 	if output.Stdout != "" {
 		format := "Command: **%s**\n<result>\n%s\n</result>"

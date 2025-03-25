@@ -8,8 +8,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/andrejsstepanovs/andai/internal/models"
 	redminemodels "github.com/andrejsstepanovs/andai/internal/redmine/models"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/andrejsstepanovs/andai/internal/workbench"
 	"github.com/andrejsstepanovs/andai/internal/worker"
 	"github.com/mattn/go-redmine"
@@ -27,10 +27,10 @@ type Knowledge struct {
 	Children          []redmine.Issue // not closed children
 	Siblings          []redmine.Issue
 	Workbench         *workbench.Workbench
-	Project           models.Project
-	IssueTypes        models.IssueTypes
+	Project           settings.Project
+	IssueTypes        settings.IssueTypes
 	Comments          redminemodels.Comments
-	Step              models.Step
+	Step              settings.Step
 }
 
 func (k Knowledge) BuildPromptTmpFile() (string, error) {
@@ -132,21 +132,21 @@ func (k Knowledge) getLastNComments(n int, tag string) (string, error) {
 
 func (k Knowledge) getCommentContext(context string) (string, error) {
 	switch context {
-	case models.ContextLastComment:
+	case settings.ContextLastComment:
 		if len(k.Comments) == 0 {
 			return "", nil
 		}
-		return k.getComments(redminemodels.Comments{k.Comments[len(k.Comments)-1]}, models.ContextLastComment)
-	case models.ContextTwoComment:
-		return k.getLastNComments(2, models.ContextTwoComment)
-	case models.ContextThreeComment:
-		return k.getLastNComments(3, models.ContextThreeComment)
-	case models.ContextFourComment:
-		return k.getLastNComments(4, models.ContextFourComment)
-	case models.ContextFifeComment:
-		return k.getLastNComments(5, models.ContextFifeComment)
-	case models.ContextComments:
-		return k.getComments(k.Comments, models.ContextComments)
+		return k.getComments(redminemodels.Comments{k.Comments[len(k.Comments)-1]}, settings.ContextLastComment)
+	case settings.ContextTwoComment:
+		return k.getLastNComments(2, settings.ContextTwoComment)
+	case settings.ContextThreeComment:
+		return k.getLastNComments(3, settings.ContextThreeComment)
+	case settings.ContextFourComment:
+		return k.getLastNComments(4, settings.ContextFourComment)
+	case settings.ContextFifeComment:
+		return k.getLastNComments(5, settings.ContextFifeComment)
+	case settings.ContextComments:
+		return k.getComments(k.Comments, settings.ContextComments)
 	default:
 		return "", fmt.Errorf("unknown comment context: %q", context)
 	}
@@ -160,23 +160,23 @@ func (k Knowledge) getContext(context string) (string, error) {
 
 	// Handle other contexts
 	switch context {
-	case models.ContextTicket:
+	case settings.ContextTicket:
 		return k.getIssue()
-	case models.ContextProject:
+	case settings.ContextProject:
 		return k.getProject()
-	case models.ContextProjectWiki:
+	case settings.ContextProjectWiki:
 		return k.getProjectWiki()
-	case models.ContextParent:
+	case settings.ContextParent:
 		return k.getParent()
-	case models.ContextParents:
+	case settings.ContextParents:
 		return k.getParents()
-	case models.ContextSiblings:
+	case settings.ContextSiblings:
 		return k.getSiblings()
-	case models.ContextChildren:
+	case settings.ContextChildren:
 		return k.getChildren()
-	case models.ContextAffectedFiles:
+	case settings.ContextAffectedFiles:
 		return k.getChangedFiles()
-	case models.ContextIssueTypes:
+	case settings.ContextIssueTypes:
 		return k.getIssueTypes()
 	default:
 		return "", fmt.Errorf("unknown context: %q", context)
@@ -399,7 +399,7 @@ func (k Knowledge) getIssueContext(issue redmine.Issue) (string, error) {
 
 	data := map[string]interface{}{
 		"Issue":     issue,
-		"IssueType": k.IssueTypes.Get(models.IssueTypeName(issue.Tracker.Name)),
+		"IssueType": k.IssueTypes.Get(settings.IssueTypeName(issue.Tracker.Name)),
 	}
 
 	tmpl, err := template.New("Issue").Parse(promptTemplate)

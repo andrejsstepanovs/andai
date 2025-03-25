@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 
-	workflow "github.com/andrejsstepanovs/andai/internal/models"
+	workflow "github.com/andrejsstepanovs/andai/internal/settings"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/mattn/go-redmine"
 )

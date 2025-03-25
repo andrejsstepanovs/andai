@@ -1,4 +1,4 @@
-package models
+package settings
 
 // Workflow represents
 type Workflow struct {

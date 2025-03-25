@@ -5,26 +5,26 @@ import (
 	"fmt"
 
 	"github.com/andrejsstepanovs/andai/internal/ai"
-	"github.com/andrejsstepanovs/andai/internal/models"
 	"github.com/andrejsstepanovs/andai/internal/redmine"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 	apiredmine "github.com/mattn/go-redmine"
 	"github.com/spf13/viper"
 )
 
 type AppDependencies struct {
-	Config  *models.Config
+	Config  *settings.Config
 	Model   *redmine.Model
 	LlmNorm *ai.AI
 }
 
 var Container *AppDependencies
 
-func NewAppDependencies(config *models.Config) (*AppDependencies, error) {
+func NewAppDependencies(config *settings.Config) (*AppDependencies, error) {
 	if Container != nil {
 		return Container, nil
 	}
 
-	settings, err := config.Load()
+	params, err := config.Load()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load settings err: %v", err)
 	}
@@ -35,7 +35,7 @@ func NewAppDependencies(config *models.Config) (*AppDependencies, error) {
 	}
 	api := apiredmine.NewClient(viper.GetString("redmine.url"), viper.GetString("redmine.api_key"))
 
-	p := settings.LlmModels.Get(models.LlmModelNormal)
+	p := params.LlmModels.Get(settings.LlmModelNormal)
 	aiNorm, err := ai.NewAI(p)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AI (normal) err: %v", err)

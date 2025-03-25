@@ -12,9 +12,9 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/employee/processor"
 	"github.com/andrejsstepanovs/andai/internal/employee/utils"
 	"github.com/andrejsstepanovs/andai/internal/exec"
-	"github.com/andrejsstepanovs/andai/internal/models"
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
 	redminemodels "github.com/andrejsstepanovs/andai/internal/redmine/models"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/andrejsstepanovs/andai/internal/workbench"
 	"github.com/andrejsstepanovs/andai/internal/worker"
 	"github.com/mattn/go-redmine"
@@ -32,14 +32,14 @@ type Employee struct {
 	children          []redmine.Issue
 	siblings          []redmine.Issue
 	project           redmine.Project
-	projectCfg        models.Project
+	projectCfg        settings.Project
 	projectRepo       redminemodels.Repository
-	aiderConfig       models.Aider
+	aiderConfig       settings.Aider
 	workbench         *workbench.Workbench
-	state             models.State
-	issueType         models.IssueType
-	issueTypes        models.IssueTypes
-	job               models.Job
+	state             settings.State
+	issueType         settings.IssueType
+	issueTypes        settings.IssueTypes
+	job               settings.Job
 	history           []string
 	contextFiles      []string
 }
@@ -57,12 +57,12 @@ func NewEmployee(
 	childIssues []redmine.Issue,
 	siblingIssues []redmine.Issue,
 	project redmine.Project,
-	projectConfig models.Project,
+	projectConfig settings.Project,
 	workbench *workbench.Workbench,
-	aiderConfig models.Aider,
-	state models.State,
-	issueType models.IssueType,
-	issueTypes models.IssueTypes,
+	aiderConfig settings.Aider,
+	state settings.State,
+	issueType settings.IssueType,
+	issueTypes settings.IssueTypes,
 	projectRepo redminemodels.Repository,
 ) *Employee {
 	return &Employee{
@@ -81,7 +81,7 @@ func NewEmployee(
 		state:             state,
 		issueType:         issueType,
 		issueTypes:        issueTypes,
-		job:               issueType.Jobs.Get(models.StateName(issue.Status.Name)),
+		job:               issueType.Jobs.Get(settings.StateName(issue.Status.Name)),
 		projectRepo:       projectRepo,
 	}
 }
@@ -142,7 +142,7 @@ func (i *Employee) ExecuteWorkflow() (bool, error) {
 // Returns:
 //   - Output: The execution results including command, stdout and stderr
 //   - error: Any error that occurred during execution
-func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, error) {
+func (i *Employee) executeWorkflowStep(workflowStep settings.Step) (exec.Output, error) {
 	log.Printf("Execute Step: %s - %s", workflowStep.Command, workflowStep.Action)
 
 	comments, err := i.getComments()
@@ -184,7 +184,7 @@ func (i *Employee) executeWorkflowStep(workflowStep models.Step) (exec.Output, e
 	return i.executeCommand(workflowStep, contextFile)
 }
 
-func (i *Employee) executeCommand(workflowStep models.Step, contextFile string) (exec.Output, error) {
+func (i *Employee) executeCommand(workflowStep settings.Step, contextFile string) (exec.Output, error) {
 	log.Printf("Execute Command: %s - %s", workflowStep.Command, workflowStep.Action)
 	switch workflowStep.Command {
 	case "next":
@@ -283,7 +283,7 @@ func (i *Employee) commitUncommitted(commitMessage string) (exec.Output, error) 
 	return ret, nil
 }
 
-func (i *Employee) runProjectCmd(workflowStep models.Step) (exec.Output, error) {
+func (i *Employee) runProjectCmd(workflowStep settings.Step) (exec.Output, error) {
 	command, err := i.projectCfg.Commands.Find(workflowStep.Action)
 	if err != nil {
 		return exec.Output{}, err
@@ -319,7 +319,7 @@ func (i *Employee) runProjectCmd(workflowStep models.Step) (exec.Output, error) 
 	return ret, nil
 }
 
-func (i *Employee) runBash(workflowStep models.Step) (exec.Output, error) {
+func (i *Employee) runBash(workflowStep settings.Step) (exec.Output, error) {
 	parts := strings.Split(workflowStep.Action, " ")
 	cmd := parts[0]
 	arguments := make([]string, 0)
@@ -333,7 +333,7 @@ func (i *Employee) runBash(workflowStep models.Step) (exec.Output, error) {
 	return ret, nil
 }
 
-func (i *Employee) aider(workflowStep models.Step, contextFile string) (exec.Output, error) {
+func (i *Employee) aider(workflowStep settings.Step, contextFile string) (exec.Output, error) {
 	if contextFile == "" {
 		return exec.Output{}, fmt.Errorf("no context file provided for aider command")
 	}
@@ -374,7 +374,7 @@ func (i *Employee) commentLastCommit(commitMessage string) error {
 	return nil
 }
 
-func (i *Employee) summarizeTask(workflowStep models.Step, contextFile string, includeFiles []string) (string, error) {
+func (i *Employee) summarizeTask(workflowStep settings.Step, contextFile string, includeFiles []string) (string, error) {
 	contextContent, err := utils.GetFileContents(contextFile)
 	if err != nil {
 		log.Printf("Failed to get file contents: %v", err)
@@ -445,7 +445,7 @@ func (i *Employee) buildTaskSummaryAIHistory(contextContent, query string, inclu
 	return history, nil
 }
 
-func (i *Employee) summarizeTheTask(workflowStep models.Step, contextFile string) (exec.Output, error) {
+func (i *Employee) summarizeTheTask(workflowStep settings.Step, contextFile string) (exec.Output, error) {
 	summaryFile, err := i.summarizeTask(workflowStep, contextFile, i.contextFiles)
 	if err != nil {
 		return exec.Output{}, err
@@ -458,7 +458,7 @@ func (i *Employee) summarizeTheTask(workflowStep models.Step, contextFile string
 	return exec.Output{Stdout: content}, err
 }
 
-func (i *Employee) aiderCode(workflowStep models.Step, contextFile string) (exec.Output, error) {
+func (i *Employee) aiderCode(workflowStep settings.Step, contextFile string) (exec.Output, error) {
 	if workflowStep.Summarize {
 		var err error
 		contextFile, err = i.summarizeTask(workflowStep, contextFile, []string{})
@@ -478,7 +478,7 @@ func (i *Employee) aiderCode(workflowStep models.Step, contextFile string) (exec
 	return out, nil
 }
 
-func (i *Employee) aiderArchitect(workflowStep models.Step, contextFile string) (exec.Output, error) {
+func (i *Employee) aiderArchitect(workflowStep settings.Step, contextFile string) (exec.Output, error) {
 	if workflowStep.Summarize {
 		var err error
 		contextFile, err = i.summarizeTask(workflowStep, contextFile, []string{})
@@ -504,7 +504,7 @@ func (i *Employee) aiderArchitect(workflowStep models.Step, contextFile string) 
 }
 
 // aiderCommit DEPRECATED. not working as expected.
-func (i *Employee) aiderCommit(workflowStep models.Step) (exec.Output, error) {
+func (i *Employee) aiderCommit(workflowStep settings.Step) (exec.Output, error) {
 	lastSha, err := i.workbench.GetLastCommit()
 	if err != nil {
 		return exec.Output{}, err
@@ -606,7 +606,7 @@ func (i *Employee) mergeIntoParent() (exec.Output, error) {
 	return exec.Output{Stdout: "Merged"}, nil
 }
 
-func (i *Employee) createIssueCommand(workflowStep models.Step, contextFile string) (exec.Output, error) {
+func (i *Employee) createIssueCommand(workflowStep settings.Step, contextFile string) (exec.Output, error) {
 	if contextFile == "" {
 		return exec.Output{}, fmt.Errorf("no context file provided for create-issues command")
 	}
@@ -619,7 +619,7 @@ func (i *Employee) createIssueCommand(workflowStep models.Step, contextFile stri
 
 	executionOutput, issues, deps, err := processor.GenerateIssues(
 		i.llmNorm,
-		models.IssueTypeName(workflowStep.Action),
+		settings.IssueTypeName(workflowStep.Action),
 		contextFile,
 	)
 	if err != nil {

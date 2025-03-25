@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/andrejsstepanovs/andai/internal/models"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 )
 
 var (
@@ -69,7 +69,7 @@ var (
 	}
 )
 
-func AiderCommand(contextFile string, step models.Step, config models.Aider) string {
+func AiderCommand(contextFile string, step settings.Step, config settings.Aider) string {
 	var (
 		params map[string]string
 		args   []string

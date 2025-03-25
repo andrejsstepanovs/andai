@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/andrejsstepanovs/andai/internal/exec"
-	"github.com/andrejsstepanovs/andai/internal/models"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/teilomillet/gollm"
 	"github.com/teilomillet/gollm/config"
 	"github.com/teilomillet/gollm/llm"
@@ -20,7 +20,7 @@ import (
 
 var ErrTooManyTokens = fmt.Errorf("prompt exceeds max tokens limit")
 
-func NewAI(config models.LlmModel) (*AI, error) {
+func NewAI(config settings.LlmModel) (*AI, error) {
 	cfg, err := gollm.LoadConfig()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)

@@ -8,7 +8,7 @@ import (
 	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/andrejsstepanovs/andai/internal/employee"
 	"github.com/andrejsstepanovs/andai/internal/employee/actions"
-	"github.com/andrejsstepanovs/andai/internal/models"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/andrejsstepanovs/andai/internal/workbench"
 	"github.com/andrejsstepanovs/andai/internal/worker"
 	"github.com/spf13/cobra"
@@ -31,16 +31,16 @@ func Loop(deps *internal.AppDependencies) error {
 	currentSleepDuration := time.Duration(0) // Start with no sleep
 
 	for {
-		settings, err := deps.Config.Load()
+		params, err := deps.Config.Load()
 		if err != nil {
 			return err
 		}
 
-		err = processTriggers(deps.Model, settings.Workflow)
+		err = processTriggers(deps.Model, params.Workflow)
 		if err != nil {
 			return fmt.Errorf("failed to process triggers err: %v", err)
 		}
-		wasWorking, err := workNext(deps, settings)
+		wasWorking, err := workNext(deps, params)
 		if err != nil {
 			return fmt.Errorf("failed to work next err: %v", err)
 		}
@@ -102,20 +102,20 @@ func newNextCommand(deps *internal.AppDependencies) *cobra.Command {
 		Use:   "next",
 		Short: "Work with redmine",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			settings, err := deps.Config.Load()
+			params, err := deps.Config.Load()
 			if err != nil {
 				return err
 			}
 
 			log.Println("Searching for workable issue")
-			_, err = workNext(deps, settings)
+			_, err = workNext(deps, params)
 			return err
 		},
 	}
 }
 
-func workNext(deps *internal.AppDependencies, settings *models.Settings) (bool, error) {
-	issues, err := deps.Model.APIGetWorkableIssues(settings.Workflow)
+func workNext(deps *internal.AppDependencies, params *settings.Settings) (bool, error) {
+	issues, err := deps.Model.APIGetWorkableIssues(params.Workflow)
 	if err != nil {
 		log.Println("Failed to get workable issue")
 		return false, err
@@ -128,8 +128,8 @@ func workNext(deps *internal.AppDependencies, settings *models.Settings) (bool, 
 	log.Printf("FOUND WORKABLE ISSUES (%d)", len(issues))
 	for _, issue := range issues {
 		fmt.Printf("WORKING ON: %q in %q ID=%d: %s\n",
-			settings.Workflow.IssueTypes.Get(models.IssueTypeName(issue.Tracker.Name)).Name,
-			settings.Workflow.States.Get(models.StateName(issue.Status.Name)).Name,
+			params.Workflow.IssueTypes.Get(settings.IssueTypeName(issue.Tracker.Name)).Name,
+			params.Workflow.States.Get(settings.StateName(issue.Status.Name)).Name,
 			issue.Id,
 			issue.Subject,
 		)
@@ -172,7 +172,7 @@ func workNext(deps *internal.AppDependencies, settings *models.Settings) (bool, 
 		}
 		log.Printf("Repository %d: %s", projectRepo.ID, projectRepo.RootURL)
 
-		projectConfig := settings.Projects.Find(project.Identifier)
+		projectConfig := params.Projects.Find(project.Identifier)
 		git, err := worker.FindProjectGit(projectConfig, projectRepo)
 		if err != nil {
 			return false, fmt.Errorf("failed to find project git err: %v", err)
@@ -196,10 +196,10 @@ func workNext(deps *internal.AppDependencies, settings *models.Settings) (bool, 
 			*project,
 			projectConfig,
 			wb,
-			settings.Aider,
-			settings.Workflow.States.Get(models.StateName(issue.Status.Name)),
-			settings.Workflow.IssueTypes.Get(models.IssueTypeName(issue.Tracker.Name)),
-			settings.Workflow.IssueTypes,
+			params.Aider,
+			params.Workflow.States.Get(settings.StateName(issue.Status.Name)),
+			params.Workflow.IssueTypes.Get(settings.IssueTypeName(issue.Tracker.Name)),
+			params.Workflow.IssueTypes,
 			projectRepo,
 		)
 		success, err := work.ExecuteWorkflow()
@@ -207,7 +207,7 @@ func workNext(deps *internal.AppDependencies, settings *models.Settings) (bool, 
 			return false, fmt.Errorf("failed to finish work on issue err: %v", err)
 		}
 
-		err = actions.TransitionToNextStatus(settings.Workflow, deps.Model, issue, success)
+		err = actions.TransitionToNextStatus(params.Workflow, deps.Model, issue, success)
 		if err != nil {
 			return false, fmt.Errorf("failed to comment issue err: %v", err)
 		}

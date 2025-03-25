@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/andrejsstepanovs/andai/internal/models"
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/mattn/go-redmine"
 )
 
-func TransitionToNextStatus(workflow models.Workflow, model *model.Model, issue redmine.Issue, success bool) error {
-	nextTransition := workflow.Transitions.GetNextTransition(models.StateName(issue.Status.Name))
+func TransitionToNextStatus(workflow settings.Workflow, model *model.Model, issue redmine.Issue, success bool) error {
+	nextTransition := workflow.Transitions.GetNextTransition(settings.StateName(issue.Status.Name))
 	nextTransition.LogPrint()
 	nextIssueStatus, err := model.APIGetIssueStatus(string(nextTransition.GetTarget(success)))
 	if err != nil {

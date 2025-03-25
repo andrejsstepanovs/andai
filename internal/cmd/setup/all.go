@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/andrejsstepanovs/andai/internal"
-	"github.com/andrejsstepanovs/andai/internal/models"
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/spf13/cobra"
 )
@@ -28,7 +28,7 @@ func newSetupAllCommand(deps *internal.AppDependencies) *cobra.Command {
 	return cmd
 }
 
-func Setup(model *model.Model, projectsConf models.Projects, workflowConfig models.Workflow) error {
+func Setup(model *model.Model, projectsConf settings.Projects, workflowConfig settings.Workflow) error {
 	maxTries := 7
 	for {
 		err := setupAll(model, projectsConf, workflowConfig)
@@ -45,7 +45,7 @@ func Setup(model *model.Model, projectsConf models.Projects, workflowConfig mode
 	return nil
 }
 
-func setupAll(model *model.Model, projectsConf models.Projects, workflowConfig models.Workflow) error {
+func setupAll(model *model.Model, projectsConf settings.Projects, workflowConfig settings.Workflow) error {
 	err := setupAutoIncrement(model)
 	if err != nil {
 		return err

@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/andrejsstepanovs/andai/internal/models"
 	redminemodels "github.com/andrejsstepanovs/andai/internal/redmine/models"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 )
@@ -193,7 +193,7 @@ func (g *Git) CheckoutBranch(branchName string) error {
 	return err
 }
 
-func GetAllPossiblePaths(projectConfig models.Project, projectRepo redminemodels.Repository, forGit bool) ([]string, error) {
+func GetAllPossiblePaths(projectConfig settings.Project, projectRepo redminemodels.Repository, forGit bool) ([]string, error) {
 	currentDir, err := os.Getwd()
 	if err != nil {
 		return nil, err
@@ -228,7 +228,7 @@ func GetAllPossiblePaths(projectConfig models.Project, projectRepo redminemodels
 	return newPaths, nil
 }
 
-func FindProjectGit(projectConfig models.Project, projectRepo redminemodels.Repository) (*Git, error) {
+func FindProjectGit(projectConfig settings.Project, projectRepo redminemodels.Repository) (*Git, error) {
 	paths, err := GetAllPossiblePaths(projectConfig, projectRepo, true)
 	if err != nil {
 		return nil, err

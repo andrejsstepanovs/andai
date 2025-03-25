@@ -6,8 +6,8 @@ import (
 	"sort"
 
 	"github.com/andrejsstepanovs/andai/internal"
-	"github.com/andrejsstepanovs/andai/internal/models"
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/mattn/go-redmine"
 	"github.com/spf13/cobra"
@@ -30,7 +30,7 @@ func newWorkflowCommand(deps *internal.AppDependencies) *cobra.Command {
 	return cmd
 }
 
-func setupWorkflow(model *model.Model, workflowConfig models.Workflow) error {
+func setupWorkflow(model *model.Model, workflowConfig settings.Workflow) error {
 	log.Println("Issue States:", len(workflowConfig.States))
 	statuses := convertToStatuses(workflowConfig.States)
 	statuses = sortStatuses(statuses)
@@ -113,7 +113,7 @@ func projectTrackers(model *model.Model) error {
 	return nil
 }
 
-func transitions(model *model.Model, workflowConfig models.Workflow, defaultStatus redmine.IssueStatus) error {
+func transitions(model *model.Model, workflowConfig settings.Workflow, defaultStatus redmine.IssueStatus) error {
 	log.Println("Transitions:", len(workflowConfig.Transitions))
 	trackers, err := model.API().Trackers()
 	if err != nil {
@@ -142,7 +142,7 @@ func transitions(model *model.Model, workflowConfig models.Workflow, defaultStat
 	return nil
 }
 
-func saveTransitions(model *model.Model, tracker redmine.IdName, statuses []redmine.IssueStatus, defaultStatus redmine.IssueStatus, transitions models.Transitions, roleID int) error {
+func saveTransitions(model *model.Model, tracker redmine.IdName, statuses []redmine.IssueStatus, defaultStatus redmine.IssueStatus, transitions settings.Transitions, roleID int) error {
 	type key struct {
 		fromID    int
 		toID      int
@@ -190,7 +190,7 @@ func saveTransitions(model *model.Model, tracker redmine.IdName, statuses []redm
 	return nil
 }
 
-func convertToStatuses(workflowStates models.States) []redmine.IssueStatus {
+func convertToStatuses(workflowStates settings.States) []redmine.IssueStatus {
 	statuses := make([]redmine.IssueStatus, 0)
 	for _, state := range workflowStates {
 		statuses = append(statuses, redmine.IssueStatus{

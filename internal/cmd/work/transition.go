@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"github.com/andrejsstepanovs/andai/internal"
-	"github.com/andrejsstepanovs/andai/internal/models"
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/mattn/go-redmine"
 	"github.com/spf13/cobra"
 )
@@ -27,7 +27,7 @@ func newTriggersCommand(deps *internal.AppDependencies) *cobra.Command {
 	}
 }
 
-func processTriggers(model *model.Model, workflow models.Workflow) error {
+func processTriggers(model *model.Model, workflow settings.Workflow) error {
 	issueID, statusIDFrom, statusIDTo, err := model.DBGetLastStatusChange()
 	if err != nil {
 		log.Println("Failed to get last status change")
@@ -61,7 +61,7 @@ func processTriggers(model *model.Model, workflow models.Workflow) error {
 
 	log.Printf("Last status change for %q %d: %q: %d -> %d (%s -> %s)\n", issue.Tracker.Name, issue.Id, issue.Subject, statusIDFrom, statusIDTo, statusFrom.Name, statusTo.Name)
 
-	triggers := workflow.Triggers.GetTriggers(models.IssueTypeName(issue.Tracker.Name))
+	triggers := workflow.Triggers.GetTriggers(settings.IssueTypeName(issue.Tracker.Name))
 	if len(triggers) == 0 {
 		log.Println("No triggers found")
 		return nil
@@ -79,14 +79,14 @@ func processTriggers(model *model.Model, workflow models.Workflow) error {
 }
 
 func processTrigger(
-	workflow models.Workflow,
-	trigger models.Trigger,
+	workflow settings.Workflow,
+	trigger settings.Trigger,
 	model *model.Model,
 	statusFrom redmine.IssueStatus,
 	statusTo redmine.IssueStatus,
 	issue *redmine.Issue,
 ) error {
-	action := trigger.GetTriggerIf(models.StateName(statusTo.Name))
+	action := trigger.GetTriggerIf(settings.StateName(statusTo.Name))
 	if action == nil {
 		//log.Printf("No action found for %q %d %s -> %s\n", issue.Tracker.Name, issue.Id, statusFrom.Name, statusTo.Name)
 		return nil
@@ -114,13 +114,13 @@ func processTrigger(
 	}
 	log.Printf("Siblings found for %q %d: %d\n", issue.Tracker.Name, issue.Id, len(siblings))
 
-	siblingsStatuses := make([]models.StateName, 0)
+	siblingsStatuses := make([]settings.StateName, 0)
 	for _, sibling := range siblings {
 		status, err := model.APIGetIssueStatusByID(sibling.Status.Id)
 		if err != nil {
 			log.Printf("Failed to get status for sibling %q %d\n", sibling.Tracker.Name, sibling.Id)
 		}
-		siblingsStatuses = append(siblingsStatuses, models.StateName(status.Name))
+		siblingsStatuses = append(siblingsStatuses, settings.StateName(status.Name))
 	}
 	log.Printf("Siblings statuses for %q %d: %v\n", issue.Tracker.Name, issue.Id, siblingsStatuses)
 	siblingStatusOK := action.AllSiblingsCheck(siblingsStatuses)
@@ -139,22 +139,22 @@ func processTrigger(
 }
 
 func processTriggerWho(
-	action *models.TriggerIf,
+	action *settings.TriggerIf,
 	children []redmine.Issue,
-	workflow models.Workflow,
+	workflow settings.Workflow,
 	model *model.Model,
 	nextIssueStatus redmine.IssueStatus,
 	parent *redmine.Issue,
 	issue *redmine.Issue,
 ) error {
 	switch action.TriggerTransition.Who {
-	case models.TriggerTransitionWhoChildren:
+	case settings.TriggerTransitionWhoChildren:
 		if len(children) == 0 {
 			log.Printf("Should transition children to %q but no children to work with (%q %d)\n", nextIssueStatus.Name, issue.Tracker.Name, issue.Id)
 			return nil
 		}
 		for _, child := range children {
-			childState := workflow.States.Get(models.StateName(child.Status.Name))
+			childState := workflow.States.Get(settings.StateName(child.Status.Name))
 			log.Printf("Transitioning child %q %d - %q -> %q\n", child.Tracker.Name, child.Id, childState.Name, nextIssueStatus.Name)
 		}
 		for _, child := range children {
@@ -165,12 +165,12 @@ func processTriggerWho(
 			fmt.Printf("Successfully moved %d to: %d - %s\n", child.Id, nextIssueStatus.Id, nextIssueStatus.Name)
 			// todo, check if this transition triggers something else
 		}
-	case models.TriggerTransitionWhoParent:
+	case settings.TriggerTransitionWhoParent:
 		if parent == nil {
 			log.Println("Should have transition parent, but no parent was found")
 			return nil
 		}
-		parentState := workflow.States.Get(models.StateName(parent.Status.Name))
+		parentState := workflow.States.Get(settings.StateName(parent.Status.Name))
 		log.Printf(
 			"Transitioning parent %q %d - %q -> %q\n",
 			parent.Tracker.Name,

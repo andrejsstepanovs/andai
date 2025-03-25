@@ -1,4 +1,4 @@
-package models
+package settings
 
 type Priorities []Priority
 

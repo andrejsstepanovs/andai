@@ -1,4 +1,4 @@
-package models
+package settings
 
 const (
 	// TriggerTransitionWhoParent is used to indicate that the transition should be applied to the parent issue.

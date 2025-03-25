@@ -10,8 +10,8 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/ai"
 	"github.com/andrejsstepanovs/andai/internal/employee/utils"
 	"github.com/andrejsstepanovs/andai/internal/exec"
-	"github.com/andrejsstepanovs/andai/internal/models"
 	"github.com/andrejsstepanovs/andai/internal/redmine"
+	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/andrejsstepanovs/andai/internal/workbench"
 	"github.com/andrejsstepanovs/andai/internal/worker"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
@@ -40,7 +40,7 @@ func newPingAiderCommand(deps *internal.AppDependencies) *cobra.Command {
 	return cmd
 }
 
-func pingAider(redmine *redmine.Model, projects models.Projects, aider models.Aider) error {
+func pingAider(redmine *redmine.Model, projects settings.Projects, aider settings.Aider) error {
 	redmineProjects, err := redmine.API().Projects()
 	if err != nil {
 		return fmt.Errorf("failed to get redmine project err: %v", err)
@@ -64,7 +64,7 @@ func pingAider(redmine *redmine.Model, projects models.Projects, aider models.Ai
 	log.Printf("Project Repository Opened %s", git.GetPath())
 
 	wb := &workbench.Workbench{Git: git}
-	step := models.Step{
+	step := settings.Step{
 		Command: "aider",
 		Action:  "architect",
 		Prompt:  "Answer with OK.",

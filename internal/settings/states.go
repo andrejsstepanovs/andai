@@ -1,4 +1,4 @@
-package models
+package settings
 
 // StateName : Initial, Backlog, In Progress, etc
 type StateName string
