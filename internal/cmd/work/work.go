@@ -183,7 +183,7 @@ func workNext(deps *internal.AppDependencies, params *settings.Settings) (bool, 
 			Issue: issue,
 		}
 
-		work := employee.NewEmployee(
+		work := employee.NewRoutine(
 			deps.Model,
 			deps.LlmNorm,
 			issue,

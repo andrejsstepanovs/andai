@@ -10,7 +10,7 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/settings"
 )
 
-func (i *Employee) getComments() (redminemodels.Comments, error) {
+func (i *Routine) getComments() (redminemodels.Comments, error) {
 	comments, err := i.model.DBGetComments(i.issue.Id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get comments err: %v", err)
@@ -23,7 +23,7 @@ func (i *Employee) getComments() (redminemodels.Comments, error) {
 	return comments, nil
 }
 
-func (i *Employee) AddCommentToParent(text string) error {
+func (i *Routine) AddCommentToParent(text string) error {
 	if i.parent == nil {
 		return fmt.Errorf("no parent issue")
 	}
@@ -34,7 +34,7 @@ func (i *Employee) AddCommentToParent(text string) error {
 	return nil
 }
 
-func (i *Employee) AddComment(text string) error {
+func (i *Routine) AddComment(text string) error {
 	err := i.model.Comment(i.issue, text)
 	if err != nil {
 		return fmt.Errorf("failed to comment issue err: %v", err)
@@ -42,7 +42,7 @@ func (i *Employee) AddComment(text string) error {
 	return nil
 }
 
-func (i *Employee) RememberOutput(step settings.Step, output exec.Output) {
+func (i *Routine) RememberOutput(step settings.Step, output exec.Output) {
 	logCommand := fmt.Sprintf("%s %s", step.Command, step.Action)
 	if output.Stdout != "" {
 		format := "Command: **%s**\n<result>\n%s\n</result>"
