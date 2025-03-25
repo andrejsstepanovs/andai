@@ -5,16 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"strings"
 	"time"
 
 	"github.com/andrejsstepanovs/andai/pkg/exec"
 	"github.com/andrejsstepanovs/andai/pkg/models"
 	"github.com/teilomillet/gollm"
+	"github.com/teilomillet/gollm/config"
 	"github.com/teilomillet/gollm/llm"
 	"github.com/teilomillet/gollm/providers"
 	"github.com/teilomillet/gollm/utils"
 )
+
+var ErrTooManyTokens = fmt.Errorf("prompt exceeds max tokens limit")
 
 func NewAI(config models.LlmModel) (*AI, error) {
 	cfg, err := gollm.LoadConfig()
@@ -37,7 +41,7 @@ func NewAI(config models.LlmModel) (*AI, error) {
 	if config.MaxTokens > 0 {
 		maxTokens = config.MaxTokens
 	}
-	maxRetries := 30
+	maxRetries := 5
 	if config.MaxRetries > 0 {
 		maxRetries = config.MaxRetries
 	}
@@ -107,6 +111,7 @@ func NewAI(config models.LlmModel) (*AI, error) {
 		client:   conn,
 		provider: config.Provider,
 		model:    config.Model,
+		config:   cfg,
 	}, nil
 }
 
@@ -114,6 +119,7 @@ type AI struct {
 	client   llm.LLM
 	provider string
 	model    string
+	config   *config.Config
 }
 
 func (a *AI) Multi(question string, prompts []map[string]string) (exec.Output, error) {
@@ -146,6 +152,10 @@ func (a *AI) Simple(prompt string) (exec.Output, error) {
 }
 
 func (a *AI) Generate(ctx context.Context, prompt *llm.Prompt, opts ...llm.GenerateOption) (exec.Output, error) {
+	if a.config != nil && a.estimateTokens(prompt.String()) > a.config.MaxTokens {
+		return exec.Output{}, ErrTooManyTokens
+	}
+
 	resp, err := a.client.Generate(ctx, prompt, opts...)
 	if err != nil {
 		return exec.Output{}, err
@@ -182,4 +192,15 @@ func (a *AI) GenerateJSON(ctx context.Context, prompt *llm.Prompt, element any) 
 	}
 
 	return exec.Output{Stdout: responseJSON}, nil, nil
+}
+
+func (a *AI) estimateTokens(text string) int {
+	// Character-based estimation
+	charEstimate := int(math.Ceil(float64(len(text)) / 4))
+
+	// Word-based estimation
+	words := strings.Fields(text)
+	wordEstimate := int(math.Ceil(float64(len(words)) * 1.33))
+
+	return max(charEstimate, wordEstimate)
 }

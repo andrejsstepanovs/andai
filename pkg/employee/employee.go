@@ -381,41 +381,25 @@ func (i *Employee) summarizeTask(workflowStep models.Step, contextFile string, i
 		return "", fmt.Errorf("failed to get file contents: %w", err)
 	}
 
-	filesContent := make([]string, 0)
-	for _, file := range includeFiles {
-		content, err := utils.GetFileContents(file)
-		if err != nil {
-			return "", err
-		}
-		filesContent = append(filesContent, fmt.Sprintf("# %s\n%s", file, content))
-	}
-
 	query := "Perfect, yes. Now do it! Answer only with the reformatted task text."
-	history := []map[string]string{
-		{"USER": "Help me to reformat this task"},
-		{"AI": "OK! Please provide the task contents and all relevant details."},
-		{"USER": contextContent},
-		{"AI": "Got it! This is a original task text that I should summarize, groom and reformat. How should I reformat this task?"},
-		{"USER": i.aiderConfig.TaskSummaryPrompt},
-		{"AI": "Understood! I will reformat the task using the provided instructions. Is this all?"},
-	}
 
-	if len(filesContent) > 0 {
-		history = append(history, map[string]string{"USER": "You will probably also need code file contents right?"})
-		history = append(history, map[string]string{"AI": "Yes!"})
-		history = append(history, map[string]string{"USER": strings.Join(filesContent, "\n")})
-		history = append(history, map[string]string{"AI": "Thanks! I will use this to understand the task better and improve the task description."})
-	}
-
-	history = append(history, map[string]string{"USER": "Yes, but remember, this is super important: do not work on task content, only reformat it."})
-	history = append(history, map[string]string{"AI": "Got it! I will reformat the task text and not do what the task is asking because someone else will actually work on it. I just prepare a task description."})
-	history = append(history, map[string]string{"USER": query})
-
-	ret, err := i.llmNorm.Multi(query, history)
-	if err != nil {
-		log.Printf("Failed to run AI: %v", err)
-	} else {
-		log.Printf("AI response: %s", ret.Stdout)
+	var ret exec.Output
+	for n := 0; n < 4; n++ {
+		history, err := i.buildTaskSummaryAIHistory(contextContent, query, includeFiles)
+		if err != nil {
+			return contextFile, err
+		}
+		ret, err = i.llmNorm.Multi(query, history)
+		if err != nil {
+			if errors.Is(err, ai.ErrTooManyTokens) && len(includeFiles) > 0 {
+				includeFiles = includeFiles[len(includeFiles)/2:] // remove half of the files
+				continue
+			}
+			log.Printf("Failed to run AI: %v", err)
+		} else {
+			log.Printf("AI response: %s", ret.Stdout)
+		}
+		break
 	}
 
 	if workflowStep.CommentSummary {
@@ -426,6 +410,39 @@ func (i *Employee) summarizeTask(workflowStep models.Step, contextFile string, i
 	}
 
 	return utils.BuildPromptTextTmpFile(ret.Stdout)
+}
+
+func (i *Employee) buildTaskSummaryAIHistory(contextContent, query string, includeFiles []string) ([]map[string]string, error) {
+	history := []map[string]string{
+		{"USER": "Help me to reformat this task"},
+		{"AI": "OK! Please provide the task contents and all relevant details."},
+		{"USER": contextContent},
+		{"AI": "Got it! This is a original task text that I should summarize, groom and reformat. How should I reformat this task?"},
+		{"USER": i.aiderConfig.TaskSummaryPrompt},
+		{"AI": "Understood! I will reformat the task using the provided instructions. Is this all?"},
+	}
+
+	if len(includeFiles) > 0 {
+		filesContent := make([]string, 0)
+		for _, file := range includeFiles {
+			content, err := utils.GetFileContents(file)
+			if err != nil {
+				return history, err
+			}
+			filesContent = append(filesContent, fmt.Sprintf("# %s\n%s", file, content))
+		}
+
+		history = append(history, map[string]string{"USER": "You will probably also need code file contents right?"})
+		history = append(history, map[string]string{"AI": "Yes!"})
+		history = append(history, map[string]string{"USER": strings.Join(filesContent, "\n")})
+		history = append(history, map[string]string{"AI": "Thanks! I will use this to understand the task better and improve the task description."})
+	}
+
+	history = append(history, map[string]string{"USER": "Yes, but remember, this is super important: do not work on task content, only reformat it."})
+	history = append(history, map[string]string{"AI": "Got it! I will reformat the task text and not do what the task is asking because someone else will actually work on it. I just prepare a task description."})
+	history = append(history, map[string]string{"USER": query})
+
+	return history, nil
 }
 
 func (i *Employee) summarizeTheTask(workflowStep models.Step, contextFile string) (exec.Output, error) {

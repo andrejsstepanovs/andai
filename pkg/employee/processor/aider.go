@@ -52,6 +52,7 @@ func aiderRemoveUnnecessaryLines(lines []string) []string {
 		"summarizer unexpectedly failed",
 		"https://aider.chat/docs/troubleshooting/",
 		"architect edit format",
+		"aiderignore spec.",
 	}
 
 	removeLinesContaining := [][]string{
@@ -60,6 +61,7 @@ func aiderRemoveUnnecessaryLines(lines []string) []string {
 		{"Tokens:", "sent", "received"},
 		{"Model:", "with architect"},
 		{"Editor model:", "with diff"},
+		{"Skipping", "that matches"},
 	}
 
 	removeExactLines := []string{

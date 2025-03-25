@@ -136,17 +136,17 @@ func (k Knowledge) getCommentContext(context string) (string, error) {
 		if len(k.Comments) == 0 {
 			return "", nil
 		}
-		return k.getComments(redminemodels.Comments{k.Comments[len(k.Comments)-1]}, "last-comment")
+		return k.getComments(redminemodels.Comments{k.Comments[len(k.Comments)-1]}, models.ContextLastComment)
 	case models.ContextTwoComment:
-		return k.getLastNComments(2, "last-2-comments")
+		return k.getLastNComments(2, models.ContextTwoComment)
 	case models.ContextThreeComment:
-		return k.getLastNComments(3, "last-3-comments")
+		return k.getLastNComments(3, models.ContextThreeComment)
 	case models.ContextFourComment:
-		return k.getLastNComments(4, "last-4-comments")
+		return k.getLastNComments(4, models.ContextFourComment)
 	case models.ContextFifeComment:
-		return k.getLastNComments(5, "last-5-comments")
+		return k.getLastNComments(5, models.ContextFifeComment)
 	case models.ContextComments:
-		return k.getComments(k.Comments, "comments")
+		return k.getComments(k.Comments, models.ContextComments)
 	default:
 		return "", fmt.Errorf("unknown comment context: %q", context)
 	}
@@ -154,7 +154,7 @@ func (k Knowledge) getCommentContext(context string) (string, error) {
 
 func (k Knowledge) getContext(context string) (string, error) {
 	// Handle comment-related contexts
-	if strings.Contains(strings.ToLower(context), "comments") {
+	if strings.Contains(strings.ToLower(context), "comment") {
 		return k.getCommentContext(context)
 	}
 

@@ -107,7 +107,7 @@ func newNextCommand(deps *deps.AppDependencies) *cobra.Command {
 				return err
 			}
 
-			log.Println("Searching for next issue")
+			log.Println("Searching for workable issue")
 			_, err = workNext(deps, settings)
 			return err
 		},
@@ -122,7 +122,6 @@ func workNext(deps *deps.AppDependencies, settings *models.Settings) (bool, erro
 	}
 
 	if len(issues) == 0 {
-		log.Println("No workable issues found")
 		return false, nil
 	}
 

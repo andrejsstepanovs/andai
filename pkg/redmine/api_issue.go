@@ -97,6 +97,15 @@ func (c *Model) APIGetWorkableIssues(workflow models.Workflow) ([]redmine.Issue,
 	}
 
 	for _, project := range projects {
+		isPublic, err := c.DBProjectPublic(project.Id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get redmine project public err: %v", err)
+		}
+		if !isPublic {
+			log.Printf("Skipping not public project %q", project.Identifier)
+			continue
+		}
+
 		projectIssues, err := c.APIGetProjectIssues(project)
 		if err != nil {
 			return nil, fmt.Errorf("error redmine issues of project: %v", err)
@@ -122,7 +131,7 @@ func (c *Model) APIGetWorkableIssues(workflow models.Workflow) ([]redmine.Issue,
 		cleanedDependencies := c.removeClosedDependencies(dependencies, projectIssues)
 		for issueID, blockedByIDs := range cleanedDependencies {
 			if len(blockedByIDs) == 0 {
-				log.Printf("Issue (%d) is not blocked at all\n", issueID)
+				//log.Printf("Issue (%d) is not blocked at all\n", issueID)
 				continue
 			}
 			blocked := make([]string, 0)
@@ -222,12 +231,12 @@ func (c *Model) issueDependencies(projectIssues []redmine.Issue) (map[int][]int,
 		if err != nil && err.Error() != "Not Found" {
 			return dependencies, err
 		}
-		fmt.Printf("Issue (%d) Relations: %d\n", issue.Id, len(relations))
+		//log.Printf("Issue (%d) Relations: %d\n", issue.Id, len(relations))
 		for _, relation := range relations {
 			if relation.RelationType != RelationBlocks {
 				continue
 			}
-			fmt.Printf("Issue (%d) - %d is blocked by %d <- needs to be done first\n", issue.Id, relation.IssueToId, relation.IssueId)
+			log.Printf("Issue (%d) - %d is blocked by %d <- needs to be done first\n", issue.Id, relation.IssueToId, relation.IssueId)
 			dependencies[relation.IssueToId] = append(dependencies[relation.IssueId], relation.IssueId)
 		}
 	}

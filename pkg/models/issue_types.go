@@ -12,16 +12,16 @@ const ContextComments = "comments"
 const ContextLastComment = "last-comment"
 
 // ContextTwoComment is a special context that matches the last two comment
-const ContextTwoComment = "last-2-comment"
+const ContextTwoComment = "last-2-comments"
 
 // ContextThreeComment is a special context that matches the last three comment
-const ContextThreeComment = "last-3-comment"
+const ContextThreeComment = "last-3-comments"
 
 // ContextFourComment is a special context that matches the last four comment
-const ContextFourComment = "last-4-comment"
+const ContextFourComment = "last-4-comments"
 
 // ContextFifeComment is a special context that matches the last fife comment
-const ContextFifeComment = "last-5-comment"
+const ContextFifeComment = "last-5-comments"
 
 // ContextProject is a special context that matches the project
 const ContextProject = "project"
