@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/andrejsstepanovs/andai/cmd/setup"
-	"github.com/andrejsstepanovs/andai/cmd/work"
+	"github.com/andrejsstepanovs/andai/internal/cmd/setup"
+	"github.com/andrejsstepanovs/andai/internal/cmd/work"
 	"github.com/spf13/cobra"
 
 	"github.com/andrejsstepanovs/andai/internal"
