@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/andrejsstepanovs/andai/internal/ai"
-	"github.com/andrejsstepanovs/andai/internal/config"
 	"github.com/andrejsstepanovs/andai/internal/models"
+	"github.com/andrejsstepanovs/andai/internal/models/config"
 	"github.com/andrejsstepanovs/andai/internal/redmine"
 	apiredmine "github.com/mattn/go-redmine"
 	"github.com/spf13/viper"

@@ -12,7 +12,7 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/cmd/setup"
 	"github.com/andrejsstepanovs/andai/internal/cmd/validate"
 	"github.com/andrejsstepanovs/andai/internal/cmd/work"
-	"github.com/andrejsstepanovs/andai/internal/config"
+	"github.com/andrejsstepanovs/andai/internal/models/config"
 	"github.com/spf13/cobra"
 )
 

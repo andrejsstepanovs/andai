@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/andrejsstepanovs/andai/internal/config"
+	"github.com/andrejsstepanovs/andai/internal/models/config"
 	"github.com/stretchr/testify/assert"
 )
 
