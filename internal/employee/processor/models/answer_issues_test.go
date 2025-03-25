@@ -1,27 +1,27 @@
-package processor_test
+package models_test
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/andrejsstepanovs/andai/internal/employee/processor"
+	"github.com/andrejsstepanovs/andai/internal/employee/processor/models"
 )
 
 func TestAnswer_GetDeps(t *testing.T) {
 	tests := []struct {
 		name     string
-		answer   processor.Answer
+		answer   models.Answer
 		expected map[int][]int
 	}{
 		{
 			name:     "empty issues",
-			answer:   processor.Answer{Issues: []processor.AnswerIssues{}},
+			answer:   models.Answer{Issues: []models.AnswerIssues{}},
 			expected: map[int][]int{},
 		},
 		{
 			name: "single issue with no dependencies",
-			answer: processor.Answer{
-				Issues: []processor.AnswerIssues{
+			answer: models.Answer{
+				Issues: []models.AnswerIssues{
 					{ID: 1},
 				},
 			},
@@ -31,8 +31,8 @@ func TestAnswer_GetDeps(t *testing.T) {
 		},
 		{
 			name: "single issue with multiple blocked_by entries",
-			answer: processor.Answer{
-				Issues: []processor.AnswerIssues{
+			answer: models.Answer{
+				Issues: []models.AnswerIssues{
 					{ID: 2, BlockedBy: []int{3, 4}},
 				},
 			},
@@ -42,8 +42,8 @@ func TestAnswer_GetDeps(t *testing.T) {
 		},
 		{
 			name: "multiple issues with various dependencies",
-			answer: processor.Answer{
-				Issues: []processor.AnswerIssues{
+			answer: models.Answer{
+				Issues: []models.AnswerIssues{
 					{ID: 1, BlockedBy: []int{5}},
 					{ID: 2},
 					{ID: 3, BlockedBy: []int{1, 2}},
@@ -57,8 +57,8 @@ func TestAnswer_GetDeps(t *testing.T) {
 		},
 		{
 			name: "duplicate blocked_by entries",
-			answer: processor.Answer{
-				Issues: []processor.AnswerIssues{
+			answer: models.Answer{
+				Issues: []models.AnswerIssues{
 					{ID: 4, BlockedBy: []int{5, 5}},
 				},
 			},
@@ -81,17 +81,17 @@ func TestAnswer_GetDeps(t *testing.T) {
 func TestValidateNoSelfReference(t *testing.T) {
 	tests := []struct {
 		name    string
-		answer  processor.Answer
+		answer  models.Answer
 		wantErr bool
 	}{
 		{
 			name:    "no issues",
-			answer:  processor.Answer{Issues: []processor.AnswerIssues{}},
+			answer:  models.Answer{Issues: []models.AnswerIssues{}},
 			wantErr: false,
 		},
 		{
 			name: "no dependencies",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1},
 				{ID: 2},
 			}},
@@ -99,7 +99,7 @@ func TestValidateNoSelfReference(t *testing.T) {
 		},
 		{
 			name: "no self-dependency",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1, BlockedBy: []int{2}},
 				{ID: 2},
 			}},
@@ -107,14 +107,14 @@ func TestValidateNoSelfReference(t *testing.T) {
 		},
 		{
 			name: "self-dependency",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1, BlockedBy: []int{1}},
 			}},
 			wantErr: true,
 		},
 		{
 			name: "multiple self-dependencies",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1, BlockedBy: []int{1, 2}},
 				{ID: 2, BlockedBy: []int{2}},
 			}},
@@ -122,7 +122,7 @@ func TestValidateNoSelfReference(t *testing.T) {
 		},
 		{
 			name: "self-dependency with other dependencies",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1, BlockedBy: []int{1, 2}},
 				{ID: 2},
 			}},
@@ -130,7 +130,7 @@ func TestValidateNoSelfReference(t *testing.T) {
 		},
 		{
 			name: "self-dependency with other dependencies",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1, BlockedBy: []int{1, 2}},
 				{ID: 2},
 			}},
@@ -138,7 +138,7 @@ func TestValidateNoSelfReference(t *testing.T) {
 		},
 		{
 			name: "self-dependency with multiple dependencies",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1, BlockedBy: []int{1, 2, 3}},
 				{ID: 2},
 				{ID: 3},
@@ -160,17 +160,17 @@ func TestValidateNoSelfReference(t *testing.T) {
 func TestValidateDependenciesExist(t *testing.T) {
 	tests := []struct {
 		name    string
-		answer  processor.Answer
+		answer  models.Answer
 		wantErr bool
 	}{
 		{
 			name:    "no issues",
-			answer:  processor.Answer{Issues: []processor.AnswerIssues{}},
+			answer:  models.Answer{Issues: []models.AnswerIssues{}},
 			wantErr: false,
 		},
 		{
 			name: "no dependencies",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1},
 				{ID: 2},
 			}},
@@ -178,7 +178,7 @@ func TestValidateDependenciesExist(t *testing.T) {
 		},
 		{
 			name: "all dependencies exist",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1, BlockedBy: []int{2}},
 				{ID: 2},
 			}},
@@ -186,14 +186,14 @@ func TestValidateDependenciesExist(t *testing.T) {
 		},
 		{
 			name: "dependency on non-existent issue",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1, BlockedBy: []int{2}},
 			}},
 			wantErr: true,
 		},
 		{
 			name: "multiple missing dependencies",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1, BlockedBy: []int{2, 3}},
 				{ID: 3, BlockedBy: []int{4}},
 			}},
@@ -201,21 +201,21 @@ func TestValidateDependenciesExist(t *testing.T) {
 		},
 		{
 			name: "self dependency exists",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1, BlockedBy: []int{1}},
 			}},
 			wantErr: false,
 		},
 		{
 			name: "zero ID exists",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 0, BlockedBy: []int{0}},
 			}},
 			wantErr: false,
 		},
 		{
 			name: "negative ID exists",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: -1, BlockedBy: []int{-2}},
 				{ID: -2},
 			}},
@@ -223,7 +223,7 @@ func TestValidateDependenciesExist(t *testing.T) {
 		},
 		{
 			name: "negative ID missing",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: -1, BlockedBy: []int{-2}},
 			}},
 			wantErr: true,
@@ -243,17 +243,17 @@ func TestValidateDependenciesExist(t *testing.T) {
 func TestValidateCircularDependency(t *testing.T) {
 	tests := []struct {
 		name    string
-		answer  processor.Answer
+		answer  models.Answer
 		wantErr bool
 	}{
 		{
 			name:    "no issues",
-			answer:  processor.Answer{Issues: []processor.AnswerIssues{}},
+			answer:  models.Answer{Issues: []models.AnswerIssues{}},
 			wantErr: false,
 		},
 		{
 			name: "no dependencies",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1},
 				{ID: 2},
 			}},
@@ -261,14 +261,14 @@ func TestValidateCircularDependency(t *testing.T) {
 		},
 		{
 			name: "self dependency",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1, BlockedBy: []int{1}},
 			}},
 			wantErr: true,
 		},
 		{
 			name: "two-issue cycle",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1, BlockedBy: []int{2}},
 				{ID: 2, BlockedBy: []int{1}},
 			}},
@@ -276,7 +276,7 @@ func TestValidateCircularDependency(t *testing.T) {
 		},
 		{
 			name: "three-issue cycle",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1, BlockedBy: []int{2}},
 				{ID: 2, BlockedBy: []int{3}},
 				{ID: 3, BlockedBy: []int{1}},
@@ -285,7 +285,7 @@ func TestValidateCircularDependency(t *testing.T) {
 		},
 		{
 			name: "no cycle with multiple dependencies",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1, BlockedBy: []int{2, 3}},
 				{ID: 2},
 				{ID: 3},
@@ -294,7 +294,7 @@ func TestValidateCircularDependency(t *testing.T) {
 		},
 		{
 			name: "cycle in subgraph",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1, BlockedBy: []int{2}},
 				{ID: 2, BlockedBy: []int{3}},
 				{ID: 3, BlockedBy: []int{2}},
@@ -304,7 +304,7 @@ func TestValidateCircularDependency(t *testing.T) {
 		},
 		{
 			name: "chain without cycle",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 1, BlockedBy: []int{2}},
 				{ID: 2, BlockedBy: []int{3}},
 				{ID: 3},
@@ -313,7 +313,7 @@ func TestValidateCircularDependency(t *testing.T) {
 		},
 		{
 			name: "negative ID cycle",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: -1, BlockedBy: []int{-2}},
 				{ID: -2, BlockedBy: []int{-1}},
 			}},
@@ -321,7 +321,7 @@ func TestValidateCircularDependency(t *testing.T) {
 		},
 		{
 			name: "zero ID cycle",
-			answer: processor.Answer{Issues: []processor.AnswerIssues{
+			answer: models.Answer{Issues: []models.AnswerIssues{
 				{ID: 0, BlockedBy: []int{0}},
 			}},
 			wantErr: true,

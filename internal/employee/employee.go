@@ -11,6 +11,7 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/ai"
 	"github.com/andrejsstepanovs/andai/internal/employee/knowledge"
 	"github.com/andrejsstepanovs/andai/internal/employee/processor"
+	"github.com/andrejsstepanovs/andai/internal/employee/processor/models"
 	"github.com/andrejsstepanovs/andai/internal/employee/utils"
 	"github.com/andrejsstepanovs/andai/internal/exec"
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
@@ -622,7 +623,7 @@ func (i *Employee) createIssueCommand(workflowStep settings.Step, contextFile st
 		contextFile,
 	)
 	if err != nil {
-		if errors.Is(err, processor.ErrNoIssues) {
+		if errors.Is(err, models.ErrNoIssues) {
 			return exec.Output{Stdout: "No new issues are needed here"}, nil
 		}
 		return executionOutput, err

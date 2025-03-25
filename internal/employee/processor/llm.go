@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/andrejsstepanovs/andai/internal/ai"
+	"github.com/andrejsstepanovs/andai/internal/employee/processor/models"
 	"github.com/andrejsstepanovs/andai/internal/employee/utils"
 	"github.com/andrejsstepanovs/andai/internal/exec"
 	"github.com/andrejsstepanovs/andai/internal/settings"
@@ -67,7 +68,7 @@ func GenerateIssues(llm *ai.AI, targetIssueTypeName settings.IssueTypeName, know
 		query            string
 		validationPrompt string
 	)
-	var createIssues Answer
+	var createIssues models.Answer
 	for i := 0; i < 5; i++ {
 		createIssues, query, err = getIssues(llm, targetIssueTypeName, knowledgeFile, validationPrompt)
 		if err != nil {
@@ -97,9 +98,9 @@ func GenerateIssues(llm *ai.AI, targetIssueTypeName settings.IssueTypeName, know
 	return exec.Output{}, items, deps, nil
 }
 
-func getIssues(llmNorm *ai.AI, targetIssueTypeName settings.IssueTypeName, knowledgeFile, promptExend string) (Answer, string, error) {
-	example := Answer{
-		Issues: []AnswerIssues{
+func getIssues(llmNorm *ai.AI, targetIssueTypeName settings.IssueTypeName, knowledgeFile, promptExend string) (models.Answer, string, error) {
+	example := models.Answer{
+		Issues: []models.AnswerIssues{
 			{
 				ID:          1,
 				Subject:     "Issue Title",
@@ -121,12 +122,12 @@ func getIssues(llmNorm *ai.AI, targetIssueTypeName settings.IssueTypeName, knowl
 	}
 	jsonResp, err := json.Marshal(example)
 	if err != nil {
-		return Answer{}, "", err
+		return models.Answer{}, "", err
 	}
 
 	knowledge, err := utils.GetFileContents(knowledgeFile)
 	if err != nil {
-		return Answer{}, "", err
+		return models.Answer{}, "", err
 	}
 
 	templatePrompt := gollm.NewPromptTemplate("IssuePlanToJson", "",
@@ -154,18 +155,18 @@ func getIssues(llmNorm *ai.AI, targetIssueTypeName settings.IssueTypeName, knowl
 		"TargetIssueType": targetIssueTypeName,
 	})
 	if err != nil {
-		return Answer{}, "", err
+		return models.Answer{}, "", err
 	}
 
 	ctx := context.Background()
 
-	picked := Answer{}
+	picked := models.Answer{}
 	_, validationErr, err := llmNorm.GenerateJSON(ctx, prompt, &picked)
 	if err != nil {
-		return Answer{}, "", err
+		return models.Answer{}, "", err
 	}
 	if validationErr != nil {
-		return Answer{}, validationErr.Error(), nil
+		return models.Answer{}, validationErr.Error(), nil
 	}
 
 	err = picked.Validate()
