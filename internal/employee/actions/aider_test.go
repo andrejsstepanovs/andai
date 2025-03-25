@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/andrejsstepanovs/andai/internal/employee/utils"
+	"github.com/andrejsstepanovs/andai/internal/employee/actions/file"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -74,9 +74,9 @@ func TestAider_aiderRemoveUnnecessaryLines(t *testing.T) {
 }
 
 func TestLongTextRealWorldExample(t *testing.T) {
-	content, err := utils.GetFileContents("testdata/output.txt")
+	content, err := file.GetFileContents("testdata/output.txt")
 	assert.NoError(t, err)
-	expectedOutput, err := utils.GetFileContents("testdata/expected.txt")
+	expectedOutput, err := file.GetFileContents("testdata/expected.txt")
 	assert.NoError(t, err)
 
 	lines := strings.Split(content, "\n")

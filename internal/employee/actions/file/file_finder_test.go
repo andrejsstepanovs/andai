@@ -1,4 +1,4 @@
-package utils_test
+package file_test
 
 import (
 	"os"
@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/andrejsstepanovs/andai/internal/employee/utils"
+	"github.com/andrejsstepanovs/andai/internal/employee/actions/file"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -51,27 +51,27 @@ func TestFindFilesInText(t *testing.T) {
 	deeperAbsPath, _ := filepath.Abs(filepath.Join(tempDir, "nested/deeper/config.yaml"))
 
 	// Fix the struct usage
-	finder := utils.NewFileFinder([]string{tempDir, ""})
+	finder := file.NewFileFinder([]string{tempDir, ""})
 
 	tests := []struct {
 		name     string
 		content  string
-		expected []utils.FileInfo
+		expected []file.Info
 	}{
 		{
 			name:     "Empty text",
 			content:  "",
-			expected: []utils.FileInfo{},
+			expected: []file.Info{},
 		},
 		{
 			name:     "No valid paths",
 			content:  "This text contains no valid file paths.",
-			expected: []utils.FileInfo{},
+			expected: []file.Info{},
 		},
 		{
 			name:    "Single unquoted path",
 			content: "Check this file: " + filepath.Join(tempDir, "simple.txt"),
-			expected: []utils.FileInfo{
+			expected: []file.Info{
 				{
 					Original: filepath.Join(tempDir, "simple.txt"),
 					Resolved: simpleAbsPath,
@@ -81,7 +81,7 @@ func TestFindFilesInText(t *testing.T) {
 		{
 			name:    "Single unquoted path in search directories",
 			content: "<error>\n# github.bus.zalan.do/aaa/bbb/pkg/repository\nsimple.txt:37:1: syntax error: non-declaration statement outside function body\nnested/file.go:39:1: syntax error: imports must appear before other declarations\n</error>\n",
-			expected: []utils.FileInfo{
+			expected: []file.Info{
 				{
 					Original: "simple.txt",
 					Resolved: simpleAbsPath,
@@ -95,7 +95,7 @@ func TestFindFilesInText(t *testing.T) {
 		{
 			name:    "Multiple unquoted path in search directories",
 			content: "simple.txt:39:1: syntax error: imports must appear before other declarations",
-			expected: []utils.FileInfo{
+			expected: []file.Info{
 				{
 					Original: "simple.txt",
 					Resolved: simpleAbsPath,
@@ -105,7 +105,7 @@ func TestFindFilesInText(t *testing.T) {
 		{
 			name:    "Double quoted path",
 			content: "Check this file: \"" + filepath.Join(tempDir, "with space.txt") + "\"",
-			expected: []utils.FileInfo{
+			expected: []file.Info{
 				{
 					Original: filepath.Join(tempDir, "with space.txt"),
 					Resolved: spaceAbsPath,
@@ -115,7 +115,7 @@ func TestFindFilesInText(t *testing.T) {
 		{
 			name:    "Single quoted path",
 			content: "Check this file: '" + filepath.Join(tempDir, "nested/file.go") + "'",
-			expected: []utils.FileInfo{
+			expected: []file.Info{
 				{
 					Original: filepath.Join(tempDir, "nested/file.go"),
 					Resolved: nestedAbsPath,
@@ -125,7 +125,7 @@ func TestFindFilesInText(t *testing.T) {
 		{
 			name:    "Backtick quoted path",
 			content: "Check this file: `" + filepath.Join(tempDir, "nested/deeper/config.yaml") + "` here",
-			expected: []utils.FileInfo{
+			expected: []file.Info{
 				{
 					Original: filepath.Join(tempDir, "nested/deeper/config.yaml"),
 					Resolved: deeperAbsPath,
@@ -135,7 +135,7 @@ func TestFindFilesInText(t *testing.T) {
 		{
 			name:    "Test files are found",
 			content: "" + filepath.Join(tempDir, "nested/deeper/config.yaml") + ":37:1: syntax error: non-declaration statement outside function body",
-			expected: []utils.FileInfo{
+			expected: []file.Info{
 				{
 					Original: filepath.Join(tempDir, "nested/deeper/config.yaml"),
 					Resolved: deeperAbsPath,
@@ -148,7 +148,7 @@ func TestFindFilesInText(t *testing.T) {
 				filepath.Join(tempDir, "simple.txt") + " and \"" +
 				filepath.Join(tempDir, "with space.txt") + "\" and '" +
 				filepath.Join(tempDir, "nested/file.go") + "'",
-			expected: []utils.FileInfo{
+			expected: []file.Info{
 				{
 					Original: filepath.Join(tempDir, "simple.txt"),
 					Resolved: simpleAbsPath,
@@ -166,14 +166,14 @@ func TestFindFilesInText(t *testing.T) {
 		{
 			name:     "Nonexistent files",
 			content:  "This file doesn't exist: " + filepath.Join(tempDir, "nonexistent.txt"),
-			expected: []utils.FileInfo{},
+			expected: []file.Info{},
 		},
 		{
 			name: "Mixed existing and nonexistent",
 			content: "Files: " +
 				filepath.Join(tempDir, "simple.txt") + " and " +
 				filepath.Join(tempDir, "nonexistent.txt"),
-			expected: []utils.FileInfo{
+			expected: []file.Info{
 				{
 					Original: filepath.Join(tempDir, "simple.txt"),
 					Resolved: simpleAbsPath,
@@ -190,12 +190,12 @@ func TestFindFilesInText(t *testing.T) {
 			assert.Equal(t, len(tt.expected), len(results), "Number of found files should match expected")
 
 			// Create maps for easier comparison
-			expectedMap := make(map[string]utils.FileInfo)
+			expectedMap := make(map[string]file.Info)
 			for _, e := range tt.expected {
 				expectedMap[e.Resolved] = e
 			}
 
-			resultsMap := make(map[string]utils.FileInfo)
+			resultsMap := make(map[string]file.Info)
 			for _, r := range results {
 				resultsMap[r.Resolved] = r
 			}
@@ -207,7 +207,7 @@ func TestFindFilesInText(t *testing.T) {
 }
 
 func TestExtractCandidates(t *testing.T) {
-	finder := utils.NewFileFinder([]string{".", "/tmp"})
+	finder := file.NewFileFinder([]string{".", "/tmp"})
 
 	tests := []struct {
 		name     string
@@ -269,7 +269,7 @@ func TestExtractCandidates(t *testing.T) {
 }
 
 func TestResolvePath(t *testing.T) {
-	finder := utils.NewFileFinder([]string{})
+	finder := file.NewFileFinder([]string{})
 
 	// Create a temp file for testing
 	tempFile, err := os.CreateTemp("", "test-file-*.txt")
@@ -325,7 +325,7 @@ func TestResolvePath(t *testing.T) {
 }
 
 func TestPathExists(t *testing.T) {
-	finder := utils.NewFileFinder([]string{})
+	finder := file.NewFileFinder([]string{})
 
 	// Create a temp file for testing
 	tempFile, err := os.CreateTemp("", "test-file-*.txt")
@@ -366,7 +366,7 @@ func TestPathExists(t *testing.T) {
 }
 
 func TestExtractCandidatesLine(t *testing.T) {
-	finder := utils.NewFileFinder([]string{})
+	finder := file.NewFileFinder([]string{})
 
 	tests := []struct {
 		name     string

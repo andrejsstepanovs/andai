@@ -1,24 +1,24 @@
-package utils_test
+package file_test
 
 import (
 	"testing"
 
-	"github.com/andrejsstepanovs/andai/internal/employee/utils"
+	"github.com/andrejsstepanovs/andai/internal/employee/actions/file"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBuildPromptTextTmpFile(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		create := func() string {
-			file, err := utils.BuildPromptTextTmpFile("test content")
+			fileName, err := file.BuildPromptTextTmpFile("test content")
 			assert.NoError(t, err)
-			return file
+			return fileName
 		}
 
-		file := create()
-		assert.NotEmpty(t, file)
+		fileName := create()
+		assert.NotEmpty(t, fileName)
 
-		content, err := utils.GetFileContents(file)
+		content, err := file.GetFileContents(fileName)
 		assert.NoError(t, err)
 		assert.Equal(t, "test content", content)
 	})
