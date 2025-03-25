@@ -12,7 +12,7 @@ packages:
       recursive: True
       all: True
       unroll-variadic: False
-  github.com/andrejsstepanovs/andai/internal/workbench:
+  github.com/andrejsstepanovs/andai/internal/exec:
     config:
       recursive: True
       all: True

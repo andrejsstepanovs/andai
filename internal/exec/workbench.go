@@ -1,4 +1,4 @@
-package workbench
+package exec
 
 import (
 	"errors"
@@ -11,12 +11,12 @@ import (
 )
 
 type Workbench struct {
-	Git        git
+	Git        GitInterface
 	Issue      redmine.Issue
 	WorkingDir string
 }
 
-type git interface {
+type GitInterface interface {
 	GetAffectedFiles(sha string) ([]string, error)
 	GetLastCommits(count int) ([]string, error)
 	GetLastCommitHash() (string, error)

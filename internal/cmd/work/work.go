@@ -10,7 +10,6 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/employee/actions"
 	"github.com/andrejsstepanovs/andai/internal/exec"
 	"github.com/andrejsstepanovs/andai/internal/settings"
-	"github.com/andrejsstepanovs/andai/internal/workbench"
 	"github.com/spf13/cobra"
 )
 
@@ -179,7 +178,7 @@ func workNext(deps *internal.AppDependencies, params *settings.Settings) (bool, 
 		}
 		log.Printf("Project Repository Opened %s", git.GetPath())
 
-		wb := &workbench.Workbench{
+		wb := &exec.Workbench{
 			Git:   git,
 			Issue: issue,
 		}

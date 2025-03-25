@@ -12,7 +12,6 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/exec"
 	"github.com/andrejsstepanovs/andai/internal/redmine"
 	"github.com/andrejsstepanovs/andai/internal/settings"
-	"github.com/andrejsstepanovs/andai/internal/workbench"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/spf13/cobra"
 )
@@ -62,7 +61,7 @@ func pingAider(redmine *redmine.Model, projects settings.Projects, aider setting
 	}
 	log.Printf("Project Repository Opened %s", git.GetPath())
 
-	wb := &workbench.Workbench{Git: git}
+	wb := &exec.Workbench{Git: git}
 	step := settings.Step{
 		Command: "aider",
 		Action:  "architect",

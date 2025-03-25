@@ -15,7 +15,6 @@ import (
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
 	redminemodels "github.com/andrejsstepanovs/andai/internal/redmine/models"
 	"github.com/andrejsstepanovs/andai/internal/settings"
-	"github.com/andrejsstepanovs/andai/internal/workbench"
 	"github.com/mattn/go-redmine"
 )
 
@@ -34,7 +33,7 @@ type Employee struct {
 	projectCfg        settings.Project
 	projectRepo       redminemodels.Repository
 	aiderConfig       settings.Aider
-	workbench         *workbench.Workbench
+	workbench         *exec.Workbench
 	state             settings.State
 	issueType         settings.IssueType
 	issueTypes        settings.IssueTypes
@@ -57,7 +56,7 @@ func NewEmployee(
 	siblingIssues []redmine.Issue,
 	project redmine.Project,
 	projectConfig settings.Project,
-	workbench *workbench.Workbench,
+	workbench *exec.Workbench,
 	aiderConfig settings.Aider,
 	state settings.State,
 	issueType settings.IssueType,

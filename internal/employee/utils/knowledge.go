@@ -11,7 +11,6 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/exec"
 	redminemodels "github.com/andrejsstepanovs/andai/internal/redmine/models"
 	"github.com/andrejsstepanovs/andai/internal/settings"
-	"github.com/andrejsstepanovs/andai/internal/workbench"
 	"github.com/mattn/go-redmine"
 )
 
@@ -26,7 +25,7 @@ type Knowledge struct {
 	ClosedChildrenIDs []int
 	Children          []redmine.Issue // not closed children
 	Siblings          []redmine.Issue
-	Workbench         *workbench.Workbench
+	Workbench         *exec.Workbench
 	Project           settings.Project
 	IssueTypes        settings.IssueTypes
 	Comments          redminemodels.Comments
