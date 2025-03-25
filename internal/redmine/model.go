@@ -7,12 +7,12 @@ import (
 	"github.com/mattn/go-redmine"
 )
 
-type database interface {
+type DatabaseInterface interface {
 	Query(query string, args ...any) (*sql.Rows, error)
 	Exec(query string, args ...any) (sql.Result, error)
 }
 
-type api interface {
+type ApiInterface interface {
 	Users() ([]redmine.User, error)
 	WikiPage(projectID int, title string) (*redmine.WikiPage, error)
 	CreateWikiPage(projectID int, wikiPage redmine.WikiPage) (*redmine.WikiPage, error)
@@ -32,21 +32,21 @@ type api interface {
 }
 
 type Model struct {
-	db  database
-	api api
+	db  DatabaseInterface
+	api ApiInterface
 }
 
-func NewModel(db database, api api) *Model {
+func NewModel(db DatabaseInterface, api ApiInterface) *Model {
 	return &Model{
 		api: api,
 		db:  db,
 	}
 }
 
-func (c *Model) API() api {
+func (c *Model) API() ApiInterface {
 	return c.api
 }
 
-func (c *Model) DB() database {
+func (c *Model) DB() DatabaseInterface {
 	return c.db
 }

@@ -250,7 +250,7 @@ func FindProjectGit(projectConfig models.Project, projectRepo redminemodels.Repo
 		break
 	}
 
-	if !gitRet.Opened {
+	if gitRet == nil || !gitRet.Opened {
 		log.Printf("failed to find git repository location for %q", projectRepo.RootURL)
 		return nil, errors.New("failed to open git repository")
 	}

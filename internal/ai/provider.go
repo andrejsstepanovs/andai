@@ -334,15 +334,6 @@ func (p *CustomOpenAIProvider) HandleFunctionCalls(body []byte) ([]byte, error) 
 	return json.Marshal(result)
 }
 
-// nolint: unused
-func mustMarshal(v interface{}) []byte {
-	b, err := json.Marshal(v)
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
 func (p *CustomOpenAIProvider) SetExtraHeaders(extraHeaders map[string]string) {
 	p.extraHeaders = extraHeaders
 	p.logger.Debug("Extra headers set", "headers", extraHeaders)
