@@ -172,7 +172,12 @@ func (i *Employee) executeWorkflowStep(workflowStep settings.Step) (exec.Output,
 
 	if contextFile != "" {
 		log.Printf("Context file: %q\n", contextFile)
-		defer os.Remove(contextFile)
+		defer func(name string) {
+			err := os.Remove(name)
+			if err != nil {
+				log.Printf("Failed to remove context file: %v", err)
+			}
+		}(contextFile)
 
 		contents, err := file.GetContents(contextFile)
 		if err != nil {

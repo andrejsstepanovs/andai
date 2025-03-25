@@ -22,8 +22,8 @@ func TestFindFilesInText(t *testing.T) {
 		"nested/deeper/config.yaml",
 	}
 
-	for _, file := range testFiles {
-		path := filepath.Join(tempDir, filepath.Clean(file))
+	for _, fileName := range testFiles {
+		path := filepath.Join(tempDir, filepath.Clean(fileName))
 		dir := filepath.Dir(path)
 
 		// Create directory if needed
