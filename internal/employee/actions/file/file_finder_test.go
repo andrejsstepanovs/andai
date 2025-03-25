@@ -262,7 +262,7 @@ func TestExtractCandidates(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := finder.ExtractCandidates(tt.content)
+			results := finder.ExtractFilenameCandidates(tt.content)
 			assert.Equal(t, tt.expected, results)
 		})
 	}
@@ -421,7 +421,7 @@ func TestExtractCandidatesLine(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := finder.ExtractCandidates(tt.content)
+			results := finder.ExtractFilenameCandidates(tt.content)
 			assert.Equal(t, tt.expected, results)
 		})
 	}

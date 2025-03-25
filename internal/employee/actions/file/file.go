@@ -26,7 +26,7 @@ func BuildPromptTextTmpFile(content string) (string, error) {
 	return tempFile.Name(), err
 }
 
-func GetFileContents(filename string) (string, error) {
+func GetContents(filename string) (string, error) {
 	file, err := os.ReadFile(filename) // nolint:gosec
 	if err != nil {
 		return "", err

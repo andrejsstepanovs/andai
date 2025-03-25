@@ -40,7 +40,7 @@ func NewFileFinder(searchDirectories []string) *Finder {
 // FindFilesInText extracts valid filesystem paths from text content
 func (f *Finder) FindFilesInText(content string) (Infos, error) {
 	// Step 1: Split content into potential path candidates
-	candidates := f.ExtractCandidates(content)
+	candidates := f.ExtractFilenameCandidates(content)
 
 	// Step 2: Validate each candidate against the filesystem
 	var results []Info
@@ -86,16 +86,16 @@ func (f *Finder) tryFindInDirectories(filename string, seen map[string]struct{},
 	}
 }
 
-func (f *Finder) ExtractCandidates(content string) []string {
+func (f *Finder) ExtractFilenameCandidates(content string) []string {
 	lines := strings.Split(content, "\n")
 	var candidates []string
 	for _, line := range lines {
-		candidates = append(candidates, f.ExtractCandidatesLine(line)...)
+		candidates = append(candidates, f.ExtractFilenameCandidatesLine(line)...)
 	}
 	return candidates
 }
 
-// ExtractCandidates splits a line of text into potential path candidates.
+// ExtractFilenameCandidates splits a line of text into potential path candidates.
 // It handles quoted strings (with double quotes, single quotes, or backticks)
 // and extracts potential filesystem paths.
 func (f *Finder) handleQuote(char rune, current *strings.Builder, inQuote *bool, quoteChar *rune, candidates *[]string) bool {
@@ -153,7 +153,7 @@ func (f *Finder) uniqueAndSort(candidates []string) []string {
 	return result
 }
 
-func (f *Finder) ExtractCandidatesLine(content string) []string {
+func (f *Finder) ExtractFilenameCandidatesLine(content string) []string {
 	var candidates []string
 	var current strings.Builder
 	var inQuote bool

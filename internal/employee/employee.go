@@ -174,7 +174,7 @@ func (i *Employee) executeWorkflowStep(workflowStep settings.Step) (exec.Output,
 		log.Printf("Context file: %q\n", contextFile)
 		defer os.Remove(contextFile)
 
-		contents, err := file.GetFileContents(contextFile)
+		contents, err := file.GetContents(contextFile)
 		if err != nil {
 			log.Printf("Failed to get file contents: %v", err)
 		}
@@ -229,7 +229,7 @@ func (i *Employee) executeCommand(workflowStep settings.Step, contextFile string
 }
 
 func (i *Employee) findMentionedFiles(contextFile string) (exec.Output, error) {
-	content, err := file.GetFileContents(contextFile)
+	content, err := file.GetContents(contextFile)
 	if err != nil {
 		log.Printf("Failed to get file contents: %v", err)
 		return exec.Output{}, err
@@ -375,7 +375,7 @@ func (i *Employee) commentLastCommit(commitMessage string) error {
 }
 
 func (i *Employee) summarizeTask(workflowStep settings.Step, contextFile string, includeFiles []string) (string, error) {
-	contextContent, err := file.GetFileContents(contextFile)
+	contextContent, err := file.GetContents(contextFile)
 	if err != nil {
 		log.Printf("Failed to get file contents: %v", err)
 		return "", fmt.Errorf("failed to get file contents: %w", err)
@@ -425,7 +425,7 @@ func (i *Employee) buildTaskSummaryAIHistory(contextContent, query string, inclu
 	if len(includeFiles) > 0 {
 		filesContent := make([]string, 0)
 		for _, fileName := range includeFiles {
-			content, err := file.GetFileContents(fileName)
+			content, err := file.GetContents(fileName)
 			if err != nil {
 				return history, err
 			}
@@ -450,7 +450,7 @@ func (i *Employee) summarizeTheTask(workflowStep settings.Step, contextFile stri
 	if err != nil {
 		return exec.Output{}, err
 	}
-	content, err := file.GetFileContents(summaryFile)
+	content, err := file.GetContents(summaryFile)
 	if err != nil {
 		return exec.Output{}, err
 	}
@@ -539,7 +539,7 @@ func (i *Employee) aiderCommit(workflowStep settings.Step) (exec.Output, error) 
 }
 
 func (i *Employee) simpleAI(promptFile string) (exec.Output, error) {
-	prompt, err := file.GetFileContents(promptFile)
+	prompt, err := file.GetContents(promptFile)
 	if err != nil {
 		log.Printf("Failed to get file contents: %v", err)
 	}

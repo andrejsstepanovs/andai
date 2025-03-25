@@ -18,7 +18,7 @@ func TestBuildPromptTextTmpFile(t *testing.T) {
 		fileName := create()
 		assert.NotEmpty(t, fileName)
 
-		content, err := file.GetFileContents(fileName)
+		content, err := file.GetContents(fileName)
 		assert.NoError(t, err)
 		assert.Equal(t, "test content", content)
 	})

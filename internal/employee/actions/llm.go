@@ -20,7 +20,7 @@ func EvaluateOutcome(llm *ai.AI, knowledgeFile string) (exec.Output, bool, error
 	if knowledgeFile == "" {
 		return exec.Output{}, false, fmt.Errorf("knowledge file is required for evaluation")
 	}
-	knowledge, err := file.GetFileContents(knowledgeFile)
+	knowledge, err := file.GetContents(knowledgeFile)
 	if err != nil {
 		return exec.Output{}, false, err
 	}
@@ -125,7 +125,7 @@ func getIssues(llmNorm *ai.AI, targetIssueTypeName settings.IssueTypeName, knowl
 		return models.Answer{}, "", err
 	}
 
-	knowledge, err := file.GetFileContents(knowledgeFile)
+	knowledge, err := file.GetContents(knowledgeFile)
 	if err != nil {
 		return models.Answer{}, "", err
 	}

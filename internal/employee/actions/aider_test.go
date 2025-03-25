@@ -74,9 +74,9 @@ func TestAider_aiderRemoveUnnecessaryLines(t *testing.T) {
 }
 
 func TestLongTextRealWorldExample(t *testing.T) {
-	content, err := file.GetFileContents("testdata/output.txt")
+	content, err := file.GetContents("testdata/output.txt")
 	assert.NoError(t, err)
-	expectedOutput, err := file.GetFileContents("testdata/expected.txt")
+	expectedOutput, err := file.GetContents("testdata/expected.txt")
 	assert.NoError(t, err)
 
 	lines := strings.Split(content, "\n")
