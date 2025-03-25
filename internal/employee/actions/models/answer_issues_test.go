@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/andrejsstepanovs/andai/internal/employee/processor/models"
+	"github.com/andrejsstepanovs/andai/internal/employee/actions/models"
 )
 
 func TestAnswer_GetDeps(t *testing.T) {

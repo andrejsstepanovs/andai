@@ -1,4 +1,4 @@
-package processor
+package actions
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/andrejsstepanovs/andai/internal/ai"
-	"github.com/andrejsstepanovs/andai/internal/employee/processor/models"
+	"github.com/andrejsstepanovs/andai/internal/employee/actions/models"
 	"github.com/andrejsstepanovs/andai/internal/employee/utils"
 	"github.com/andrejsstepanovs/andai/internal/exec"
 	"github.com/andrejsstepanovs/andai/internal/settings"

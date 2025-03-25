@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/andrejsstepanovs/andai/internal/ai"
+	"github.com/andrejsstepanovs/andai/internal/employee/actions"
+	"github.com/andrejsstepanovs/andai/internal/employee/actions/models"
 	"github.com/andrejsstepanovs/andai/internal/employee/knowledge"
-	"github.com/andrejsstepanovs/andai/internal/employee/processor"
-	"github.com/andrejsstepanovs/andai/internal/employee/processor/models"
 	"github.com/andrejsstepanovs/andai/internal/employee/utils"
 	"github.com/andrejsstepanovs/andai/internal/exec"
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
@@ -197,7 +197,7 @@ func (i *Employee) executeCommand(workflowStep settings.Step, contextFile string
 	case "create-issues":
 		return i.createIssueCommand(workflowStep, contextFile)
 	case "evaluate":
-		resp, success, err := processor.EvaluateOutcome(i.llmNorm, contextFile)
+		resp, success, err := actions.EvaluateOutcome(i.llmNorm, contextFile)
 		if err != nil {
 			log.Printf("Failed to create new issues: %v", err)
 			return exec.Output{}, err
@@ -467,7 +467,7 @@ func (i *Employee) aiderCode(workflowStep settings.Step, contextFile string) (ex
 		}
 	}
 
-	out, err := processor.AiderExecute(contextFile, workflowStep, i.aiderConfig)
+	out, err := actions.AiderExecute(contextFile, workflowStep, i.aiderConfig)
 	if err != nil {
 		return out, err
 	}
@@ -487,7 +487,7 @@ func (i *Employee) aiderArchitect(workflowStep settings.Step, contextFile string
 		}
 	}
 
-	architectResult, err := processor.AiderExecute(contextFile, workflowStep, i.aiderConfig)
+	architectResult, err := actions.AiderExecute(contextFile, workflowStep, i.aiderConfig)
 	if err != nil {
 		return architectResult, err
 	}
@@ -510,7 +510,7 @@ func (i *Employee) aiderCommit(workflowStep settings.Step) (exec.Output, error) 
 		return exec.Output{}, err
 	}
 
-	commitResult, err := processor.AiderExecute(
+	commitResult, err := actions.AiderExecute(
 		"Commit any uncommitted changes. Do nothing if no uncommitted changes are present.",
 		workflowStep,
 		i.aiderConfig,
@@ -617,7 +617,7 @@ func (i *Employee) createIssueCommand(workflowStep settings.Step, contextFile st
 	}
 	log.Printf("Need to create: %q Tracker ID: %d\n", workflowStep.Action, trackerID)
 
-	executionOutput, issues, deps, err := processor.GenerateIssues(
+	executionOutput, issues, deps, err := actions.GenerateIssues(
 		i.llmNorm,
 		settings.IssueTypeName(workflowStep.Action),
 		contextFile,
