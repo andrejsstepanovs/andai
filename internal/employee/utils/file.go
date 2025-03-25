@@ -6,6 +6,10 @@ import (
 	"os"
 )
 
+const (
+	tmpFile = "andai-%d-*.md"
+)
+
 func BuildPromptTextTmpFile(content string) (string, error) {
 	tempFile, err := os.CreateTemp("", fmt.Sprintf(tmpFile, 1))
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/andrejsstepanovs/andai/internal/ai"
+	"github.com/andrejsstepanovs/andai/internal/employee/knowledge"
 	"github.com/andrejsstepanovs/andai/internal/employee/processor"
 	"github.com/andrejsstepanovs/andai/internal/employee/utils"
 	"github.com/andrejsstepanovs/andai/internal/exec"
@@ -149,7 +150,7 @@ func (i *Employee) executeWorkflowStep(workflowStep settings.Step) (exec.Output,
 		return exec.Output{}, err
 	}
 
-	knowledge := utils.Knowledge{
+	understanding := knowledge.Knowledge{
 		Issue:             i.issue,
 		Parent:            i.parent,
 		Parents:           i.parents,
@@ -163,7 +164,7 @@ func (i *Employee) executeWorkflowStep(workflowStep settings.Step) (exec.Output,
 		Step:              workflowStep,
 	}
 
-	contextFile, err := knowledge.BuildIssueKnowledgeTmpFile()
+	contextFile, err := understanding.BuildIssueKnowledgeTmpFile()
 	if err != nil {
 		log.Printf("Failed to build issue context tmp file: %v", err)
 	}

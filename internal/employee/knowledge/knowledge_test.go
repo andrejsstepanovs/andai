@@ -1,15 +1,15 @@
-package utils_test
+package knowledge_test
 
 import (
 	"testing"
 
-	"github.com/andrejsstepanovs/andai/internal/employee/utils"
+	"github.com/andrejsstepanovs/andai/internal/employee/knowledge"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestTabContent(t *testing.T) {
 	t.Run("success 1", func(t *testing.T) {
-		k := utils.Knowledge{}
+		k := knowledge.Knowledge{}
 		resp := k.TagContent("apple", "Content Line 1\nContent Line 2\nContent Line 3", 3)
 		expected := "<apple>\n" +
 			"\t\t\tContent Line 1\n" +
@@ -21,7 +21,7 @@ func TestTabContent(t *testing.T) {
 	})
 
 	t.Run("success 2", func(t *testing.T) {
-		k := utils.Knowledge{}
+		k := knowledge.Knowledge{}
 		resp := k.TagContent("apple_banana", "Content Line 1\nContent Line 2\n\n", 1)
 		expected := "<apple_banana>\n" +
 			"\tContent Line 1\n" +
@@ -34,7 +34,7 @@ func TestTabContent(t *testing.T) {
 	})
 
 	t.Run("success 3 empty", func(t *testing.T) {
-		k := utils.Knowledge{}
+		k := knowledge.Knowledge{}
 		resp := k.TagContent("empty", "", 1)
 		expected := "<empty>\n" +
 			"\t\n" +

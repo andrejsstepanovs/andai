@@ -8,7 +8,7 @@ import (
 
 	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/andrejsstepanovs/andai/internal/ai"
-	"github.com/andrejsstepanovs/andai/internal/employee/utils"
+	"github.com/andrejsstepanovs/andai/internal/employee/knowledge"
 	"github.com/andrejsstepanovs/andai/internal/exec"
 	"github.com/andrejsstepanovs/andai/internal/redmine"
 	"github.com/andrejsstepanovs/andai/internal/settings"
@@ -67,7 +67,7 @@ func pingAider(redmine *redmine.Model, projects settings.Projects, aider setting
 		Action:  "architect",
 		Prompt:  "Answer with OK.",
 	}
-	e := utils.Knowledge{
+	e := knowledge.Knowledge{
 		Step:      step,
 		Workbench: wb,
 	}
