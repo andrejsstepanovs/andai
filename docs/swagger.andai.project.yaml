@@ -39,6 +39,7 @@ components:
             - cohere
             - groq
             - mistral
+            - groq
             - openai
             - google
             - openrouter
