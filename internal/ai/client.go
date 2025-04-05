@@ -38,7 +38,7 @@ func NewAI(config settings.LlmModel) (*AI, error) {
 		temp = config.Temperature
 	}
 
-	maxTokens := 4096
+	maxTokens := 128000
 	if config.MaxTokens > 0 {
 		maxTokens = config.MaxTokens
 	}

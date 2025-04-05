@@ -313,35 +313,54 @@ func (i *Routine) commentLastCommit(commitMessage string) error {
 func (i *Routine) summarizeTask(workflowStep settings.Step, contextFile string, includeFiles []string) (string, error) {
 	contextContent, err := file.GetContents(contextFile)
 	if err != nil {
-		log.Printf("Failed to get file contents: %v", err)
-		return "", fmt.Errorf("failed to get file contents: %w", err)
+		log.Printf("Failed to get context file contents: %v", err)
+		return "", fmt.Errorf("failed to get context file contents: %w", err)
 	}
 
 	query := "Perfect, yes. Now do it! Answer only with the reformatted task text."
-
+	remainingFiles := includeFiles
 	var ret exec.Output
-	for n := 0; n < 4; n++ {
-		history, err := i.buildTaskSummaryAIHistory(contextContent, query, includeFiles)
+	var lastError error
+
+	for attempts := 0; attempts < len(remainingFiles); attempts++ {
+		history, err := i.buildTaskSummaryAIHistory(contextContent, query, remainingFiles)
 		if err != nil {
-			return contextFile, err
+			log.Printf("Failed to build task summary history: %v", err)
+			return "", fmt.Errorf("failed to build task summary history: %w", err)
 		}
+
 		ret, err = i.llmNorm.Multi(query, history)
-		if err != nil {
-			if errors.Is(err, ai.ErrTooManyTokens) && len(includeFiles) > 0 {
-				includeFiles = includeFiles[len(includeFiles)/2:] // remove half of the files
-				continue
-			}
-			log.Printf("Failed to run AI: %v", err)
-		} else {
-			log.Printf("AI response: %s", ret.Stdout)
+		if err == nil {
+			log.Printf("AI response received successfully")
+			break // Success, exit the loop
 		}
+
+		lastError = err
+		log.Printf("AI request attempt %d failed: %v", attempts+1, err)
+
+		// If we hit token limits and have files we can remove, try again with fewer files
+		if errors.Is(err, ai.ErrTooManyTokens) && len(remainingFiles) > 0 {
+			log.Printf("Too many tokens, reducing included files by one. Consider setting or increasing 'max_tokens' parameter.")
+			remainingFiles = remainingFiles[1:]
+			continue
+		}
+
+		// Any other error or we can't reduce files further
 		break
 	}
 
+	// If we exhausted all attempts without success
+	if lastError != nil {
+		log.Printf("All AI requests failed, last error: %v", lastError)
+		return "", fmt.Errorf("failed to get AI response: %w", lastError)
+	}
+
+	log.Printf("AI response: %s", ret.Stdout)
+
 	if workflowStep.CommentSummary {
-		err = i.AddComment(ret.Stdout)
-		if err != nil {
-			return contextFile, err
+		if err := i.AddComment(ret.Stdout); err != nil {
+			log.Printf("Failed to add comment: %v", err)
+			return "", fmt.Errorf("failed to add comment: %w", err)
 		}
 	}
 
@@ -386,6 +405,7 @@ func (i *Routine) summarizeTheTask(workflowStep settings.Step, contextFile strin
 	if err != nil {
 		return exec.Output{}, err
 	}
+
 	content, err := file.GetContents(summaryFile)
 	if err != nil {
 		return exec.Output{}, err
