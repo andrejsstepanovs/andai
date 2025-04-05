@@ -4,8 +4,7 @@ import (
 	"regexp"
 )
 
-// extractCommitSHAs extracts unique Git commit SHAs from comment text
-// Returns slice of unique SHA strings
+// ExtractCommitSHAs extracts unique Git commit SHAs from comment text, returning them as a slice of strings.
 func ExtractCommitSHAs(commentText string) []string {
 	// Regex pattern for matching Git commit SHAs (40-char hexadecimal)
 	pattern := regexp.MustCompile(`(?i)\b[0-9a-f]{40}\b`)
