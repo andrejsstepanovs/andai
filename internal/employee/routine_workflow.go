@@ -81,7 +81,7 @@ func (i *Routine) executeWorkflowStep(workflowStep settings.Step) (exec.Output, 
 		log.Printf("Failed to get comments: %v", err)
 		return exec.Output{}, fmt.Errorf("failed to retrieve comments: %w", err)
 	}
-    
+
 	if len(comments) == 0 {
 		log.Printf("No existing comments found")
 	}

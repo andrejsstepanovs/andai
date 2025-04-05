@@ -1,0 +1,433 @@
+openapi: 3.0.0
+info:
+  title: AndAI Configuration API
+  description: Swagger specification for documenting AndAI configuration file `.andai.project.yaml`. See docs/ to get more detailed manual.
+  version: 1.0.0
+  contact:
+    name: AndAI
+    url: https://github.com/andrejsstepanovs/andai
+
+components:
+  schemas:
+    LlmModel:
+      type: object
+      required:
+        - name
+        - model
+        - provider
+        - api_key
+      properties:
+        name:
+          type: string
+          description: Name of the LLM model configuration
+        model:
+          oneOf:
+            - type: string
+            - type: object
+              properties:
+                name:
+                  type: string
+                base_url:
+                  type: string
+              required:
+                - name
+                - base_url
+        provider:
+          type: string
+          enum:
+            - anthropic
+            - cohere
+            - groq
+            - mistral
+            - groq
+            - openai
+            - google
+            - openrouter
+            - deepseek
+            - custom
+          description: LLM provider
+        api_key:
+          type: string
+          description: API key for the LLM provider
+        temperature:
+          type: number
+          default: 0.2
+          description: Temperature setting for model responses
+        base_url:
+          type: string
+          description: Base URL for custom LLM providers
+
+    RedmineConfig:
+      type: object
+      required:
+        - db
+        - url
+        - api_key
+        - repositories
+      properties:
+        db:
+          type: string
+          description: Database connection string
+        url:
+          type: string
+          format: uri
+          description: Redmine instance URL
+        api_key:
+          type: string
+          description: Redmine API key
+        repositories:
+          type: string
+          description: Path to repositories within Redmine container
+
+    AiderConfig:
+      type: object
+      properties:
+        timeout:
+          type: string
+          format: duration
+          description: Timeout for Aider operations
+        config:
+          type: string
+          description: Path to Aider configuration file
+        map_tokens:
+          type: integer
+          default: 1024
+          description: Number of tokens for project mapping
+        task_summary_prompt:
+          type: string
+          description: Custom prompt for task summarization
+
+    Project:
+      type: object
+      required:
+        - identifier
+        - name
+        - description
+        - git_path
+        - git_local_dir
+        - final_branch
+      properties:
+        identifier:
+          type: string
+          description: Unique project identifier
+        name:
+          type: string
+          description: Human-readable project name
+        description:
+          type: string
+          description: Project description
+        git_path:
+          type: string
+          description: Path to git repository within Redmine
+        git_local_dir:
+          type: string
+          description: Local path to git repository
+        final_branch:
+          type: string
+          description: Final branch for merging code
+        wiki:
+          type: string
+          description: Project wiki content in Markdown
+        commands:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectCommand'
+
+    ProjectCommand:
+      type: object
+      required:
+        - name
+        - command
+      properties:
+        name:
+          type: string
+          description: Command name
+        command:
+          type: array
+          items:
+            type: string
+          description: Command to execute
+        ignore_err:
+          type: boolean
+          default: false
+          description: Ignore command errors
+        ignore_stdout_if_no_stderr:
+          type: boolean
+          default: false
+          description: Ignore stdout if no stderr
+        success_if_no_output:
+          type: boolean
+          default: false
+          description: Consider successful if no output
+
+    WorkflowState:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: State name
+        description:
+          type: string
+          description: State description
+        is_default:
+          type: boolean
+          description: Whether this is the default state
+        is_first:
+          type: boolean
+          description: Whether this is the first state
+        is_closed:
+          type: boolean
+          description: Whether this is a closed state
+        ai:
+          type: array
+          items:
+            type: string
+          description: List of issue types (IssueType.name) that AI will work on
+
+    WorkflowTransition:
+      type: object
+      required:
+        - source
+        - target
+      properties:
+        source:
+          type: string
+          description: Source state (WorkflowState.name)
+        target:
+          type: string
+          description: Target state (WorkflowState.name)
+        success:
+          type: boolean
+          description: Success transition (mainly used by Step.command=evaluate)
+        fail:
+          type: boolean
+          description: Failure transition (mainly used by Step.command=evaluate)
+
+    IssueType:
+      type: object
+      required:
+        - name
+        - description
+        - jobs
+      properties:
+        name:
+          type: string
+          description: Issue type name
+        description:
+          type: string
+          description: Issue type description
+        jobs:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/IssueTypeJob'
+
+    IssueTypeJob:
+      type: object
+      properties:
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/Step'
+
+    Step:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: string
+          enum:
+            - next
+            - merge-into-parent
+            - project-cmd
+            - create-issues
+            - summarize-task
+            - context-files
+            - commit
+            - git
+            - bash
+            - evaluate
+            - ai
+            - aider
+          description: Command to execute
+        action:
+          type: string
+          description: Action for the command
+        context:
+          type: array
+          items:
+            type: string
+            enum:
+              - ticket
+              - comments
+              - last-comment
+              - last-2-comment
+              - last-3-comment
+              - last-4-comment
+              - last-5-comment
+              - project
+              - wiki
+              - children
+              - siblings
+              - parent
+              - parents
+              - issue_types
+              - affected-files
+          description: Context sources for the command
+        remember:
+          type: boolean
+          default: false
+          description: Remember output for next step
+        comment:
+          type: boolean
+          default: false
+          description: Comment output to the issue
+        prompt:
+          type: string
+          description: Prompt for AI/LLM commands
+        summarize:
+          type: boolean
+          default: false
+          description: Summarize context for Aider
+        comment-summary:
+          type: boolean
+          default: false
+          description: Comment the summary
+
+    Trigger:
+      type: object
+      required:
+        - issue_type
+        - if
+        - transition
+      properties:
+        issue_type:
+          type: string
+          description: Issue type (IssueType.name) this trigger applies to
+        if:
+          type: array
+          items:
+            type: object
+            required:
+              - moved_to
+              - all_siblings_status
+            properties:
+              moved_to:
+                type: string
+                description: The state (WorkflowState.name) the issue was moved to
+              all_siblings_status:
+                type: string
+                description: Status of all sibling issues status must be (WorkflowState.name)
+        transition:
+          type: object
+          required:
+            - who
+            - to
+          properties:
+            who:
+              type: string
+              enum:
+                - parent
+                - children
+              description: Who to transition (parent or children)
+            to:
+              type: string
+              description: Target state (WorkflowState.name) for the transition (who) element(s)
+
+    AndAiConfig:
+      type: object
+      required:
+        - llm_models
+        - redmine
+        - aider
+        - projects
+        - workflow
+      properties:
+        llm_models:
+          type: array
+          items:
+            $ref: '#/components/schemas/LlmModel'
+        redmine:
+          $ref: '#/components/schemas/RedmineConfig'
+        aider:
+          $ref: '#/components/schemas/AiderConfig'
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+        workflow:
+          type: object
+          required:
+            - states
+            - transitions
+            - issue_types
+            - priorities
+          properties:
+            states:
+              type: array
+              items:
+                $ref: '#/components/schemas/WorkflowState'
+            transitions:
+              type: array
+              items:
+                $ref: '#/components/schemas/WorkflowTransition'
+            issue_types:
+              type: object
+              additionalProperties:
+                $ref: '#/components/schemas/IssueType'
+            priorities:
+              type: array
+              items:
+                type: object
+                required:
+                  - type
+                  - state
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - Task
+                      - Story
+                      - Grooming
+                  state:
+                    type: string
+        triggers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trigger'
+          description: Optional array of triggers that will be applied based on issue states. For example, when all children are moved to Done, then move Parent to Ready for Review.
+
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+
+  requestBodies:
+    AndAiConfig:
+      content:
+        application/yaml:
+          schema:
+            $ref: '#/components/schemas/AndAiConfig'
+
+paths:
+  /validate:
+    post:
+      summary: Validate AndAI configuration
+      description: Validates the provided YAML configuration
+      requestBody:
+        $ref: '#/components/requestBodies/AndAiConfig'
+      responses:
+        '200':
+          description: Configuration is valid
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

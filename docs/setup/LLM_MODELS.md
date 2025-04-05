@@ -37,6 +37,7 @@ llm_models:
 - `mistral`
 - `openai`
 - `google`
+- `groq`
 - `openrouter`
 - `deepseek`
 

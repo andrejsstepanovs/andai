@@ -26,9 +26,10 @@ func NewAI(config settings.LlmModel) (*AI, error) {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
+	modelsWithNoTemp := []string{"r1", "o1"}
 	var temp float64
 	useTemperature := true
-	for _, model := range []string{"r1", "o1"} {
+	for _, model := range modelsWithNoTemp {
 		if strings.Contains(strings.ToLower(config.Model), model) {
 			useTemperature = false
 		}
@@ -37,7 +38,7 @@ func NewAI(config settings.LlmModel) (*AI, error) {
 		temp = config.Temperature
 	}
 
-	maxTokens := 4096
+	maxTokens := 128000
 	if config.MaxTokens > 0 {
 		maxTokens = config.MaxTokens
 	}
@@ -60,6 +61,7 @@ func NewAI(config settings.LlmModel) (*AI, error) {
 		"openrouter": "https://openrouter.ai/api/v1/chat/completions",
 		"mistral":    "https://api.mistral.ai/v1/chat/completions",
 		"google":     "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+		"groq":       "https://api.groq.com/openai/v1/chat/completions",
 		"custom":     config.BaseURL,
 	}
 

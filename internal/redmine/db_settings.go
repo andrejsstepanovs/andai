@@ -12,7 +12,7 @@ import (
 
 const (
 	// TokenActionAPI is a constant for API token action
-	TokenActionAPI = "APIInterface"
+	TokenActionAPI = "api"
 	// SettingRestAPIEnabled is a constant for setting name
 	SettingRestAPIEnabled = "rest_api_enabled"
 	settingsValueEnabled  = "1"

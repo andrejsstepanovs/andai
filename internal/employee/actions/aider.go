@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"errors"
 	"log"
 	"strings"
 
@@ -24,6 +25,14 @@ func AiderExecute(contextFile string, step settings.Step, aiderConfig settings.A
 		return output, err
 	}
 	output = ai.RemoveThinkingFromOutput(output)
+
+	failedIfFound := []string{"Check your API key"}
+	for _, s := range failedIfFound {
+		if strings.Contains(output.Stdout, s) || strings.Contains(output.Stderr, s) {
+			output.Stderr = output.Stdout
+			return output, errors.New("aider API key is not valid")
+		}
+	}
 
 	if output.Stdout != "" {
 		lines := strings.Split(output.Stdout, "\n")
