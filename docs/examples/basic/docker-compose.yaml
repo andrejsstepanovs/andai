@@ -18,7 +18,7 @@ services:
       - --collation-server=utf8mb4_unicode_ci
 
   redmine:
-    image: sameersbn/redmine:6.0.3
+    image: sameersbn/redmine:6.0.4-1
     env_file:
       - .redmine.env
     ports:

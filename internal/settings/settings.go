@@ -431,6 +431,15 @@ func (s *Settings) validateStepContexts() error {
 }
 
 func (s *Settings) validateIssueTypes(stateNames map[StateName]bool) (map[IssueTypeName]bool, error) {
+	for issueTypeName, issueType := range s.Workflow.IssueTypes {
+		if len(issueType.Name) > 30 {
+			return nil, fmt.Errorf("issue type %q name is too long (by %d) (max 30)", issueTypeName, len(issueType.Name)-30)
+		}
+		if len(issueType.Description) > 255 {
+			return nil, fmt.Errorf("issue type %q description is too long (by %d) (max 255)", issueTypeName, len(issueType.Description)-255)
+		}
+	}
+
 	issueStateNames, err := s.validateIssueTypeStates(stateNames)
 	if err != nil {
 		return nil, err
