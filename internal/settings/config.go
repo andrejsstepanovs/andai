@@ -24,9 +24,8 @@ func NewConfig(project, basePath string) *Config {
 	}
 
 	if project == "" {
-		log.Println("PROJECT environment variable not set")
-		log.Println("Assuming PROJECT=project")
 		project = defaultProjectName
+		log.Printf("PROJECT environment variable not set. Assuming its %q", project)
 	}
 
 	conf.project = project
@@ -87,10 +86,10 @@ func (c *Config) findConfigFile() (string, error) {
 }
 
 func (c *Config) getSettings(configFile string) (*Settings, error) {
-	log.Println("Using config file to load workflow:", configFile)
+	//log.Println("Using config file to load workflow:", configFile)
 	content, err := os.ReadFile(configFile) // nolint:gosec
 	if err != nil {
-		log.Println("Error reading file:", err)
+		log.Printf("Error reading file %s err: %s", configFile, err)
 		return &Settings{}, err
 	}
 

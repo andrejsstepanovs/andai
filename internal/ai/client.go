@@ -68,7 +68,7 @@ func NewAI(config settings.LlmModel) (*AI, error) {
 	endpoint, ok := customProviders[config.Provider]
 	var conn llm.LLM
 	if ok {
-		log.Printf("Using custom OpenAI provider %q", config.Provider)
+		//log.Printf("Using custom OpenAI provider %q", config.Provider)
 		registry := providers.NewProviderRegistry()
 		registry.Register(config.Provider, func(apiKey, model string, extraHeaders map[string]string) providers.Provider {
 			return NewCustomOpenAIProvider(
@@ -85,7 +85,7 @@ func NewAI(config settings.LlmModel) (*AI, error) {
 			return nil, fmt.Errorf("failed to create custom %q LLM err: %v", config.Provider, err)
 		}
 	} else {
-		log.Printf("Using provider %q", config.Provider)
+		//log.Printf("Using provider %q", config.Provider)
 		opts := []gollm.ConfigOption{
 			gollm.SetProvider(cfg.Provider),
 			gollm.SetModel(cfg.Model),
