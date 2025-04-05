@@ -79,11 +79,7 @@ func (i *Routine) executeWorkflowStep(workflowStep settings.Step) (exec.Output, 
 	comments, err := i.getComments()
 	if err != nil {
 		log.Printf("Failed to get comments: %v", err)
-		return exec.Output{}, fmt.Errorf("failed to retrieve comments: %w", err)
-	}
-
-	if len(comments) == 0 {
-		log.Printf("No existing comments found")
+		return exec.Output{}, err
 	}
 
 	understanding := knowledge.Knowledge{
