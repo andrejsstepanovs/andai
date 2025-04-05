@@ -107,11 +107,25 @@ func newNextCommand(deps *internal.AppDependencies) *cobra.Command {
 				return err
 			}
 
-			log.Println("Searching for workable issue")
+			log.Println("Searching for workable issues")
 			_, err = workNext(deps, params)
 			return err
 		},
 	}
+}
+
+func getFirstWorkableIssuePerProjects(issues []redmine.Issue) []redmine.Issue {
+	issuesPerProject := make(map[int][]redmine.Issue)
+	for _, issue := range issues {
+		if len(issuesPerProject[issue.Project.Id]) == 0 {
+			issuesPerProject[issue.Project.Id] = append(issuesPerProject[issue.Project.Id], issue)
+		}
+	}
+	workableProjectIssues := make([]redmine.Issue, 0)
+	for _, projectIssues := range issuesPerProject {
+		workableProjectIssues = append(workableProjectIssues, projectIssues...)
+	}
+	return workableProjectIssues
 }
 
 func workNext(deps *internal.AppDependencies, params *settings.Settings) (bool, error) {
@@ -121,12 +135,17 @@ func workNext(deps *internal.AppDependencies, params *settings.Settings) (bool, 
 		return false, err
 	}
 
-	if len(issues) == 0 {
-		return false, nil
-	}
+	for _, issue := range getFirstWorkableIssuePerProjects(issues) {
+		// check if AI is allowed to work on it
+		currentIssueState := params.Workflow.States.Get(settings.StateName(issue.Status.Name))
+		currentIssueType := params.Workflow.IssueTypes.Get(settings.IssueTypeName(issue.Tracker.Name))
 
-	log.Printf("FOUND WORKABLE ISSUES (%d)", len(issues))
-	for _, issue := range issues {
+		if !currentIssueState.UseAI.Yes(currentIssueType.Name) {
+			f := "Waiting on USER to finish work on %q (ID: %d) in %q - %q\n"
+			log.Printf(f, currentIssueType.Name, issue.Id, currentIssueState.Name, issue.Subject)
+			continue
+		}
+
 		fmt.Printf("WORKING ON: %q in %q ID=%d: %s\n",
 			params.Workflow.IssueTypes.Get(settings.IssueTypeName(issue.Tracker.Name)).Name,
 			params.Workflow.States.Get(settings.StateName(issue.Status.Name)).Name,
