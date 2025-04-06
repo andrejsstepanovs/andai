@@ -1,8 +1,8 @@
 llm_models:
-  # your llm config here
+# your llm config here
 
 projects:
-  # your projects here
+# your projects here
 
 redmine:
   db: redmine:redmine@tcp(localhost:3306)/redmine
@@ -249,7 +249,7 @@ workflow:
               action: architect-code
               summarize: True
               comment-summary: False
-              context: ["project", "wiki", "ticket", "last-5-comment"]
+              context: ["project", "wiki", "ticket", "last-5-comments"]
               prompt: Implement (code) given Task issue based on ticket description and last comments.
             - command: project-cmd
               action: reformat
@@ -333,23 +333,23 @@ workflow:
         QA:
           steps:
             - command: next
-# searching for that perfect setup. With this LLM fails to fix linter forever. Don't have so much cash to burn. Fixing myself in Story Review step.
-#            - command: project-cmd
-#              action: lint
-#              remember: True
-#            - command: project-cmd
-#              action: test
-#              remember: True
-#            - command: ai
-#              prompt: |
-#                If there are any linter errors then pinpoint exact files and place in file (using linter output) that is at fault.
-#                Answer with clear and concise explanation of the sources for these linter errors.
-#                If there are any testing errors then pinpoint exact files and test cases that are faulty (using tests output).
-#                Keep the answer straight to the point of what was test cases are broken and in what file and where.
-#                If there are no linter and testing errors then answer with "Linter and tests are OK".
-#              comment: True
-#              remember: True
-#            - command: evaluate
+        # searching for that perfect setup. With this LLM fails to fix linter forever. Don't have so much cash to burn. Fixing myself in Story Review step.
+        #            - command: project-cmd
+        #              action: lint
+        #              remember: True
+        #            - command: project-cmd
+        #              action: test
+        #              remember: True
+        #            - command: ai
+        #              prompt: |
+        #                If there are any linter errors then pinpoint exact files and place in file (using linter output) that is at fault.
+        #                Answer with clear and concise explanation of the sources for these linter errors.
+        #                If there are any testing errors then pinpoint exact files and test cases that are faulty (using tests output).
+        #                Keep the answer straight to the point of what was test cases are broken and in what file and where.
+        #                If there are no linter and testing errors then answer with "Linter and tests are OK".
+        #              comment: True
+        #              remember: True
+        #            - command: evaluate
         Review:
           steps:
             - command: next
@@ -390,6 +390,8 @@ workflow:
 
     - type: Story
       state: Deployment
+    - type: Story
+      state: Review
     - type: Story
       state: QA
     - type: Story
