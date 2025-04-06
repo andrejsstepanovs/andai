@@ -120,7 +120,7 @@ func (i *Workbench) GetLastCommit() (string, error) {
 
 func (i *Workbench) GetCommitsSinceInReverseOrder(sinceSha string) ([]string, error) {
 	// from newest to oldest
-	allCommits, err := i.GetBranchCommits(100)
+	allCommits, err := i.GetBranchCommits(20)
 	if err != nil {
 		return nil, errors.New("failed to get last commits")
 	}
@@ -134,10 +134,11 @@ func (i *Workbench) GetCommitsSinceInReverseOrder(sinceSha string) ([]string, er
 	}
 
 	// reverse the order of commits
-	for i, j := 0, len(commits)-1; i < j; i, j = i+1, j-1 {
-		commits[i], commits[j] = commits[j], commits[i]
+	for k, j := 0, len(commits)-1; k < j; k, j = k+1, j-1 {
+		commits[k], commits[j] = commits[j], commits[k]
 	}
 
+	// returns in order from oldest to newest
 	return commits, nil
 }
 

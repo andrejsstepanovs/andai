@@ -187,38 +187,6 @@ func (i *Routine) findMentionedFiles(contextFile string) (exec.Output, error) {
 	return exec.Output{Stdout: foundFiles.String()}, nil
 }
 
-func (i *Routine) commitUncommitted(commitMessage string) (exec.Output, error) {
-	modified := "git status | cat | grep modified | awk '{print $2}'"
-	out, err := exec.Exec(modified, time.Minute)
-	if err != nil {
-		return exec.Output{}, err
-	}
-	if out.Stdout == "" {
-		log.Println("No files to add")
-		return exec.Output{}, nil
-	}
-	files := strings.Split(out.Stdout, "\n")
-	if len(files) == 0 {
-		log.Println("No files to add")
-		return exec.Output{}, nil
-	}
-	for _, f := range files {
-		ret, err := exec.Exec(fmt.Sprintf("git add %s", f), time.Minute)
-		if err != nil {
-			return ret, err
-		}
-	}
-	ret, err := exec.Exec("git commit -m \"code reformat\"", time.Minute)
-	if err != nil {
-		return ret, err
-	}
-	err = i.commentLastCommit(commitMessage)
-	if err != nil {
-		return out, err
-	}
-	return ret, nil
-}
-
 func (i *Routine) runProjectCmd(workflowStep settings.Step) (exec.Output, error) {
 	command, err := i.projectCfg.Commands.Find(workflowStep.Action)
 	if err != nil {
@@ -283,31 +251,6 @@ func (i *Routine) aider(workflowStep settings.Step, contextFile string) (exec.Ou
 	default:
 		return exec.Output{}, fmt.Errorf("unknown %q action: %q", workflowStep.Command, workflowStep.Action)
 	}
-}
-
-func (i *Routine) commentLastCommit(commitMessage string) error {
-	commits, getShaErr := i.workbench.GetBranchCommits(1)
-	if getShaErr != nil {
-		log.Printf("Failed to get last commit sha: %v", getShaErr)
-		return nil
-	}
-
-	txt := make([]string, 0)
-	branchName := i.workbench.GetIssueBranchName(i.issue)
-	format := "### Branch [%s](/projects/%s/repository/%s?rev=%s)"
-	txt = append(txt, fmt.Sprintf(format, branchName, i.project.Identifier, i.project.Identifier, branchName))
-	if len(commits) > 0 {
-		for n, sha := range commits {
-			format = "%d. Commit [%s](/projects/%s/repository/%s/revisions/%s/diff) - %s"
-			txt = append(txt, fmt.Sprintf(format, n+1, sha, i.project.Identifier, i.project.Identifier, sha, commitMessage))
-		}
-
-		err := i.AddComment(strings.Join(txt, "\n"))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (i *Routine) summarizeTask(workflowStep settings.Step, contextFile string, includeFiles []string) (string, error) {
@@ -423,11 +366,17 @@ func (i *Routine) aiderCode(workflowStep settings.Step, contextFile string) (exe
 		}
 	}
 
+	currentCommitSku, err := i.workbench.GetLastCommit()
+	if err != nil {
+		return exec.Output{}, err
+	}
+
 	out, err := actions.AiderExecute(contextFile, workflowStep, i.aiderConfig)
 	if err != nil {
 		return out, err
 	}
-	err = i.commentLastCommit("code changes")
+
+	err = i.commentCommitsSince(currentCommitSku, "code changes")
 	if err != nil {
 		return out, err
 	}
@@ -475,20 +424,9 @@ func (i *Routine) aiderCommit(workflowStep settings.Step) (exec.Output, error) {
 		return commitResult, err
 	}
 
-	commits, err := i.workbench.GetCommitsSinceInReverseOrder(lastSha)
+	err = i.commentCommitsSince(lastSha, "code changes")
 	if err != nil {
 		return commitResult, fmt.Errorf("failed to get commits since %q: %v", lastSha, err)
-	}
-	// TODO loop existing comments.
-	// if this sha already exists in comments, then make comment that no new commits were made.
-
-	for _, sha := range commits {
-		format := "%d. Commit [%s](/projects/%s/repository/%s/revisions/%s/diff)"
-		txt := fmt.Sprintf(format, 1, sha, i.project.Identifier, i.project.Identifier, sha)
-		err = i.AddComment(txt)
-		if err != nil {
-			return commitResult, err
-		}
 	}
 
 	return commitResult, nil
@@ -511,13 +449,7 @@ func (i *Routine) simpleAI(promptFile string) (exec.Output, error) {
 
 func (i *Routine) mergeIntoParent() (exec.Output, error) {
 	currentBranchName := i.workbench.GetIssueBranchName(i.issue)
-
-	// if no parent left, merge it into final branch defined in project config yaml
-	parentBranchName := i.projectCfg.FinalBranch
-	parentExists := i.parent != nil && i.parent.Id != 0
-	if parentExists {
-		parentBranchName = i.workbench.GetIssueBranchName(*i.parent)
-	}
+	parentBranchName := i.getTargetBranch()
 	log.Printf("Merging current branch: %q into parent branch: %q", currentBranchName, parentBranchName)
 
 	err := i.workbench.Git.CheckoutBranch(parentBranchName)
@@ -535,20 +467,13 @@ func (i *Routine) mergeIntoParent() (exec.Output, error) {
 	}
 	log.Printf("Merged current branch: %q into parent branch: %q", currentBranchName, parentBranchName)
 
-	if parentExists {
-		branchDiffURL := fmt.Sprintf("[branch diff](/projects/%s/repository/%s/diff?rev=%s&rev_to=%s", i.project.Identifier, i.project.Identifier, parentBranchName, i.projectCfg.FinalBranch)
-		commentText := fmt.Sprintf("Merged #%d branch %q into %q. %s)", i.issue.Id, currentBranchName, parentBranchName, branchDiffURL)
-		err = i.AddCommentToParent(commentText)
-		if err != nil {
-			log.Printf("Failed to add comment to parent: %v", err)
-			return out, err
-		}
+	err = i.commentParentAboutMerge()
+	if err != nil {
+		return out, err
 	}
 
-	commentText := fmt.Sprintf("Merged #%d branch %q into parent %q", i.issue.Id, currentBranchName, parentBranchName)
-	err = i.AddComment(commentText)
+	err = i.commentCurrentAboutMerge()
 	if err != nil {
-		log.Printf("Failed to add comment: %v", err)
 		return out, err
 	}
 
