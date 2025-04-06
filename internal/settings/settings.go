@@ -12,6 +12,18 @@ type Settings struct {
 	Aider     Aider     `yaml:"aider"`
 }
 
+func (s *Settings) getAllIssueTypesAndStates() map[IssueTypeName]map[StateName]State {
+	issueTypesAndStates := make(map[IssueTypeName]map[StateName]State)
+	for issueTypeName, _ := range s.Workflow.IssueTypes {
+		states := make(map[StateName]State)
+		for stateName, state := range s.Workflow.States {
+			states[stateName] = state
+		}
+		issueTypesAndStates[issueTypeName] = states
+	}
+	return issueTypesAndStates
+}
+
 func (s *Settings) validateStates(issueTypeNames map[IssueTypeName]bool) error {
 	if len(s.Workflow.States) == 0 {
 		return fmt.Errorf("workflow states are required")
@@ -289,6 +301,50 @@ func (s *Settings) validateLlmModels() error {
 	return nil
 }
 
+func (s *Settings) validatePriorities(issueTypeNames map[IssueTypeName]bool, stateNames map[StateName]bool) error {
+	for _, priority := range s.Workflow.Priorities {
+		if _, ok := stateNames[priority.State]; !ok {
+			return fmt.Errorf("priority state %s does not exist", priority.State)
+		}
+		if _, ok := issueTypeNames[priority.Type]; !ok {
+			return fmt.Errorf("priority issue type %s does not exist", priority.Type)
+		}
+	}
+
+	// check for duplicates
+	priorityMap := make(map[string]bool)
+	for _, priority := range s.Workflow.Priorities {
+		key := fmt.Sprintf("%s-%s", priority.Type, priority.State)
+		if _, ok := priorityMap[key]; ok {
+			return fmt.Errorf("priority %q is duplicated", key)
+		}
+		priorityMap[key] = true
+	}
+
+	// check that all are defined
+	for typeName, typeStates := range s.getAllIssueTypesAndStates() {
+		for stateName, state := range typeStates {
+			if state.IsClosed || state.IsDefault {
+				continue
+			}
+
+			exists := false
+			for _, priority := range s.Workflow.Priorities {
+				if priority.Type == typeName && priority.State == stateName {
+					exists = true
+					break
+				}
+			}
+
+			if !exists {
+				return fmt.Errorf("issue type %q state %q does not have a priority defined", typeName, stateName)
+			}
+		}
+	}
+
+	return nil
+}
+
 func (s *Settings) validateTriggers(issueTypeNames map[IssueTypeName]bool, stateNames map[StateName]bool) error {
 	for _, trigger := range s.Workflow.Triggers {
 		if _, ok := issueTypeNames[trigger.IssueType]; !ok {
@@ -479,14 +535,8 @@ func (s *Settings) Validate() error {
 		return err
 	}
 
-	// validate priorities
-	for _, priority := range s.Workflow.Priorities {
-		if _, ok := stateNames[priority.State]; !ok {
-			return fmt.Errorf("priority state %s does not exist", priority.State)
-		}
-		if _, ok := issueTypeNames[priority.Type]; !ok {
-			return fmt.Errorf("priority issue type %s does not exist", priority.Type)
-		}
+	if err := s.validatePriorities(issueTypeNames, stateNames); err != nil {
+		return err
 	}
 
 	if err := s.validateLlmModels(); err != nil {
