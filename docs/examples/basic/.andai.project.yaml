@@ -4,6 +4,7 @@ llm_models:
     provider: "anthropic"
     api_key: "sk-*****"
     temperature: 0.2
+    max_tokens: 128000
 
 # redmine is running within docker and this config can stay hardcoded. Keep api-key as is. It plays no role in anything.
 redmine:

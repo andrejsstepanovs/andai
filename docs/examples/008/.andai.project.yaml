@@ -1,0 +1,385 @@
+llm_models:
+# your llm config here
+
+projects:
+# your projects here
+
+redmine:
+  db: redmine:redmine@tcp(localhost:3306)/redmine
+  url: "http://localhost:10083"
+  api_key: "2159cef2fb6c82c4f66981f199798781e161c694"
+  repositories: "/var/repositories/"
+
+aider:
+  timeout: "180m"
+  config: "/path/to/.andai.aider.yaml"
+  map_tokens:  512 #1024
+  task_summary_prompt: |
+    I need you to REFORMAT the technical information above into a structured developer task.
+    DO NOT implement any technical solution - your role is ONLY to organize and present the information.
+    
+    ### Your Think Process:
+    1. PRIORITY INFORMATION SOURCES (analyze in this order):
+      - Current issue descriptions and requirements
+      - Latest comments and discussions on the issue
+      - Project wiki and documentation
+      - Parent issues and dependencies
+    
+    2. CONTEXT TO INCORPORATE:
+      - Project documentation and technical constraints
+      - System architecture and integration points
+      - Related tickets and dependencies
+      - Previous implementation patterns and solutions
+      
+      ### Task Content Requirements:
+      - Clearly identify the specific problem/feature to implement
+      - Extract all technical requirements and acceptance criteria
+      - Highlight potential obstacles, edge cases, and dependencies
+      - Include relevant code references, API endpoints, data structures
+      - Specify exact files to be modified
+      - Identify specific methods to be changed (if known)
+      - Reference similar implementations to follow existing patterns
+    
+    ### DELIVERABLE: A FORMATTED TASK WITH THESE SECTIONS:
+      
+      1. **Summary** (1-2 sentences describing the core task)
+      2. **Background** (Essential context for understanding why this work matters)
+      3. **Requirements** (Specific, measurable criteria for success)
+      4. **Implementation Guide**:
+      - Recommended approach
+      - Specific steps with technical details
+      - Code areas to modify
+      - Potential challenges and considerations
+      5. **Resources** (Code files, references that developer should work with)
+      6. **Constraints** (Limitations or restrictions that may impact development)
+    
+    ### Output Style Requirements:
+    - Format as an official assignment/directive to a developer
+    - Use precise technical language appropriate for the development environment
+    - Prioritize clarity and actionability over comprehensiveness
+    - Include code snippets or pseudocode where helpful
+    - Provide context and high-level understanding (marked as contextual information)
+    - Highlight any areas of uncertainty requiring clarification
+    - Use clear headings, bullet points, and code blocks for readability
+    
+    REMEMBER: Your task is ONLY to format and clarify the existing information, not to solve the technical problem or create new solutions.
+
+workflow:
+  states:
+    Init:
+      ai: ["Task", "Grooming"]
+      is_default: True
+      is_first: True
+    Backlog:
+      ai: ["Story", "Task", "Grooming"]
+      description: Issue is ready to be worked on.
+    Think:
+      ai: ["Story", "Task", "Grooming"]
+      description: Analyze Issue and plan how to work on it.
+    Work:
+      ai: ["Story", "Task", "Grooming"]
+      description: Analyze Issue and plan how to work on it.
+    Test:
+      ai: ["Story", "Task", "Grooming"]
+      description: |
+        Check current state of the story code.
+        If everything is fine, move to Done. 
+        If not, move to Work where new Tasks will try to fix discovered issues.
+    Fixme:
+      ai: ["Story"]
+      description: |
+        Human in the middle bugfixing state for Grooming tasks.
+    QA:
+      ai: ["Task", "Grooming"]
+      description: Human Test to check Story code.
+    Deploy:
+      ai: ["Story", "Task", "Grooming"]
+      description: Merge code into to parent Issue branch.
+    Done:
+      description: Issue is completed.
+      ai: []
+      is_closed: True
+
+  transitions:
+    - source: Init
+      target: Backlog
+
+    - source: Backlog
+      target: Think
+    - source: Think
+      target: Work
+
+    - source: Work
+      target: Test
+
+    - source: Test
+      success: true
+      target: QA
+    - source: Test
+      fail: true
+      target: Fixme
+
+    - source: Fixme
+      success: true
+      target: QA
+    - source: Fixme
+      fail: true
+      target: Think
+
+    - source: QA
+      success: true
+      target: Deploy
+
+    - source: QA
+      fail: true
+      target: Think
+
+    - source: Deploy
+      target: Done
+
+  issue_types:
+    Story:
+      description: |
+        Represents a significant feature or component that requires multiple Tasks to implement.
+        Scope: Entire feature or major component, potentially spanning multiple files and modules.
+      jobs:
+        Backlog:
+          steps:
+            - command: next
+        Think:
+          steps:
+            - command: context-files
+              context: ["wiki", "ticket", "comments"]
+              remember: True
+            - command: summarize-task
+              comment: True
+              context: ["issue_types", "project", "wiki", "ticket", "comments", "children"]
+              prompt: |
+                Based on comments figure out if task was already worked on 
+                and if this time it is required to adjust something instead of creating issue to implement the story.
+                If this is the case (issue was already worked on) this means that issue failed Test and we need to
+                create new issues that addresses Test findings. 
+                Understand that based on current issue comments and their time.
+                If there are no comments or existing comments don't show that issue was already worked on, 
+                then create new issues that are needed for this story issue.
+                Summary: Break down the current Story issue into Task issues based on pre-planned ideas from comments, 
+                ensuring detailed descriptions for each task. QA existing comments to clarify requirements, 
+                check if the task was previously worked on, and determine if adjustments are needed. 
+                If adjustments are needed then it means that the task failed Test, 
+                create new issues to address Test findings. If there’s no evidence of prior work, 
+                create new tasks to implement the Story. 
+                Use comment timestamps and context to guide decisions, 
+                ensuring alignment with Test requirements.
+                Now using what you know, analyze current_issue and comments carefully.
+                Suggest how to split current Story issue into smaller scope Task issues (make sure to stick with Task issue scope and create as many Task issues as necessary).
+                Dont forget to mention scope of the Task issues you create.
+                Make sure each Task issue is small enough to be implemented in a single code file or even better - one part of a single code file.
+        Work:
+          steps:
+            - command: create-issues
+              action: Task
+              prompt: |
+                Based on last comments and context that you are presented with,
+                split current Story issue into Task issues using pre-planned idea mentioned in comments. 
+                Write a detailed description of what needs to be done. 
+                Comply to clarification comments if exists.
+                Make the new issues detailed, clear and concise. Dont forget to mention scope of the files that need to be worked on.
+                Keep in mind that Task issue are small enough to be implemented in a single code file or even better - one part of a single code file.
+              context: ["issue_types", "project", "wiki", "ticket", "last-5-comments", "children"]
+        Test:
+          steps:
+            - command: next
+        Fixme:
+          steps:
+            - command: next
+        Deploy:
+          steps:
+            - command: merge-into-parent
+    Task:
+      description: |
+        Task issues are building blocks for single Story issue.
+        Scope: Single method or specific part of a file. 
+        Represents the smallest unit of work that must be implemented independently
+        in a single mid size or small git commit for one part of the code file.
+      jobs:
+        Init:
+          steps:
+            - command: next
+        Backlog:
+          steps:
+            - command: next
+        Think:
+          steps:
+            - command: context-files
+              context: ["wiki", "parents", "ticket", "comments"]
+              remember: True
+            - command: summarize-task
+              context: ["project", "wiki", "ticket", "last-5-comments"]
+              comment: True
+              prompt: |
+                Locate code files that are relevant for current Task issue.
+                Provide ideas how to resolve the given Task issue.
+                Focus only on the code relevant to the current issue (issue_type: Task).
+                Ensure that the changes do not affect anything else beyond what is asked in the current Task issue.
+                implement (code) given Task issue based on ticket description, last comments and your reasoning.
+        Work:
+          steps:
+            - command: aider
+              action: architect-code
+              context: ["project", "wiki", "ticket", "last-2-comments"]
+              prompt: Implement (code) current Task issue based on available information.
+            - command: project-cmd
+              action: reformat
+            - command: commit
+              prompt: linter changes
+        Test:
+          steps:
+            - command: project-cmd
+              action: lint
+              remember: True
+            - command: project-cmd
+              action: test
+              remember: True
+            - command: ai
+              prompt: |
+                If there are any linter errors then pinpoint exact files and place in file (using linter output) that is at fault.
+                Answer with clear and concise explanation of the sources for these linter errors.
+                If there are any testing errors then pinpoint exact files and test cases that are faulty (using tests output).
+                Keep the answer straight to the point of what was test cases are broken and in what file and where.
+                If there are no linter and testing errors then answer with "Linter and tests are OK".
+              remember: True
+            - command: create-issues
+              action: Grooming
+              context: ["issue_types", "ticket", "last-3-comments"]
+              prompt: |
+                Create Grooming issues that are focusing on fixing all found linter and test errors.
+                
+                Instructions:
+                - Create one Grooming issue per error.
+                - Do not specify how to fix it.
+                - If there are no linter or tests failures present then do nothing (do not create any new Grooming issues).
+                
+                In new Grooming issue description carefully define:
+                - What test or linter check needs fixing.
+                - Where are affected files located.
+            - command: evaluate
+              context: [ "ticket" ]
+        QA:
+          steps:
+            - command: next
+        Deploy:
+          steps:
+            - command: merge-into-parent
+
+    Grooming:
+      description: |
+        A unit of work focused on fixing test failures and linter issues. 
+        Scope: Specific fixes for test failures and linter failures that was spotted during parent Task issue Testing phase.
+      jobs:
+        Init:
+          steps:
+            - command: next
+        Backlog:
+          steps:
+            - command: next
+        Think:
+          steps:
+            - command: context-files
+              context: [ "ticket", "comments" ]
+              remember: True
+            - command: summarize-task
+              context: ["project", "wiki", "parent", "ticket", "last-5-comments"]
+              comment: True
+              prompt: |
+                Locate code files that are relevant only for current error fix issue.
+                Summarize what is wrong and provide ideas how to resolve it via code changes.
+                Focus only on the code relevant to the current issue (issue_type: Grooming).
+                Ensure that the changes do not affect anything else beyond what is asked in the current Grooming issue.
+        Work:
+          steps:
+            - command: aider
+              action: code
+              comment: False
+              context: [ "project", "wiki", "ticket", "last-comment" ]
+              prompt: |
+                Implement (code) given Grooming issue based on ticket description and last comments.
+                It is not allowed to create new files or run any commands!
+            - command: project-cmd
+              action: reformat
+            - command: commit
+              prompt: linter changes
+        Test:
+          steps:
+            - command: next
+        QA:
+          steps:
+            - command: next
+        Deploy:
+          steps:
+            - command: merge-into-parent
+
+  priorities:
+    - type: Grooming
+      state: Deploy
+    - type: Grooming
+      state: Fixme
+    - type: Grooming
+      state: QA
+    - type: Grooming
+      state: Test
+    - type: Grooming
+      state: Work
+    - type: Grooming
+      state: Think
+    - type: Grooming
+      state: Backlog
+    - type: Grooming
+      state: Init
+
+    - type: Task
+      state: Deploy
+    - type: Task
+      state: Fixme
+    - type: Task
+      state: QA
+    - type: Task
+      state: Test
+    - type: Task
+      state: Work
+    - type: Task
+      state: Think
+    - type: Task
+      state: Backlog
+    - type: Task
+      state: Init
+
+    - type: Story
+      state: Deploy
+    - type: Story
+      state: Fixme
+    - type: Story
+      state: QA
+    - type: Story
+      state: Test
+    - type: Story
+      state: Work
+    - type: Story
+      state: Think
+    - type: Story
+      state: Backlog
+
+  triggers:
+    - issue_type: Task
+      if:
+        - moved_to: Done
+          all_siblings_status: Done
+          transition:
+            who: parent
+            to: QA
+    - issue_type: Grooming
+      if:
+        - moved_to: Done
+          all_siblings_status: Done
+          transition:
+            who: parent
+            to: QA
