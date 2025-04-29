@@ -1,10 +1,40 @@
 llm_models:
   - name: "normal"
-    model: "claude-3-7-sonnet-latest"
-    provider: "anthropic"
-    api_key: "sk-*****"
-    temperature: 0.2
-    max_tokens: 128000
+
+    # Anthropic
+    # model: "claude-3-7-sonnet-latest"
+    # provider: "anthropic"
+    # api_key: "sk-*****"
+    # temperature: 0.2
+    # max_tokens: 128000
+
+    # LM-Studio
+    # model: "qwq-32b"
+    # base_url: "http://localhost:1234/v1/chat/completions"
+    # api_key: "lmstudio"
+
+    # Google
+    model: "gemini-2.0-flash"
+    provider: google
+    api_key: "*****"
+
+    # OpenAI
+    # model: "gpt-4.1"
+    # provider: openai
+    # max_tokens: 32768
+    # api_key: "sk-****"
+
+    # Groq
+    # model: "deepseek-r1-distill-llama-70b"
+    # provider: groq
+    # max_tokens: 128000
+    # api_key: "gsk_*****"
+
+    # openrouter
+    # model: "meta-llama/llama-4-maverick"
+    # provider: openrouter
+    # api_key: "sk-or-v1-*****"
+
 
 # redmine is running within docker and this config can stay hardcoded. Keep api-key as is. It plays no role in anything.
 redmine:

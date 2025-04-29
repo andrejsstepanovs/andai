@@ -62,6 +62,7 @@ func NewAI(config settings.LlmModel) (*AI, error) {
 		"mistral":    "https://api.mistral.ai/v1/chat/completions",
 		"google":     "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
 		"groq":       "https://api.groq.com/openai/v1/chat/completions",
+		"openai":     "https://api.openai.com/v1/chat/completions",
 		"custom":     config.BaseURL,
 	}
 

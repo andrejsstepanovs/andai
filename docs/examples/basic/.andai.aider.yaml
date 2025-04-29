@@ -32,3 +32,9 @@ subtree-only: true
 #weak-model: groq/deepseek-r1-distill-llama-70b
 #set-env:
 #  - GROQ_API_KEY=gsk_****
+
+# openai
+# model: openai/gpt-4.1
+# weak-model: openai/gpt-4.1-mini
+# set-env:
+#  - OPENAI_API_KEY=sk-****

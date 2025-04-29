@@ -14,7 +14,7 @@ type Settings struct {
 
 func (s *Settings) getAllIssueTypesAndStates() map[IssueTypeName]map[StateName]State {
 	issueTypesAndStates := make(map[IssueTypeName]map[StateName]State)
-	for issueTypeName, _ := range s.Workflow.IssueTypes {
+	for issueTypeName := range s.Workflow.IssueTypes {
 		states := make(map[StateName]State)
 		for stateName, state := range s.Workflow.States {
 			states[stateName] = state
