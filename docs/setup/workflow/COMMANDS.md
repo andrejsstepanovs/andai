@@ -266,7 +266,7 @@ Aider is bread and butter of the `AndAI`. It is external tool [aider](https://ai
 
 - `action` - Available values are `commit`, `architect`, `code`, `architect-code`
 - `prompt` - Prompt for Aider.
-- `summarize` - Optional. Default false. If true, will summarize the context and give it to aider as a task to work on. Can be only if `aider.task_summary_prompt` is configured.
+- `summarize` - Optional. Default false. If true, will summarize the context and give it to aider as a task to work on. You can override default summarization prompt via `aider.task_summary_prompt`.
 - `comment-summary` - Optional. Default false. Works together with `summarize` (`summarize` must be `true`). If true, will comment the summary as issue comment.
 - `context` - List of context sources. See [CONTEXT.md](CONTEXT.md) for more info.
 

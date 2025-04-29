@@ -95,7 +95,7 @@ components:
           description: Number of tokens for project mapping
         task_summary_prompt:
           type: string
-          description: Custom prompt for task summarization
+          description: Override custom prompt for task summarization
 
     Project:
       type: object

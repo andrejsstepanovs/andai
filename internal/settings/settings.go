@@ -179,10 +179,6 @@ func (s *Settings) validateStep(
 		}
 	}
 
-	if step.Command == "summarize-task" && s.Aider.TaskSummaryPrompt == "" {
-		return fmt.Errorf("%q step %q must have aider.task_summary_prompt set in settings", step.Command, step.Action)
-	}
-
 	if step.Command == "evaluate" {
 		if len(step.Context) == 0 {
 			return fmt.Errorf("%q step %q must have at least one context", step.Command, step.Action)
