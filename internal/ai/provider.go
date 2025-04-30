@@ -6,6 +6,7 @@ import (
 
 	"github.com/teilomillet/gollm/config"
 	"github.com/teilomillet/gollm/providers"
+	"github.com/teilomillet/gollm/types"
 	"github.com/teilomillet/gollm/utils"
 )
 
@@ -337,4 +338,70 @@ func (p *CustomOpenAIProvider) HandleFunctionCalls(body []byte) ([]byte, error) 
 func (p *CustomOpenAIProvider) SetExtraHeaders(extraHeaders map[string]string) {
 	p.extraHeaders = extraHeaders
 	p.logger.Debug("Extra headers set", "headers", extraHeaders)
+}
+
+// PrepareRequestWithMessages creates a request body using structured message objects
+// rather than a flattened prompt string.
+func (p *CustomOpenAIProvider) PrepareRequestWithMessages(messages []types.MemoryMessage, options map[string]interface{}) ([]byte, error) {
+	request := map[string]interface{}{
+		"model":    p.model,
+		"messages": []map[string]interface{}{},
+	}
+
+	// Add system prompt if present
+	if systemPrompt, ok := options["system_prompt"].(string); ok && systemPrompt != "" {
+		request["messages"] = append(request["messages"].([]map[string]interface{}), map[string]interface{}{
+			"role":    "system",
+			"content": systemPrompt,
+		})
+	}
+
+	// Convert structured messages to Groq format (OpenAI compatible)
+	for _, msg := range messages {
+		request["messages"] = append(request["messages"].([]map[string]interface{}), map[string]interface{}{
+			"role":    msg.Role,
+			"content": msg.Content,
+		})
+	}
+
+	// Add other options from provider and request
+	for k, v := range p.options {
+		if k != "messages" {
+			request[k] = v
+		}
+	}
+	for k, v := range options {
+		if k != "messages" && k != "system_prompt" && k != "structured_messages" {
+			request[k] = v
+		}
+	}
+
+	return json.Marshal(request)
+}
+
+func (p *CustomOpenAIProvider) SupportsStreaming() bool {
+	return false
+}
+
+// PrepareStreamRequest prepares a request body for streaming
+func (p *CustomOpenAIProvider) PrepareStreamRequest(prompt string, options map[string]interface{}) ([]byte, error) {
+	options["stream"] = true
+	return p.PrepareRequest(prompt, options)
+}
+
+func (p *CustomOpenAIProvider) ParseStreamResponse(chunk []byte) (string, error) {
+	var response struct {
+		Choices []struct {
+			Delta struct {
+				Content string `json:"content"`
+			} `json:"delta"`
+		} `json:"choices"`
+	}
+	if err := json.Unmarshal(chunk, &response); err != nil {
+		return "", err
+	}
+	if len(response.Choices) == 0 {
+		return "", nil
+	}
+	return response.Choices[0].Delta.Content, nil
 }
