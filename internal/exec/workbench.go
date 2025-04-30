@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/mattn/go-redmine"
 )
@@ -105,7 +106,32 @@ func (i *Workbench) checkoutBranch(branchName string) error {
 	return nil
 }
 
+// GetIssueBranchNameOverride in UI user can set branch name override. Use it if set.
+func (i *Workbench) GetIssueBranchNameOverride(issue redmine.Issue) string {
+	if issue.CustomFields == nil {
+		return ""
+	}
+	for _, field := range issue.CustomFields {
+		if field.Name != "Branch" {
+			continue
+		}
+		if field.Value == nil {
+			continue
+		}
+		s := field.Value.(string)
+		s = strings.TrimSpace(s)
+		if s != "" {
+			return s
+		}
+	}
+	return ""
+}
+
 func (i *Workbench) GetIssueBranchName(issue redmine.Issue) string {
+	overrideBranch := i.GetIssueBranchNameOverride(issue)
+	if overrideBranch != "" {
+		return overrideBranch
+	}
 	return i.Git.BranchName(issue.Id)
 }
 

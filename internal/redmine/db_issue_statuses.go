@@ -54,7 +54,7 @@ func (c *Model) DBInsertIssueStatus(status redmine.IssueStatus, position int) er
 		return fmt.Errorf("rows affected err: %v", err)
 	}
 	if affected == 0 {
-		return errors.New("token not created")
+		return errors.New("issue not created")
 	}
 	return nil
 }

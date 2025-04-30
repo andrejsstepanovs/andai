@@ -12,7 +12,7 @@ import (
 
 	redminemodels "github.com/andrejsstepanovs/andai/internal/redmine/models"
 	"github.com/andrejsstepanovs/andai/internal/settings"
-	"github.com/go-git/go-git/v5"
+	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 )
 

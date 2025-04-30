@@ -15,14 +15,15 @@ type ProjectCommand struct {
 type ProjectCommands []ProjectCommand
 
 type Project struct {
-	Identifier   string          `yaml:"identifier"`
-	Name         string          `yaml:"name"`
-	Description  string          `yaml:"description"`
-	GitPath      string          `yaml:"git_path"`
-	LocalGitPath string          `yaml:"git_local_dir"`
-	FinalBranch  string          `yaml:"final_branch"`
-	Wiki         string          `yaml:"wiki"`
-	Commands     ProjectCommands `yaml:"commands"`
+	Identifier             string          `yaml:"identifier"`
+	Name                   string          `yaml:"name"`
+	Description            string          `yaml:"description"`
+	GitPath                string          `yaml:"git_path"`
+	LocalGitPath           string          `yaml:"git_local_dir"`
+	FinalBranch            string          `yaml:"final_branch"`
+	DeleteBranchAfterMerge bool            `yaml:"delete_branch_after_merge"` // will delete source (child) branch after merge into parent
+	Wiki                   string          `yaml:"wiki"`
+	Commands               ProjectCommands `yaml:"commands"`
 }
 
 func (p Projects) Find(identifier string) Project {

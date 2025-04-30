@@ -19,6 +19,7 @@ func Cmd(deps *internal.AppDependencies) *cobra.Command {
 		newGetTokenCommand(deps),
 		newProjectsCommand(deps),
 		newWorkflowCommand(deps),
+		newCustomFieldsCommand(deps),
 		newIDAutoIncrementCommand(deps),
 	)
 

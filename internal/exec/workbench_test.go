@@ -12,6 +12,91 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestWorkbench_GetIssueBranchNameOverride(t *testing.T) {
+	tests := []struct {
+		name     string
+		issue    redmine.Issue
+		expected string
+	}{
+		{
+			name:     "no custom fields",
+			issue:    redmine.Issue{Id: 1},
+			expected: "",
+		},
+		{
+			name: "custom fields without Branch field",
+			issue: redmine.Issue{
+				Id: 2,
+				CustomFields: []*redmine.CustomField{
+					{Id: 1, Name: "OtherField", Value: "value"},
+				},
+			},
+			expected: "",
+		},
+		{
+			name: "Branch field with nil value",
+			issue: redmine.Issue{
+				Id: 3,
+				CustomFields: []*redmine.CustomField{
+					{Id: 1, Name: "Branch", Value: nil},
+				},
+			},
+			expected: "",
+		},
+		{
+			name: "Branch field with empty string value",
+			issue: redmine.Issue{
+				Id: 4,
+				CustomFields: []*redmine.CustomField{
+					{Id: 1, Name: "Branch", Value: ""},
+				},
+			},
+			expected: "",
+		},
+		{
+			name: "Branch field with whitespace string value",
+			issue: redmine.Issue{
+				Id: 5,
+				CustomFields: []*redmine.CustomField{
+					{Id: 1, Name: "Branch", Value: "   "},
+				},
+			},
+			expected: "",
+		},
+		{
+			name: "Branch field with valid value",
+			issue: redmine.Issue{
+				Id: 6,
+				CustomFields: []*redmine.CustomField{
+					{Id: 1, Name: "Branch", Value: "feature/override-branch"},
+				},
+			},
+			expected: "feature/override-branch",
+		},
+		{
+			name: "Branch field with valid value and other fields",
+			issue: redmine.Issue{
+				Id: 7,
+				CustomFields: []*redmine.CustomField{
+					{Id: 1, Name: "OtherField", Value: "value"},
+					{Id: 2, Name: "Branch", Value: "  another-override  "},
+					{Id: 3, Name: "YetAnother", Value: "123"},
+				},
+			},
+			expected: "another-override",
+		},
+	}
+
+	wb := &Workbench{} // No GitInterface needed for this method
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := wb.GetIssueBranchNameOverride(tt.issue)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
 func TestWorkbench_PrepareWorkplace(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "workbench-test-*")
 	require.NoError(t, err)

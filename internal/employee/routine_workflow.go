@@ -144,7 +144,7 @@ func (i *Routine) executeCommand(workflowStep settings.Step, contextFile string)
 		}
 		return exec.Output{Stdout: "Negative"}, ErrNegativeOutcome
 	case "merge-into-parent":
-		return i.mergeIntoParent()
+		return i.mergeIntoParent(i.projectCfg.DeleteBranchAfterMerge)
 	case "bash":
 		return i.runBash(workflowStep)
 	case "summarize-task":
@@ -454,7 +454,7 @@ func (i *Routine) simpleAI(promptFile string) (exec.Output, error) {
 	return ret, err
 }
 
-func (i *Routine) mergeIntoParent() (exec.Output, error) {
+func (i *Routine) mergeIntoParent(deleteBranchAfterMerge bool) (exec.Output, error) {
 	currentBranchName := i.workbench.GetIssueBranchName(i.issue)
 	parentBranchName := i.getTargetBranch()
 	log.Printf("Merging current branch: %q into parent branch: %q", currentBranchName, parentBranchName)
@@ -474,6 +474,11 @@ func (i *Routine) mergeIntoParent() (exec.Output, error) {
 	}
 	log.Printf("Merged current branch: %q into parent branch: %q", currentBranchName, parentBranchName)
 
+	err = i.commentParentBranchDiff()
+	if err != nil {
+		return out, err
+	}
+
 	err = i.commentParentAboutMerge()
 	if err != nil {
 		return out, err
@@ -485,10 +490,12 @@ func (i *Routine) mergeIntoParent() (exec.Output, error) {
 	}
 
 	// delete the branch after merge
-	err = i.workbench.Git.DeleteBranch(currentBranchName)
-	if err != nil {
-		log.Printf("Failed to delete branch: %s err: %v", currentBranchName, err)
-		return out, err
+	if deleteBranchAfterMerge {
+		err = i.workbench.Git.DeleteBranch(currentBranchName)
+		if err != nil {
+			log.Printf("Failed to delete branch: %s err: %v", currentBranchName, err)
+			return out, err
+		}
 	}
 
 	return exec.Output{Stdout: "Merged"}, nil

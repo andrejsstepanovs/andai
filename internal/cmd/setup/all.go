@@ -84,5 +84,11 @@ func setupAll(model *model.Model, projectsConf settings.Projects, workflowConfig
 	}
 	log.Println("Workflow OK")
 
+	err = setupCustomFields(model)
+	if err != nil {
+		return err
+	}
+	log.Println("Workflow OK")
+
 	return nil
 }

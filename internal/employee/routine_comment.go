@@ -10,15 +10,23 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/settings"
 )
 
+func (i *Routine) getParentComments() (redminemodels.Comments, error) {
+	if !i.parentExists() {
+		return nil, fmt.Errorf("no parent issue")
+	}
+	comments, err := i.model.DBGetComments(i.parent.Id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get comments err: %v", err)
+	}
+
+	return comments, nil
+}
+
 func (i *Routine) getComments() (redminemodels.Comments, error) {
 	comments, err := i.model.DBGetComments(i.issue.Id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get comments err: %v", err)
 	}
-
-	//log.Printf("Comments: %s", i.issue.Notes)
-	//fmt.Printf("Comments: %d\n", len(comments))
-	//fmt.Printf("%s\n", strings.Join(comments, "\n"))
 
 	return comments, nil
 }
