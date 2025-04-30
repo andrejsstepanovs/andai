@@ -16,13 +16,13 @@ func newSetupAllCommand(deps *internal.AppDependencies) *cobra.Command {
 		Use:   "all",
 		Short: "Setup everything",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			settings, err := deps.Config.Load()
+			s, err := deps.Config.Load()
 			if err != nil {
 				return err
 			}
 
 			log.Println("Setup ALL")
-			return Setup(deps.Model, settings.Projects, settings.Workflow)
+			return Setup(deps.Model, s.Projects, s.Workflow)
 		},
 	}
 	return cmd

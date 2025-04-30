@@ -100,7 +100,10 @@ func TestWorkbench_GetIssueBranchNameOverride(t *testing.T) {
 func TestWorkbench_PrepareWorkplace(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "workbench-test-*")
 	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		err := os.RemoveAll(tmpDir)
+		require.NoError(t, err)
+	}()
 
 	// Initialize git repository
 	repo, err := gitlib.PlainInit(tmpDir, false)
@@ -197,7 +200,10 @@ func TestWorkbench_PrepareWorkplace(t *testing.T) {
 func TestWorkbench_changeDirectory(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "workbench-test-*")
 	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		err := os.RemoveAll(tmpDir)
+		require.NoError(t, err)
+	}()
 
 	tests := []struct {
 		name    string

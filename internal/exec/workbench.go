@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	model "github.com/andrejsstepanovs/andai/internal/redmine"
 	"github.com/mattn/go-redmine"
 )
 
@@ -112,7 +113,7 @@ func (i *Workbench) GetIssueBranchNameOverride(issue redmine.Issue) string {
 		return ""
 	}
 	for _, field := range issue.CustomFields {
-		if field.Name != "Branch" {
+		if field.Name != model.CustomFieldBranch {
 			continue
 		}
 		if field.Value == nil {

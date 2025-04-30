@@ -30,16 +30,16 @@ func newCustomFieldsCommand(deps *internal.AppDependencies) *cobra.Command {
 	return cmd
 }
 
-func setupCustomFields(model *model.Model) error {
+func setupCustomFields(mod *model.Model) error {
 	createFields := []redmine.CustomField{
 		{
-			Name:        "Branch",
+			Name:        model.CustomFieldBranch,
 			Description: "Branch name to work in. If not set will be AI-123 (task id) or if main task and not set `final_branch` value will be used.",
 		},
 	}
 
 	trackerIDs := make([]int64, 0)
-	allTrackers, err := model.API().Trackers()
+	allTrackers, err := mod.API().Trackers()
 	if err != nil {
 		log.Println("Redmine Trackers Failed to enable API")
 		return fmt.Errorf("error redmine trackers: %v", err)
@@ -51,19 +51,19 @@ func setupCustomFields(model *model.Model) error {
 		return fmt.Errorf("no redmine trackers found: %v", err)
 	}
 
-	currentCustomFields, err := model.API().CustomFields()
+	currentCustomFields, err := mod.API().CustomFields()
 	if err != nil {
 		log.Println("Redmine Custom Fields Failed to enable API")
 		return fmt.Errorf("error redmine custom fields: %v", err)
 	}
 
-	customFieldIDs, err := model.DBSaveCustomFields(createFields, currentCustomFields)
+	customFieldIDs, err := mod.DBSaveCustomFields(createFields, currentCustomFields)
 	if err != nil {
 		log.Println("Failed to save Redmine Custom Fields")
 		return fmt.Errorf("error redmine custom_fields save: %v", err)
 	}
 
-	err = model.DBInsertCustomFieldTrackers(customFieldIDs, trackerIDs)
+	err = mod.DBInsertCustomFieldTrackers(customFieldIDs, trackerIDs)
 	if err != nil {
 		log.Println("Failed to save Redmine Custom Fields")
 		return fmt.Errorf("error redmine custom_fields save: %v", err)

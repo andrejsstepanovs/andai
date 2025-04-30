@@ -11,7 +11,10 @@ import (
 )
 
 // CustomFieldIssue is the type of custom field for issues
-const CustomFieldIssue = "IssueCustomField"
+const (
+	CustomFieldIssue  = "IssueCustomField"
+	CustomFieldBranch = "Branch"
+)
 
 func (c *Model) DBSaveCustomFields(customFields []redmine.CustomField, current []redmine.CustomField) ([]int64, error) {
 	newCustomFields := make([]redmine.CustomField, 0)
