@@ -47,14 +47,12 @@ func (c *Model) DBSaveCustomFields(customFields []redmine.CustomField, current [
 
 func (c *Model) DBInsertCustomField(customFieldType, fieldFormat string, field redmine.CustomField, position int) (int64, error) {
 	formatStore := []string{
-		fmt.Sprintf("text_formatting: ''"),
-		fmt.Sprintf("url_pattern: ''"),
+		"text_formatting: ''",
+		"url_pattern: ''",
+		"",
 	}
 	formatStoreParts := []string{"---"}
-	for _, format := range formatStore {
-		formatStoreParts = append(formatStoreParts, fmt.Sprintf("%s", format))
-	}
-	formatStoreParts = append(formatStoreParts, "")
+	formatStoreParts = append(formatStoreParts, formatStore...)
 	formatStoreStr := strings.Join(formatStoreParts, "\n")
 
 	queryInsertCustomField := fmt.Sprintf("INSERT INTO custom_fields " +
