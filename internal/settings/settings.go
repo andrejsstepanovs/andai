@@ -291,6 +291,7 @@ func (s *Settings) validateLlmModels() error {
 		}
 
 		// TODO check what commands are used and removed from allowedCommands what is not used
+		// TODO check that only one model is used for each command
 		if len(model.Commands) > 0 {
 			allowedCommands := []string{"evaluate", "summarize-task", "ai", "create-issues"}
 			for _, command := range model.Commands {

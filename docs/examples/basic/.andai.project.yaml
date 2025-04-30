@@ -35,6 +35,18 @@ llm_models:
     # provider: openrouter
     # api_key: "sk-or-v1-*****"
 
+  # Define other models and bind them to specific commands. Optional.
+  - name: "long"
+    temperature: 0.2
+    model: "gemini-2.0-flash"
+    provider: google
+    max_tokens: 2000000
+    api_key: "*****"
+    commands:
+      - summarize-task
+      #- create-issues
+      #- evaluate
+      #- ai
 
 # redmine is running within docker and this config can stay hardcoded. Keep api-key as is. It plays no role in anything.
 redmine:
