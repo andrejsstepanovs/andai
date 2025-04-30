@@ -3,6 +3,7 @@ package exec
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -72,6 +73,13 @@ func Exec(command string, timeout time.Duration, args ...string) (Output, error)
 
 	// Wait for the command to complete
 	err := cmd.Wait()
+
+	// Check if the context timed out or was canceled.
+	// This is important because cmd.Wait() might return a generic "signal: killed" error
+	// when the context deadline is exceeded.
+	if ctxErr := ctx.Err(); errors.Is(ctxErr, context.DeadlineExceeded) {
+		err = ctxErr // Prioritize the context error
+	}
 
 	retStdOut := stdout.String()
 	retStdErr := stderr.String()
