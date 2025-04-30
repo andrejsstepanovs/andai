@@ -219,7 +219,7 @@ func workNext(deps *internal.AppDependencies, params *settings.Settings) (bool, 
 
 		work := employee.NewRoutine(
 			deps.Model,
-			deps.LlmNorm,
+			deps.LlmPool,
 			issue,
 			parent,
 			parents,

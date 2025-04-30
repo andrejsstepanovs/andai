@@ -133,7 +133,13 @@ func (i *Routine) executeCommand(workflowStep settings.Step, contextFile string)
 	case "create-issues":
 		return i.createIssueCommand(workflowStep, contextFile)
 	case "evaluate":
-		resp, success, err := actions.EvaluateOutcome(i.llmNorm, contextFile)
+		m := i.llmPool.ForCommand(settings.LlmModelNormal, "evaluate")
+		llmModel, err := ai.NewAI(m)
+		if err != nil {
+			return exec.Output{}, err
+		}
+
+		resp, success, err := actions.EvaluateOutcome(llmModel, contextFile)
 		if err != nil {
 			log.Printf("Failed to create new issues: %v", err)
 			return exec.Output{}, err
@@ -260,6 +266,12 @@ func (i *Routine) summarizeTask(workflowStep settings.Step, contextFile string, 
 		return "", fmt.Errorf("failed to get context file contents: %w", err)
 	}
 
+	m := i.llmPool.ForCommand(settings.LlmModelNormal, "summarize-task")
+	llmModel, err := ai.NewAI(m)
+	if err != nil {
+		return "", err
+	}
+
 	query := "Perfect, yes. Now do it! Answer only with the reformatted task text."
 	remainingFiles := includeFiles
 	var ret exec.Output
@@ -272,7 +284,7 @@ func (i *Routine) summarizeTask(workflowStep settings.Step, contextFile string, 
 			return "", fmt.Errorf("failed to build task summary history: %w", err)
 		}
 
-		ret, err = i.llmNorm.Multi(query, history)
+		ret, err = llmModel.Multi(query, history)
 		if err == nil {
 			log.Printf("AI response received successfully")
 			break // Success, exit the loop
@@ -444,7 +456,14 @@ func (i *Routine) simpleAI(promptFile string) (exec.Output, error) {
 	if err != nil {
 		log.Printf("Failed to get file contents: %v", err)
 	}
-	ret, err := i.llmNorm.Simple(prompt)
+
+	m := i.llmPool.ForCommand(settings.LlmModelNormal, "ai")
+	llmModel, err := ai.NewAI(m)
+	if err != nil {
+		return exec.Output{}, err
+	}
+
+	ret, err := llmModel.Simple(prompt)
 	if err != nil {
 		log.Printf("Failed to run AI: %v", err)
 	} else {
@@ -512,8 +531,14 @@ func (i *Routine) createIssueCommand(workflowStep settings.Step, contextFile str
 	}
 	log.Printf("Need to create: %q Tracker ID: %d\n", workflowStep.Action, trackerID)
 
+	m := i.llmPool.ForCommand(settings.LlmModelNormal, "create-issues")
+	llmModel, err := ai.NewAI(m)
+	if err != nil {
+		return exec.Output{}, err
+	}
+
 	executionOutput, issues, deps, err := actions.GenerateIssues(
-		i.llmNorm,
+		llmModel,
 		settings.IssueTypeName(workflowStep.Action),
 		contextFile,
 	)

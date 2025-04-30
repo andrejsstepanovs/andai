@@ -13,14 +13,13 @@ func newPingAllCommand(deps *internal.AppDependencies) *cobra.Command {
 		Use:   "all",
 		Short: "Ping (open) Git repository",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			settings, err := deps.Config.Load()
+			sett, err := deps.Config.Load()
 			if err != nil {
 				return err
 			}
 			redmine := deps.Model
-			llm := deps.LlmNorm
 
-			err = pingGit(redmine, settings.Projects)
+			err = pingGit(redmine, sett.Projects)
 			if err != nil {
 				return err
 			}
@@ -38,13 +37,13 @@ func newPingAllCommand(deps *internal.AppDependencies) *cobra.Command {
 			}
 			fmt.Println("API OK")
 
-			err = pingLLM(llm)
+			err = pingLLM(deps.LlmPool)
 			if err != nil {
 				return err
 			}
 			log.Println("LLM OK")
 
-			err = pingAider(redmine, settings.Projects, settings.Aider)
+			err = pingAider(redmine, sett.Projects, sett.Aider)
 			if err != nil {
 				return err
 			}

@@ -278,6 +278,7 @@ func (s *Settings) validateAider() error {
 }
 
 func (s *Settings) validateLlmModels() error {
+	primaryModelExists := false
 	for _, model := range s.LlmModels {
 		if model.Model == "" {
 			return fmt.Errorf("llm model model is required")
@@ -288,12 +289,33 @@ func (s *Settings) validateLlmModels() error {
 		if model.APIKey == "" {
 			return fmt.Errorf("llm model api_key is required")
 		}
-		switch model.Name {
-		case LlmModelNormal:
-		default:
-			return fmt.Errorf("llm model %q is not valid", model.Name)
+
+		// TODO check what commands are used and removed from allowedCommands what is not used
+		if len(model.Commands) > 0 {
+			allowedCommands := []string{"evaluate", "summarize-task", "ai", "create-issues"}
+			for _, command := range model.Commands {
+				found := false
+				for _, allowedCommand := range allowedCommands {
+					if command == allowedCommand {
+						found = true
+						break
+					}
+				}
+				if !found {
+					return fmt.Errorf("llm model %q command %q is not valid", model.Name, command)
+				}
+			}
+		}
+
+		if model.Name == LlmModelNormal {
+			primaryModelExists = true
 		}
 	}
+
+	if !primaryModelExists {
+		return fmt.Errorf("llm model %q not found (there must be one model with this name defined)", LlmModelNormal)
+	}
+
 	return nil
 }
 
