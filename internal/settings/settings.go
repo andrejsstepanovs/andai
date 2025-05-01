@@ -277,6 +277,9 @@ func (s *Settings) validateAider() error {
 	return nil
 }
 
+// TODO fix this
+//
+//nolint:cyclop
 func (s *Settings) validateLlmModels() error {
 	// Collect all unique commands used in workflow steps
 	usedCommands := make(map[string]bool)
@@ -308,6 +311,15 @@ func (s *Settings) validateLlmModels() error {
 		}
 		if model.APIKey == "" {
 			return fmt.Errorf("llm model api_key is required")
+		}
+
+		// Check for duplicate commands within this specific model's list
+		seenCommands := make(map[string]bool)
+		for _, command := range model.Commands {
+			if seenCommands[command] {
+				return fmt.Errorf("llm model %q has duplicate command %q in its commands list", model.Name, command)
+			}
+			seenCommands[command] = true
 		}
 
 		// Validate that only specific commands are used if Commands list is defined

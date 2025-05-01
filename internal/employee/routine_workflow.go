@@ -138,7 +138,7 @@ func (i *Routine) executeCommand(workflowStep settings.Step, contextFile string)
 		"create-issues": func(step settings.Step, contextFile string) (exec.Output, error) {
 			return i.createIssueCommand(step, contextFile)
 		},
-		"evaluate": func(step settings.Step, contextFile string) (exec.Output, error) {
+		"evaluate": func(_ settings.Step, contextFile string) (exec.Output, error) {
 			m := i.llmPool.ForCommand(settings.LlmModelNormal, "evaluate")
 			llmModel, err := ai.NewAI(m)
 			if err != nil {
