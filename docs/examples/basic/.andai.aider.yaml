@@ -1,4 +1,5 @@
 subtree-only: true
+cache-prompts: true
 
 # ollama
 #model: ollama_chat/deepseek-r1:32b-qwen-distill-q4_K_M
