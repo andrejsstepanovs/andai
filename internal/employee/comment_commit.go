@@ -136,7 +136,7 @@ func (i *Routine) commentParentBranchDiff() error {
 		return nil
 	}
 	targetBranch := i.getTargetBranch()
-	branchDiffURL := fmt.Sprintf("[Git Diff: %s <-> %s](/projects/%s/repository/%s/diff?rev=%s&rev_to=%s", targetBranch, i.projectCfg.FinalBranch, i.project.Identifier, i.project.Identifier, targetBranch, i.projectCfg.FinalBranch)
+	branchDiffURL := fmt.Sprintf("[Git Diff: %s <-> %s](/projects/%s/repository/%s/diff?rev=%s&rev_to=%s)", targetBranch, i.projectCfg.FinalBranch, i.project.Identifier, i.project.Identifier, targetBranch, i.projectCfg.FinalBranch)
 
 	existingComments, err := i.getParentComments()
 	if err != nil {
@@ -163,7 +163,7 @@ func (i *Routine) commentParentAboutMerge() error {
 	parentBranchName := i.getTargetBranch()
 	currentBranchName := i.workbench.GetIssueBranchName(i.issue)
 
-	commentText := fmt.Sprintf("Merged #%d branch %q into %q.)", i.issue.Id, currentBranchName, parentBranchName)
+	commentText := fmt.Sprintf("Merged #%d branch %q into %q", i.issue.Id, currentBranchName, parentBranchName)
 	err := i.AddCommentToParent(commentText)
 	if err != nil {
 		return fmt.Errorf("failed to add merge comment to parent: %v", err)

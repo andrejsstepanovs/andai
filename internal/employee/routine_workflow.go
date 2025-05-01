@@ -122,52 +122,71 @@ func (i *Routine) executeWorkflowStep(workflowStep settings.Step) (exec.Output, 
 
 func (i *Routine) executeCommand(workflowStep settings.Step, contextFile string) (exec.Output, error) {
 	log.Printf("Execute Command: %s - %s", workflowStep.Command, workflowStep.Action)
-	switch workflowStep.Command {
-	case "next":
-		return exec.Output{
-			Command: "next",
-			Stdout:  "Success, moving to next",
-		}, nil
-	case "git":
-		return exec.Exec(workflowStep.Command, time.Minute, workflowStep.Action)
-	case "create-issues":
-		return i.createIssueCommand(workflowStep, contextFile)
-	case "evaluate":
-		m := i.llmPool.ForCommand(settings.LlmModelNormal, "evaluate")
-		llmModel, err := ai.NewAI(m)
-		if err != nil {
-			return exec.Output{}, err
-		}
 
-		resp, success, err := actions.EvaluateOutcome(llmModel, contextFile)
-		if err != nil {
-			log.Printf("Failed to create new issues: %v", err)
-			return exec.Output{}, err
-		}
-		fmt.Printf("AI evaluation response %q; result is: %t\n", resp.Stdout, success)
-		if success {
-			return exec.Output{Stdout: "Positive outcome"}, nil
-		}
-		return exec.Output{Stdout: "Negative"}, ErrNegativeOutcome
-	case "merge-into-parent":
-		return i.mergeIntoParent(i.projectCfg.DeleteBranchAfterMerge)
-	case "bash":
-		return i.runBash(workflowStep)
-	case "summarize-task":
-		return i.summarizeTheTask(workflowStep, contextFile)
-	case "project-cmd":
-		return i.runProjectCmd(workflowStep)
-	case "commit":
-		return i.commitUncommitted(string(workflowStep.Prompt))
-	case "context-files":
-		return i.findMentionedFiles(contextFile)
-	case "ai":
-		return i.simpleAI(contextFile)
-	case "aider":
-		return i.aider(workflowStep, contextFile)
-	default:
+	type commandHandler func(settings.Step, string) (exec.Output, error)
+
+	handlers := map[string]commandHandler{
+		"next": func(_ settings.Step, _ string) (exec.Output, error) {
+			return exec.Output{
+				Command: "next",
+				Stdout:  "Success, moving to next",
+			}, nil
+		},
+		"git": func(step settings.Step, _ string) (exec.Output, error) {
+			return exec.Exec(step.Command, time.Minute, step.Action)
+		},
+		"create-issues": func(step settings.Step, contextFile string) (exec.Output, error) {
+			return i.createIssueCommand(step, contextFile)
+		},
+		"evaluate": func(step settings.Step, contextFile string) (exec.Output, error) {
+			m := i.llmPool.ForCommand(settings.LlmModelNormal, "evaluate")
+			llmModel, err := ai.NewAI(m)
+			if err != nil {
+				return exec.Output{}, err
+			}
+
+			resp, success, err := actions.EvaluateOutcome(llmModel, contextFile)
+			if err != nil {
+				log.Printf("Failed to create new issues: %v", err)
+				return exec.Output{}, err
+			}
+			fmt.Printf("AI evaluation response %q; result is: %t\n", resp.Stdout, success)
+			if success {
+				return exec.Output{Stdout: "Positive outcome"}, nil
+			}
+			return exec.Output{Stdout: "Negative"}, ErrNegativeOutcome
+		},
+		"merge-into-parent": func(_ settings.Step, _ string) (exec.Output, error) {
+			return i.mergeIntoParent(i.projectCfg.DeleteBranchAfterMerge)
+		},
+		"bash": func(step settings.Step, _ string) (exec.Output, error) {
+			return i.runBash(step)
+		},
+		"summarize-task": func(step settings.Step, contextFile string) (exec.Output, error) {
+			return i.summarizeTheTask(step, contextFile)
+		},
+		"project-cmd": func(step settings.Step, _ string) (exec.Output, error) {
+			return i.runProjectCmd(step)
+		},
+		"commit": func(step settings.Step, _ string) (exec.Output, error) {
+			return i.commitUncommitted(string(step.Prompt))
+		},
+		"context-files": func(_ settings.Step, contextFile string) (exec.Output, error) {
+			return i.findMentionedFiles(contextFile)
+		},
+		"ai": func(_ settings.Step, contextFile string) (exec.Output, error) {
+			return i.simpleAI(contextFile)
+		},
+		"aider": func(step settings.Step, contextFile string) (exec.Output, error) {
+			return i.aider(step, contextFile)
+		},
+	}
+
+	handler, ok := handlers[workflowStep.Command]
+	if !ok {
 		return exec.Output{}, fmt.Errorf("unknown step command: %q", workflowStep.Command)
 	}
+	return handler(workflowStep, contextFile)
 }
 
 func (i *Routine) findMentionedFiles(contextFile string) (exec.Output, error) {

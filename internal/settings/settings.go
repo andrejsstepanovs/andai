@@ -278,7 +278,27 @@ func (s *Settings) validateAider() error {
 }
 
 func (s *Settings) validateLlmModels() error {
+	// Collect all unique commands used in workflow steps
+	usedCommands := make(map[string]bool)
+	for _, issueType := range s.Workflow.IssueTypes {
+		for _, job := range issueType.Jobs {
+			for _, step := range job.Steps {
+				usedCommands[step.Command] = true
+			}
+		}
+	}
+
+	// Define the set of commands allowed to be specified in the llm_models section
+	allowedLlmCommands := map[string]bool{
+		"evaluate":       true,
+		"summarize-task": true,
+		"ai":             true,
+		"create-issues":  true,
+	}
+
+	commandModelMap := make(map[string]string)
 	primaryModelExists := false
+
 	for _, model := range s.LlmModels {
 		if model.Model == "" {
 			return fmt.Errorf("llm model model is required")
@@ -290,20 +310,35 @@ func (s *Settings) validateLlmModels() error {
 			return fmt.Errorf("llm model api_key is required")
 		}
 
-		// TODO check what commands are used and removed from allowedCommands what is not used
-		// TODO check that only one model is used for each command
+		// Validate that only specific commands are used if Commands list is defined
 		if len(model.Commands) > 0 {
-			allowedCommands := []string{"evaluate", "summarize-task", "ai", "create-issues"}
 			for _, command := range model.Commands {
-				found := false
-				for _, allowedCommand := range allowedCommands {
-					if command == allowedCommand {
-						found = true
-						break
+				if _, ok := allowedLlmCommands[command]; !ok {
+					// Collect allowed command names for the error message
+					allowedKeys := make([]string, 0, len(allowedLlmCommands))
+					for k := range allowedLlmCommands {
+						allowedKeys = append(allowedKeys, k)
 					}
+					return fmt.Errorf("llm model %q has invalid command %q in its commands list. Allowed commands are: %s", model.Name, command, strings.Join(allowedKeys, ", "))
 				}
-				if !found {
-					return fmt.Errorf("llm model %q command %q is not valid", model.Name, command)
+			}
+		}
+
+		for _, command := range model.Commands {
+			prevModel, ok := commandModelMap[command]
+			if ok && prevModel != model.Name {
+				return fmt.Errorf("command %q is assigned to multiple LLM models: %q and %q", command, prevModel, model.Name)
+			}
+			if !ok {
+				commandModelMap[command] = model.Name
+			}
+		}
+
+		// Validate that model.Commands are actually used in workflow steps
+		if len(model.Commands) > 0 {
+			for _, command := range model.Commands {
+				if !usedCommands[command] {
+					return fmt.Errorf("llm model %q command %q is not used in any workflow step", model.Name, command)
 				}
 			}
 		}

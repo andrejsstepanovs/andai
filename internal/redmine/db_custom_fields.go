@@ -67,7 +67,7 @@ func (c *Model) DBInsertCustomField(customFieldType, fieldFormat string, field r
 		customFieldType,   // type
 		field.Name,        // name
 		fieldFormat,       // field_format
-		1,                 // is_required
+		0,                 // is_required
 		position,          // position
 		formatStoreStr,    // format_store
 		field.Description, // description
