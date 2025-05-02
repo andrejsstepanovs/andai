@@ -59,6 +59,11 @@ func (i *Routine) ExecuteWorkflow() (bool, error) {
 		fmt.Println("Success")
 	}
 
+	err = i.model.APISyncRepo(i.project)
+	if err != nil {
+		log.Printf("Failed to sync repo in redmine: %v", err)
+	}
+
 	return true, nil
 }
 
