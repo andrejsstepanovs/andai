@@ -42,5 +42,23 @@ func setupSettings(redmine *redmine.Model) error {
 
 	log.Printf("Worker Role OK. Identifier: %d\n", roleID)
 
+	err = redmine.DBSettingsEnableSysAPIEnabled()
+	if err != nil {
+		log.Println("Redmine Settings Failed to enable Sys API")
+		return fmt.Errorf("error redmine: %v", err)
+	}
+
+	err = redmine.DBSettingsEnableAutofetchChengesets()
+	if err != nil {
+		log.Println("Redmine Settings Failed to enable repo autofetch chengesets")
+		return fmt.Errorf("error redmine: %v", err)
+	}
+
+	err = redmine.DBSettingsEnableSCM()
+	if err != nil {
+		log.Println("Redmine Settings Failed to enable repo repo scm")
+		return fmt.Errorf("error redmine: %v", err)
+	}
+
 	return nil
 }

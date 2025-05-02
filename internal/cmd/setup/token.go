@@ -73,6 +73,13 @@ func setupToken(redmine *redmine.Model) error {
 	}
 	log.Println("New token created")
 
+	// enable sys api key used for repo api requests
+	err = redmine.DBSettingsSetSysAPIKey(newToken)
+	if err != nil {
+		log.Println("Redmine Settings Failed to set sys api key")
+		return fmt.Errorf("error redmine: %v", err)
+	}
+
 	_, err = getToken()
 	return err
 }
