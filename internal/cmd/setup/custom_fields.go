@@ -11,14 +11,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newCustomFieldsCommand(deps *internal.AppDependencies) *cobra.Command {
+func newCustomFieldsCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "custom-fields",
 		Short: "Save (Update) custom fields",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			log.Println("Processing custom fields sync")
 
-			err := setupCustomFields(deps.Model)
+			err := setupCustomFields(deps().Model)
 			if err != nil {
 				return err
 			}

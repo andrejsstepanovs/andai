@@ -9,12 +9,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newValidateCommand(deps *internal.AppDependencies) *cobra.Command {
+func newValidateCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
 		Short: "Validates project config file",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			settings, err := deps.Config.Load()
+			d := deps()
+			settings, err := d.Config.Load()
 			if err != nil {
 				return err
 			}

@@ -16,18 +16,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newPingAiderCommand(deps *internal.AppDependencies) *cobra.Command {
+func newPingAiderCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "aider",
 		Short: "Ping aider connection",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			settings, err := deps.Config.Load()
+			d := deps()
+			settings, err := d.Config.Load()
 			if err != nil {
 				return err
 			}
 
 			fmt.Println("Pinging Aider")
-			err = pingAider(deps.Model, settings.Projects, settings.Aider)
+			err = pingAider(d.Model, settings.Projects, settings.Aider)
 			if err != nil {
 				return err
 			}

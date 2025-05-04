@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newLoopCommand(deps *internal.AppDependencies) *cobra.Command {
+func newLoopCommand(deps internal.DependenciesLoader) *cobra.Command {
 	return &cobra.Command{
 		Use:   "loop",
 		Short: "Work forever",
@@ -24,23 +24,24 @@ func newLoopCommand(deps *internal.AppDependencies) *cobra.Command {
 	}
 }
 
-func Loop(deps *internal.AppDependencies) error {
+func Loop(deps internal.DependenciesLoader) error {
 	// AI: Initialize tracking variables for incremental sleep
 	lastSuccessfulTask := time.Now()
 	consecutiveEmptyChecks := 0
 	currentSleepDuration := time.Duration(0) // Start with no sleep
 
 	for {
-		params, err := deps.Config.Load()
+		d := deps() // load fresh config on every loop
+		params, err := d.Config.Load()
 		if err != nil {
 			return err
 		}
 
-		err = processTriggers(deps.Model, params.Workflow)
+		err = processTriggers(d.Model, params.Workflow)
 		if err != nil {
 			return fmt.Errorf("failed to process triggers err: %v", err)
 		}
-		wasWorking, err := workNext(deps, params)
+		wasWorking, err := workNext(d, params)
 		if err != nil {
 			return fmt.Errorf("failed to work next err: %v", err)
 		}
@@ -97,18 +98,19 @@ func Loop(deps *internal.AppDependencies) error {
 	}
 }
 
-func newNextCommand(deps *internal.AppDependencies) *cobra.Command {
+func newNextCommand(deps internal.DependenciesLoader) *cobra.Command {
 	return &cobra.Command{
 		Use:   "next",
 		Short: "Work with redmine",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			params, err := deps.Config.Load()
+			d := deps()
+			params, err := d.Config.Load()
 			if err != nil {
 				return err
 			}
 
 			log.Println("Searching for workable issues")
-			_, err = workNext(deps, params)
+			_, err = workNext(d, params)
 			return err
 		},
 	}

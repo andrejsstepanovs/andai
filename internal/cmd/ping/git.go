@@ -12,18 +12,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newGitPingCommand(deps *internal.AppDependencies) *cobra.Command {
+func newGitPingCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "git",
 		Short: "Ping (open) repository",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			settings, err := deps.Config.Load()
+			d := deps()
+			settings, err := d.Config.Load()
 			if err != nil {
 				return err
 			}
 
 			fmt.Println("Pinging Git Repo")
-			err = pingGit(deps.Model, settings.Projects)
+			err = pingGit(d.Model, settings.Projects)
 			if err != nil {
 				return err
 			}

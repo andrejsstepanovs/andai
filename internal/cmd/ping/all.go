@@ -8,16 +8,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newPingAllCommand(deps *internal.AppDependencies) *cobra.Command {
+func newPingAllCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "all",
 		Short: "Ping (open) Git repository",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			sett, err := deps.Config.Load()
+			d := deps()
+			sett, err := d.Config.Load()
 			if err != nil {
 				return err
 			}
-			redmine := deps.Model
+			redmine := d.Model
 
 			err = pingGit(redmine, sett.Projects)
 			if err != nil {
@@ -37,7 +38,7 @@ func newPingAllCommand(deps *internal.AppDependencies) *cobra.Command {
 			}
 			fmt.Println("API OK")
 
-			err = pingLLM(deps.LlmPool)
+			err = pingLLM(d.LlmPool)
 			if err != nil {
 				return err
 			}

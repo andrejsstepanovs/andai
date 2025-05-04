@@ -18,7 +18,9 @@ type Config struct {
 	project  string
 }
 
-func NewConfig(project, basePath string) *Config {
+func NewConfig(basePath string) *Config {
+	project := os.Getenv("PROJECT")
+
 	conf := &Config{
 		basePath: basePath, // Default to current directory
 	}

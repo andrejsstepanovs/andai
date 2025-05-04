@@ -11,18 +11,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newSetupAllCommand(deps *internal.AppDependencies) *cobra.Command {
+func newSetupAllCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "all",
 		Short: "Setup everything",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			s, err := deps.Config.Load()
+			d := deps()
+			s, err := d.Config.Load()
 			if err != nil {
 				return err
 			}
 
 			log.Println("Setup ALL")
-			return Setup(deps.Model, s.Projects, s.Workflow)
+			return Setup(d.Model, s.Projects, s.Workflow)
 		},
 	}
 	return cmd

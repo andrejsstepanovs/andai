@@ -10,13 +10,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newDBPingCommand(deps *internal.AppDependencies) *cobra.Command {
+func newDBPingCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "db",
 		Short: "Ping database connection",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			fmt.Println("Pinging Database")
-			err := pingDB(deps.Model)
+			err := pingDB(deps().Model)
 			if err != nil {
 				return err
 			}

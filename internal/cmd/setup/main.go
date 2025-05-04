@@ -6,7 +6,7 @@ import (
 	"github.com/andrejsstepanovs/andai/internal"
 )
 
-func Cmd(deps *internal.AppDependencies) *cobra.Command {
+func Cmd(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "setup",
 		Short: "Changes environment setup",

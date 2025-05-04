@@ -12,7 +12,7 @@ func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "This command dose nothing",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			fmt.Printf("AndAI %s by Andrejs Stepanovs and contributors\n", ver)
 		},
 	}

@@ -13,18 +13,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newWorkflowCommand(deps *internal.AppDependencies) *cobra.Command {
+func newWorkflowCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "workflow",
 		Short: "Setup Redmine workflow",
 		RunE: func(_ *cobra.Command, _ []string) error {
+			d := deps()
 			log.Println("Update Redmine workflow")
-			settings, err := deps.Config.Load()
+			settings, err := d.Config.Load()
 			if err != nil {
 				return err
 			}
 
-			return setupWorkflow(deps.Model, settings.Workflow)
+			return setupWorkflow(d.Model, settings.Workflow)
 		},
 	}
 	return cmd

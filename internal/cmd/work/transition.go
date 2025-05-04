@@ -11,18 +11,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newTriggersCommand(deps *internal.AppDependencies) *cobra.Command {
+func newTriggersCommand(deps internal.DependenciesLoader) *cobra.Command {
 	return &cobra.Command{
 		Use:   "triggers",
 		Short: "Checks last issue status change and applies workflow triggers",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			settings, err := deps.Config.Load()
+			d := deps()
+			settings, err := d.Config.Load()
 			if err != nil {
 				return err
 			}
 
 			log.Println("Starting triggers check")
-			return processTriggers(deps.Model, settings.Workflow)
+			return processTriggers(d.Model, settings.Workflow)
 		},
 	}
 }

@@ -10,13 +10,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newSettingsCommand(deps *internal.AppDependencies) *cobra.Command {
+func newSettingsCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "settings",
 		Short: "Enable REST API in Redmine",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			log.Println("Update Redmine settings")
-			return setupSettings(deps.Model)
+			return setupSettings(deps().Model)
 		},
 	}
 	return cmd

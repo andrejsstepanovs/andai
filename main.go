@@ -18,35 +18,38 @@ import (
 )
 
 func main() {
-	project := os.Getenv("PROJECT")
-
-	projectConfig := settings.NewConfig(project, ".")
-	_, err := projectConfig.Load()
-	if err != nil {
-		log.Println("Error loading config:", err)
-		os.Exit(1)
-	}
-
-	dependencies, err := internal.NewAppDependencies(projectConfig)
-	if err != nil {
-		log.Println("Error creating dependencies:", err)
-		os.Exit(1)
-	}
-
 	rootCmd := &cobra.Command{
 		Use:   "main",
 		Short: "A simple CLI application",
 	}
 
+	// DependenciesLoader use callback so we dont block the app if not used
+	var dependenciesLoader internal.DependenciesLoader = func() *internal.AppDependencies {
+		projectConfig := settings.NewConfig(".")
+		_, err := projectConfig.Load()
+		if err != nil {
+			log.Println("Error loading config:", err)
+			os.Exit(1)
+		}
+
+		dependencies, err := internal.NewAppDependencies(projectConfig)
+		if err != nil {
+			log.Println("Error creating dependencies:", err)
+			os.Exit(1)
+		}
+
+		return dependencies
+	}
+
 	rootCmd.AddCommand(
 		version.Cmd(),
-		cmd.LetsGo(dependencies),
+		cmd.LetsGo(dependenciesLoader),
 		nothing.Cmd(),
-		validate.SetupValidateCmd(dependencies),
-		ping.SetupPingCmd(dependencies),
-		setup.Cmd(dependencies),
-		work.Cmd(dependencies),
-		issue.Cmd(dependencies),
+		validate.SetupValidateCmd(dependenciesLoader),
+		ping.SetupPingCmd(dependenciesLoader),
+		setup.Cmd(dependenciesLoader),
+		work.Cmd(dependenciesLoader),
+		issue.Cmd(dependenciesLoader),
 	)
 
 	if err := rootCmd.Execute(); err != nil {

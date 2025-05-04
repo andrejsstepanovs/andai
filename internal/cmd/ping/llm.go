@@ -10,13 +10,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newLLMPingCommand(deps *internal.AppDependencies) *cobra.Command {
+func newLLMPingCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "llm",
 		Short: "Test LLM connection",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			log.Println("Ping LLM")
-			err := pingLLM(deps.LlmPool)
+			err := pingLLM(deps().LlmPool)
 			if err != nil {
 				return err
 			}

@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func SetupPingCmd(deps *internal.AppDependencies) *cobra.Command {
+func SetupPingCmd(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ping",
 		Short: "Ping environment",

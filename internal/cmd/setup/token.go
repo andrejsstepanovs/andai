@@ -12,12 +12,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-func newGetTokenCommand(deps *internal.AppDependencies) *cobra.Command {
+func newGetTokenCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
 		Short: "Set (or get) redmine admin token",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return setupToken(deps.Model)
+			return setupToken(deps().Model)
 		},
 	}
 	return cmd

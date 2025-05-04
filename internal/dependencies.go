@@ -16,6 +16,8 @@ type AppDependencies struct {
 	LlmPool *settings.LlmModels
 }
 
+type DependenciesLoader func() *AppDependencies
+
 var Container *AppDependencies
 
 func NewAppDependencies(config *settings.Config) (*AppDependencies, error) {
