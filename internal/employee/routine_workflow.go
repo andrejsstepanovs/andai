@@ -349,8 +349,8 @@ func (i *Routine) summarizeTask(workflowStep settings.Step, contextFile string, 
 
 func (i *Routine) buildTaskSummaryAIHistory(contextContent, query string, includeFiles []string) ([]map[string]string, error) {
 	var summaryPrompt string
-	if i.aiderConfig.TaskSummaryPrompt != "" {
-		summaryPrompt = i.aiderConfig.TaskSummaryPrompt
+	if i.codingAgents.Aider.TaskSummaryPrompt != "" {
+		summaryPrompt = i.codingAgents.Aider.TaskSummaryPrompt
 	} else {
 		summaryPrompt = ai.TaskSummaryPrompt
 	}
@@ -415,7 +415,7 @@ func (i *Routine) aiderCode(workflowStep settings.Step, contextFile string) (exe
 		return exec.Output{}, err
 	}
 
-	out, err := actions.AiderExecute(contextFile, workflowStep, i.aiderConfig)
+	out, err := actions.AiderExecute(contextFile, workflowStep, i.codingAgents.Aider)
 	if err != nil {
 		return out, err
 	}
@@ -436,7 +436,7 @@ func (i *Routine) aiderArchitect(workflowStep settings.Step, contextFile string)
 		}
 	}
 
-	architectResult, err := actions.AiderExecute(contextFile, workflowStep, i.aiderConfig)
+	architectResult, err := actions.AiderExecute(contextFile, workflowStep, i.codingAgents.Aider)
 	if err != nil {
 		return architectResult, err
 	}
@@ -462,7 +462,7 @@ func (i *Routine) aiderCommit(workflowStep settings.Step) (exec.Output, error) {
 	commitResult, err := actions.AiderExecute(
 		"Commit any uncommitted changes. Do nothing if no uncommitted changes are present.",
 		workflowStep,
-		i.aiderConfig,
+		i.codingAgents.Aider,
 	)
 	if err != nil {
 		return commitResult, err

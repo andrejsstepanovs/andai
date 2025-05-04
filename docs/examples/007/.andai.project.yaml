@@ -10,10 +10,11 @@ redmine:
   api_key: "2159cef2fb6c82c4f66981f199798781e161c694"
   repositories: "/var/repositories/"
 
-aider:
-  timeout: "180m"
-  config: "/path/to/.andai.aider.yaml"
-  map_tokens:  1024
+coding_agents:
+  aider:
+    timeout: "180m"
+    config: "/path/to/.andai.aider.yaml"
+    map_tokens:  1024
 
 workflow:
   states:

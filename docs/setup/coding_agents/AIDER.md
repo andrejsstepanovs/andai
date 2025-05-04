@@ -10,11 +10,12 @@ Arguments:
 - task_summary_prompt - Optional override prompt for `summarize-task` and aider `summarize` option. Example: `andai` command `command: aider` `summarize: True` configured in `workflow`.
 
 ```yaml
-aider:
-  timeout: "180m"
-  config: "/full/path/to/here/.andai.aider.yaml"
-  model_metadata_file: "/full/path/to/here/.andai.aider.model.json"
-  map_tokens:  1024
+coding_agents:
+  aider:
+    timeout: "180m"
+    config: "/full/path/to/here/.andai.aider.yaml"
+    model_metadata_file: "/full/path/to/here/.andai.aider.model.json"
+    map_tokens:  1024
 
 (!) You are required to configure api key and url in aider config file.
 

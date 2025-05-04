@@ -6,10 +6,10 @@ import (
 )
 
 type Settings struct {
-	Workflow  Workflow  `yaml:"workflow"`
-	Projects  Projects  `yaml:"projects"`
-	LlmModels LlmModels `yaml:"llm_models"`
-	Aider     Aider     `yaml:"aider"`
+	Workflow     Workflow     `yaml:"workflow"`
+	Projects     Projects     `yaml:"projects"`
+	LlmModels    LlmModels    `yaml:"llm_models"`
+	CodingAgents CodingAgents `yaml:"coding_agents"`
 }
 
 func (s *Settings) getAllIssueTypesAndStates() map[IssueTypeName]map[StateName]State {
@@ -264,14 +264,22 @@ func (s *Settings) validateProjects() error {
 	return nil
 }
 
+func (s *Settings) validateCodingAgents() error {
+	if err := s.validateAider(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *Settings) validateAider() error {
 	//if s.Aider.MapTokens == 0 {
 	//	return fmt.Errorf("aider map_tokens is required")
 	//}
-	if s.Aider.Config == "" {
+	if s.CodingAgents.Aider.Config == "" {
 		return fmt.Errorf("aider config is required")
 	}
-	if s.Aider.Timeout == 0 {
+	if s.CodingAgents.Aider.Timeout == 0 {
 		return fmt.Errorf("aider timeout (duration) is required. Example: 5m")
 	}
 	return nil
@@ -613,7 +621,7 @@ func (s *Settings) Validate() error {
 		return err
 	}
 
-	if err := s.validateAider(); err != nil {
+	if err := s.validateCodingAgents(); err != nil {
 		return err
 	}
 

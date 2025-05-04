@@ -28,8 +28,8 @@ See [REDMINE.md](REDMINE.md) for more information.
 ## projects
 See [PROJECTS.md](PROJECTS.md) for more information.
 
-## aider
-See [AIDER.md](AIDER.md) for more information.
+## coding_agents
+See [coding_agents/CODING_AGENTS.md](coding_agents/CODING_AGENTS.md) for more information.
 
 ## llm_models
 See [LLM_MODELS.md](LLM_MODELS.md) for more information.

@@ -28,7 +28,7 @@ func newPingAiderCommand(deps internal.DependenciesLoader) *cobra.Command {
 			}
 
 			fmt.Println("Pinging Aider")
-			err = pingAider(d.Model, settings.Projects, settings.Aider)
+			err = pingAider(d.Model, settings.Projects, settings.CodingAgents.Aider)
 			if err != nil {
 				return err
 			}

@@ -55,10 +55,11 @@ redmine:
   api_key: "2159cef2fb6c82c4f66981f199798781e161c694"
   repositories: "/var/repositories/"
 
-aider:
-  #map_tokens: 1024
-  timeout: "180m"
-  config: "/tmp/test/.andai.aider.yaml" # configure aider model in that file
+coding_agents:
+  aider:
+    #map_tokens: 1024
+    timeout: "180m"
+    config: "/tmp/test/.andai.aider.yaml" # configure aider model in that file
 
 projects:
   - identifier: "test"

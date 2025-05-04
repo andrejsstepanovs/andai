@@ -44,7 +44,7 @@ func newPingAllCommand(deps internal.DependenciesLoader) *cobra.Command {
 			}
 			log.Println("LLM OK")
 
-			err = pingAider(redmine, sett.Projects, sett.Aider)
+			err = pingAider(redmine, sett.Projects, sett.CodingAgents.Aider)
 			if err != nil {
 				return err
 			}
