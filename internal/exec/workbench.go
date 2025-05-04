@@ -128,6 +128,27 @@ func (i *Workbench) GetIssueBranchNameOverride(issue redmine.Issue) string {
 	return ""
 }
 
+// GetIssueSkipMergeOverride in UI user can set flag to not merge into parent. Use it if set.
+func (i *Workbench) GetIssueSkipMergeOverride(issue redmine.Issue) bool {
+	if issue.CustomFields == nil {
+		return false
+	}
+	for _, field := range issue.CustomFields {
+		if field.Name != model.CustomFieldSkipMerge {
+			continue
+		}
+		if field.Value == nil {
+			continue
+		}
+		s := field.Value.(string)
+		s = strings.TrimSpace(s)
+		if s == "1" {
+			return true
+		}
+	}
+	return false
+}
+
 func (i *Workbench) GetIssueBranchName(issue redmine.Issue) string {
 	overrideBranch := i.GetIssueBranchNameOverride(issue)
 	if overrideBranch != "" {

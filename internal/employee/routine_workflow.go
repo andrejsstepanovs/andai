@@ -14,6 +14,7 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/employee/actions/models"
 	"github.com/andrejsstepanovs/andai/internal/employee/knowledge"
 	"github.com/andrejsstepanovs/andai/internal/exec"
+	model "github.com/andrejsstepanovs/andai/internal/redmine"
 	"github.com/andrejsstepanovs/andai/internal/settings"
 )
 
@@ -500,6 +501,18 @@ func (i *Routine) simpleAI(promptFile string) (exec.Output, error) {
 func (i *Routine) mergeIntoParent(deleteBranchAfterMerge bool) (exec.Output, error) {
 	currentBranchName := i.workbench.GetIssueBranchName(i.issue)
 	parentBranchName := i.getTargetBranch()
+
+	skipMerge := i.workbench.GetIssueSkipMergeOverride(i.issue)
+	if skipMerge {
+		msg := fmt.Sprintf("Skipped merge (because %q = 1) of current branch: %q into parent branch: %q", model.CustomFieldSkipMerge, currentBranchName, parentBranchName)
+		log.Println(msg)
+
+		i.AddCommentToParent(msg)
+		i.AddComment(msg)
+
+		return exec.Output{Stdout: "Skipping merge"}, nil
+	}
+
 	log.Printf("Merging current branch: %q into parent branch: %q", currentBranchName, parentBranchName)
 
 	err := i.workbench.Git.CheckoutBranch(parentBranchName)
