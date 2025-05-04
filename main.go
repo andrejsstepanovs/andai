@@ -19,7 +19,7 @@ import (
 
 func main() {
 	rootCmd := &cobra.Command{
-		Use:   "main",
+		Use:   "andai",
 		Short: "A simple CLI application",
 	}
 
