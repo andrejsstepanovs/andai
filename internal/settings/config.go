@@ -25,7 +25,7 @@ func NewConfig(project, basePath string) *Config {
 
 	if project == "" {
 		project = defaultProjectName
-		log.Printf("PROJECT environment variable not set. Assuming its %q", project)
+		log.Printf("INFO: PROJECT environment variable not set. Assuming its %q", project)
 	}
 
 	conf.project = project

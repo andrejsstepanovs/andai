@@ -11,6 +11,7 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/cmd/ping"
 	"github.com/andrejsstepanovs/andai/internal/cmd/setup"
 	"github.com/andrejsstepanovs/andai/internal/cmd/validate"
+	"github.com/andrejsstepanovs/andai/internal/cmd/version"
 	"github.com/andrejsstepanovs/andai/internal/cmd/work"
 	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/spf13/cobra"
@@ -38,6 +39,7 @@ func main() {
 	}
 
 	rootCmd.AddCommand(
+		version.Cmd(),
 		cmd.LetsGo(dependencies),
 		nothing.Cmd(),
 		validate.SetupValidateCmd(dependencies),
