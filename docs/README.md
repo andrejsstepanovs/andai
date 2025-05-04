@@ -63,6 +63,7 @@ andai ping llm              # Test LLM connection
 ```bash
 andai work next             # Run a single work cycle
 andai work loop             # Run continuous work cycles
+andai go                    # Setups everything (setup all) and continuous execution (work loop) in single command
 ```
 
 ### Issue Management
@@ -75,7 +76,6 @@ andai issue move-children <subject> <success|fail>  # Move all child issues to n
 ### Utility Commands
 ```bash
 andai nothing               # Sleep indefinitely (useful for Docker containers)
-andai lets go               # Comprehensive setup and continuous execution
 ```
 
 ## Development Philosophy

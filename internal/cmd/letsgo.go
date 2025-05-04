@@ -10,29 +10,23 @@ import (
 
 func LetsGo(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "lets",
+		Use:   "go",
 		Short: "Setup and Run the workflow loop",
-	}
+		RunE: func(_ *cobra.Command, _ []string) error {
+			d := deps()
+			settings, err := d.Config.Load()
+			if err != nil {
+				return err
+			}
 
-	cmd.AddCommand(
-		&cobra.Command{
-			Use: "go",
-			RunE: func(_ *cobra.Command, _ []string) error {
-				d := deps()
-				settings, err := d.Config.Load()
-				if err != nil {
-					return err
-				}
+			err = setup.Setup(d.Model, settings.Projects, settings.Workflow)
+			if err != nil {
+				return err
+			}
 
-				err = setup.Setup(d.Model, settings.Projects, settings.Workflow)
-				if err != nil {
-					return err
-				}
-
-				return work.Loop(deps)
-			},
+			return work.Loop(deps)
 		},
-	)
+	}
 
 	return cmd
 }
