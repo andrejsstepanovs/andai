@@ -6,18 +6,20 @@ import (
 	"log"
 	"strings"
 
+	"github.com/andrejsstepanovs/andai/internal/redmine/models"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/mattn/go-redmine"
 )
 
 // CustomFieldIssue is the type of custom field for issues
 const (
-	CustomFieldIssue  = "IssueCustomField"
-	CustomFieldBranch = "Branch"
+	CustomFieldIssue     = "IssueCustomField"
+	CustomFieldBranch    = "Branch"
+	CustomFieldSkipMerge = "Skip merge"
 )
 
-func (c *Model) DBSaveCustomFields(customFields []redmine.CustomField, current []redmine.CustomField) ([]int64, error) {
-	newCustomFields := make([]redmine.CustomField, 0)
+func (c *Model) DBSaveCustomFields(customFields []models.CustomField, current []redmine.CustomField) ([]int64, error) {
+	newCustomFields := make([]models.CustomField, 0)
 	for _, field := range customFields {
 		exists := false
 		for _, s := range current {
@@ -38,7 +40,7 @@ func (c *Model) DBSaveCustomFields(customFields []redmine.CustomField, current [
 	newIDs := make([]int64, 0)
 	for i, field := range newCustomFields {
 		log.Printf("Creating New Custom Field: %s\n\n", field.Name)
-		id, err := c.DBInsertCustomField(CustomFieldIssue, "string", field, i+1)
+		id, err := c.DBInsertCustomField(CustomFieldIssue, field, i+1)
 		if err != nil {
 			return nil, fmt.Errorf("redmine issue status insert err: %v", err)
 		}
@@ -48,27 +50,24 @@ func (c *Model) DBSaveCustomFields(customFields []redmine.CustomField, current [
 	return newIDs, nil
 }
 
-func (c *Model) DBInsertCustomField(customFieldType, fieldFormat string, field redmine.CustomField, position int) (int64, error) {
-	formatStore := []string{
-		"text_formatting: ''",
-		"url_pattern: ''",
-		"",
-	}
+func (c *Model) DBInsertCustomField(customFieldType string, field models.CustomField, position int) (int64, error) {
 	formatStoreParts := []string{"---"}
-	formatStoreParts = append(formatStoreParts, formatStore...)
+	formatStoreParts = append(formatStoreParts, field.FormatStore...)
 	formatStoreStr := strings.Join(formatStoreParts, "\n")
 
 	queryInsertCustomField := fmt.Sprintf("INSERT INTO custom_fields " +
 		"(`type`, `name`, field_format, possible_values, `regexp`, min_length, max_length, is_required, is_for_all, is_filter, position, searchable, default_value, editable, visible, multiple, format_store, description) " +
-		"VALUES (?, ?, ?, NULL, '', NULL, NULL, ?, 1, 0, ?, 0, '', 1, 1, 0, ?, ?)")
+		"VALUES (?, ?,     ?,           NULL,            '',       NULL,       NULL,       ?,           1,          ?,         ?,        0,          ?,             1,        1,       0,        ?,            ?)")
 
 	result, err := c.execDML(
 		queryInsertCustomField,
 		customFieldType,   // type
 		field.Name,        // name
-		fieldFormat,       // field_format
+		field.Type,        // field_format
 		0,                 // is_required
+		field.IsFilter,    // is_filter
 		position,          // position
+		field.Default,     // default_value
 		formatStoreStr,    // format_store
 		field.Description, // description
 	)

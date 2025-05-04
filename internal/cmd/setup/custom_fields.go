@@ -6,8 +6,8 @@ import (
 
 	"github.com/andrejsstepanovs/andai/internal"
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
+	"github.com/andrejsstepanovs/andai/internal/redmine/models"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
-	"github.com/mattn/go-redmine"
 	"github.com/spf13/cobra"
 )
 
@@ -31,10 +31,30 @@ func newCustomFieldsCommand(deps internal.DependenciesLoader) *cobra.Command {
 }
 
 func setupCustomFields(mod *model.Model) error {
-	createFields := []redmine.CustomField{
+	createFields := []models.CustomField{
 		{
 			Name:        model.CustomFieldBranch,
 			Description: "Branch name to work in. If not set will be AI-123 (task id) or if main task and not set `final_branch` value will be used.",
+			Type:        "string",
+			Default:     "",
+			FormatStore: []string{
+				"text_formatting: ''",
+				"url_pattern: ''",
+				"",
+			},
+			IsFilter: 1,
+		},
+		{
+			Name:        model.CustomFieldSkipMerge,
+			Description: "If True on success will NOT merge branch into parent task. If no parent issue exists, then will use andai final_branch value.",
+			Type:        "bool",
+			Default:     "0",
+			FormatStore: []string{
+				"url_pattern: ''",
+				"edit_tag_style: check_box",
+				"",
+			},
+			IsFilter: 1,
 		},
 	}
 
