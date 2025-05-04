@@ -43,7 +43,6 @@ func WithContext(ctx context.Context, command string, args ...string) (Output, e
 		cmdExec = fmt.Sprintf("%s %s", command, strings.Join(args, " "))
 	}
 
-	fmt.Println(cmdExec)
 	output := Output{Command: cmdExec}
 
 	fullCommand := fmt.Sprintf("%s %s", command, strings.Join(args, " "))
