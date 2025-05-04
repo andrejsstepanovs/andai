@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/andrejsstepanovs/andai/internal/cmd/setup"
 	"github.com/andrejsstepanovs/andai/internal/cmd/work"
 	"github.com/spf13/cobra"
@@ -23,8 +25,9 @@ func LetsGo(deps internal.DependenciesLoader) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			ctx := context.Background()
 
-			return work.Loop(deps)
+			return work.Loop(ctx, deps)
 		},
 	}
 

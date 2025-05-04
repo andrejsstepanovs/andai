@@ -1,8 +1,12 @@
 package work
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/andrejsstepanovs/andai/internal"
@@ -19,19 +23,31 @@ func newLoopCommand(deps internal.DependenciesLoader) *cobra.Command {
 		Use:   "loop",
 		Short: "Work forever",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return Loop(deps)
+			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+			defer stop()
+			return Loop(ctx, deps)
 		},
 	}
 }
 
-func Loop(deps internal.DependenciesLoader) error {
-	// AI: Initialize tracking variables for incremental sleep
+// Loop runs work next loop forever
+// TODO fix this
+//
+//nolint:cyclop
+func Loop(ctx context.Context, deps internal.DependenciesLoader) error {
 	lastSuccessfulTask := time.Now()
 	consecutiveEmptyChecks := 0
-	currentSleepDuration := time.Duration(0) // Start with no sleep
+	currentSleepDuration := time.Duration(0)
 
 	for {
-		d := deps() // load fresh config on every loop
+		select {
+		case <-ctx.Done():
+			log.Println("Received interrupt signal, exiting work loop.")
+			return nil
+		default:
+		}
+
+		d := deps()
 		params, err := d.Config.Load()
 		if err != nil {
 			return err
@@ -91,8 +107,14 @@ func Loop(deps internal.DependenciesLoader) error {
 					currentSleepDuration,
 					time.Since(lastSuccessfulTask).Round(time.Second),
 					consecutiveEmptyChecks)
-				time.Sleep(currentSleepDuration)
-				continue // Skip the rest of the loop after sleeping
+
+				select {
+				case <-ctx.Done():
+					log.Println("Received interrupt signal during sleep, exiting work loop.")
+					return nil
+				case <-time.After(currentSleepDuration):
+				}
+				continue
 			}
 		}
 	}
