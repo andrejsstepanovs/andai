@@ -362,6 +362,8 @@ func (i *Routine) buildTaskSummaryAIHistory(contextContent, query string, includ
 		{"AI": "Got it! This is a original task text that I should summarize, groom and reformat. How should I reformat this task?"},
 		{"USER": summaryPrompt},
 		{"AI": "Understood! I will reformat the task using the provided instructions. Is this all?"},
+		{"USER": "Yes, remember that you are a senior software engineer with strong system design experience. Avoid situations where we end up with spahghetti code to maintain."},
+		{"AI": "Of course! I know how to prepare clean, maintainable tasks. My designs focus on modular structure, clear separation of concerns, and patterns that ensure long-term sustainability of the codebase. Anything else?"},
 	}
 
 	if len(includeFiles) > 0 {
@@ -374,7 +376,7 @@ func (i *Routine) buildTaskSummaryAIHistory(contextContent, query string, includ
 			filesContent = append(filesContent, fmt.Sprintf("# %s\n%s", fileName, content))
 		}
 
-		history = append(history, map[string]string{"USER": "You will probably also need code file contents right?"})
+		history = append(history, map[string]string{"USER": "You will probably also need existing code files?"})
 		history = append(history, map[string]string{"AI": "Yes!"})
 		history = append(history, map[string]string{"USER": strings.Join(filesContent, "\n")})
 		history = append(history, map[string]string{"AI": "Thanks! I will use this to understand the task better and improve the task description."})
