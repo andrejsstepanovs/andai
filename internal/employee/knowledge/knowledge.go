@@ -48,7 +48,7 @@ func (k Knowledge) BuildPromptTmpFile() (string, error) {
 		return "", err
 	}
 	content := buf.String()
-	fmt.Println("\n##############\n", content, "\n##############")
+	//fmt.Println("\n##############\n", content, "\n##############")
 
 	tempFile, err := os.CreateTemp("", fmt.Sprintf(tmpFile, k.Issue.Id))
 	if err != nil {
