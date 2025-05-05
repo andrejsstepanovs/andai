@@ -456,7 +456,7 @@ func (i *Routine) aiderArchitect(workflowStep settings.Step, contextFile string)
 
 // aiderCommit DEPRECATED. not working as expected.
 func (i *Routine) aiderCommit(workflowStep settings.Step) (exec.Output, error) {
-	// TODO check if there is anything uncommited.
+	// TODO check if there is anything uncommitted.
 
 	lastSha, err := i.workbench.GetLastCommit()
 	if err != nil {
