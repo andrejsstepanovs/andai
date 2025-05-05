@@ -103,14 +103,18 @@ func (i *Workbench) changeDirectory() error {
 }
 
 func (i *Workbench) CheckoutBranch(branchName string) error {
-	resp, err := Exec("git", time.Second*10, "branch")
+	respGit, err := Exec("git", time.Second*10, "branch")
 	if err != nil {
-		log.Printf("stderr: %s", resp.Stderr)
+		log.Printf("stderr: %s", respGit.Stderr)
 		return fmt.Errorf("failed to check if branch exists err: %v", err)
 	}
-	branches := strings.Split(resp.Stdout, "\n")
+	branches := strings.Split(respGit.Stdout, "\n")
 	branchExists := false
 	for _, branch := range branches {
+		if strings.HasPrefix(branch, "*") && strings.TrimSpace(strings.TrimPrefix(branch, "*")) == branchName {
+			log.Printf("Already on branch %s\n", branchName)
+			return nil
+		}
 		if strings.TrimSpace(branch) == branchName {
 			branchExists = true
 			break
@@ -132,10 +136,10 @@ func (i *Workbench) CheckoutBranch(branchName string) error {
 		return fmt.Errorf("failed to checkout branch err: %v", checkoutErr)
 	}
 	if checkoutResp.Stderr != "" {
-		log.Printf("git: %s", resp.Stderr)
+		log.Printf("git: %s", checkoutResp.Stderr)
 	}
 	if checkoutResp.Stdout != "" {
-		log.Printf("git: %s", resp.Stdout)
+		log.Printf("git: %s", checkoutResp.Stdout)
 	}
 
 	return nil
