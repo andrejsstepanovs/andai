@@ -137,7 +137,7 @@ func (a *AI) Multi(question string, prompts []map[string]string) (exec.Output, e
 		Messages: messages,
 	}
 
-	log.Println(prompt)
+	//log.Println(prompt) // debug
 
 	return a.Generate(context.Background(), prompt)
 }
