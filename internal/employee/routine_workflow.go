@@ -38,9 +38,9 @@ func (i *Routine) ExecuteWorkflow() (bool, error) {
 		return false, err
 	}
 
-	fmt.Printf("Total steps: %d\n", len(i.job.Steps))
+	log.Printf("Total steps: %d", len(i.job.Steps))
 	for stepIndex, step := range i.job.Steps {
-		fmt.Printf("Step: %d\n", stepIndex+1)
+		log.Printf("Step: %d", stepIndex+1)
 
 		step.History = i.history
 		if len(i.contextFiles) > 0 {
@@ -57,7 +57,7 @@ func (i *Routine) ExecuteWorkflow() (bool, error) {
 		}
 		i.RememberOutput(step, executionOutput)
 
-		fmt.Println("Success")
+		log.Println("Success")
 	}
 
 	err = i.model.APISyncRepo(i.project)
@@ -519,7 +519,7 @@ func (i *Routine) mergeIntoParent(deleteBranchAfterMerge bool) (exec.Output, err
 
 	log.Printf("Merging current branch: %q into parent branch: %q", currentBranchName, parentBranchName)
 
-	err := i.workbench.Git.CheckoutBranch(parentBranchName)
+	err := i.workbench.CheckoutBranch(parentBranchName)
 	if err != nil {
 		log.Printf("Failed to checkout parent branch: %v", err)
 		return exec.Output{}, err

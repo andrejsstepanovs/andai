@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
 	"github.com/mattn/go-redmine"
@@ -50,24 +51,26 @@ func (i *Workbench) PrepareWorkplace(parentIssueID *int, finalBranch string) err
 
 	if parentIssueID != nil {
 		branchName := i.GetIssueBranchName(redmine.Issue{Id: *parentIssueID})
-		err = i.checkoutBranch(branchName)
+		err = i.CheckoutBranch(branchName)
 		if err != nil {
-			log.Printf("Failed to checkout parent branch: %v", err)
+			log.Printf("Prepare workplace: failed to checkout parent branch: %v", err)
+			return err
 		}
 	} else {
 		if finalBranch != "" {
-			err = i.checkoutBranch(finalBranch)
+			err = i.CheckoutBranch(finalBranch)
 			if err != nil {
-				log.Printf("Failed to checkout project final branch: %v", err)
+				log.Printf("Prepare workplace: failed to checkout project final branch: %v", err)
+				return err
 			}
 		}
 	}
 	i.Git.Reload()
 
 	branchName := i.GetIssueBranchName(i.Issue)
-	err = i.checkoutBranch(branchName)
+	err = i.CheckoutBranch(branchName)
 	if err != nil {
-		log.Printf("Failed to checkout branch: %v", err)
+		log.Printf("Prepare workplace: failed to checkout branch: %v", err)
 		return err
 	}
 
@@ -99,11 +102,42 @@ func (i *Workbench) changeDirectory() error {
 	return nil
 }
 
-func (i *Workbench) checkoutBranch(branchName string) error {
-	err := i.Git.CheckoutBranch(branchName)
+func (i *Workbench) CheckoutBranch(branchName string) error {
+	resp, err := Exec("git", time.Second*10, "branch")
 	if err != nil {
-		return fmt.Errorf("failed to checkout branch err: %v", err)
+		log.Printf("stderr: %s", resp.Stderr)
+		return fmt.Errorf("failed to check if branch exists err: %v", err)
 	}
+	branches := strings.Split(resp.Stdout, "\n")
+	branchExists := false
+	for _, branch := range branches {
+		if strings.TrimSpace(branch) == branchName {
+			branchExists = true
+			break
+		}
+	}
+
+	var checkoutResp Output
+	var checkoutErr error
+
+	if branchExists {
+		log.Printf("Branch %s already exists\n", branchName)
+		checkoutResp, checkoutErr = Exec("git", time.Second*10, "checkout", branchName)
+	} else {
+		log.Printf("Branch %s does not exist\n", branchName)
+		checkoutResp, checkoutErr = Exec("git", time.Second*10, "checkout", "-b", branchName)
+	}
+
+	if checkoutErr != nil {
+		return fmt.Errorf("failed to checkout branch err: %v", checkoutErr)
+	}
+	if checkoutResp.Stderr != "" {
+		log.Printf("git: %s", resp.Stderr)
+	}
+	if checkoutResp.Stdout != "" {
+		log.Printf("git: %s", resp.Stdout)
+	}
+
 	return nil
 }
 

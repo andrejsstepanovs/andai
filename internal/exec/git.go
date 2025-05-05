@@ -162,6 +162,9 @@ func (g *Git) DeleteBranch(branchName string) error {
 	return nil
 }
 
+// CheckoutBranch checks out a branch.
+// TODO this is not working as expected. After checkout last commit files are staged. Best if we could use worktree.
+// Looks like this works if branch do not exist.
 func (g *Git) CheckoutBranch(branchName string) error {
 	branchRefName := plumbing.NewBranchReferenceName(branchName)
 
