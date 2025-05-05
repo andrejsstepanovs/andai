@@ -116,11 +116,11 @@ func (i *Routine) executeWorkflowStep(workflowStep settings.Step) (exec.Output, 
 			}
 		}(contextFile)
 
-		contents, err := file.GetContents(contextFile)
+		_, err := file.GetContents(contextFile)
 		if err != nil {
 			log.Printf("Failed to get file contents: %v", err)
 		}
-		log.Printf("Context file contents: \n------------------\n%s\n------------------\n", contents)
+		//log.Printf("Context file contents: \n------------------\n%s\n------------------\n", contents)
 	}
 
 	return i.executeCommand(workflowStep, contextFile)
@@ -527,9 +527,9 @@ func (i *Routine) mergeIntoParent(deleteBranchAfterMerge bool) (exec.Output, err
 	log.Printf("Checked out parent branch: %q", parentBranchName)
 	log.Printf("Merging...")
 
-	out, err := exec.Exec("git", time.Minute, "merge", currentBranchName)
+	out, err := exec.Exec("git", time.Minute, "merge", currentBranchName, "--no-edit")
 	if err != nil {
-		log.Printf("Failed to merge current branch: %q into parent branch: %q: %v", currentBranchName, parentBranchName, err)
+		log.Printf("Failed to merge current branch: %q into parent branch: %q err: %v, stderr: %s", currentBranchName, parentBranchName, err, out.Stderr)
 		return out, err
 	}
 	log.Printf("Merged current branch: %q into parent branch: %q", currentBranchName, parentBranchName)
