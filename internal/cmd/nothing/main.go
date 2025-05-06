@@ -1,7 +1,7 @@
 package nothing
 
 import (
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -18,7 +18,7 @@ func Cmd() *cobra.Command {
 			Use:   "execute",
 			Short: "Sleeps for a year",
 			RunE: func(_ *cobra.Command, _ []string) error {
-				fmt.Println("UP")
+				log.Println("UP")
 				time.Sleep(time.Hour * 24 * 365)
 				return nil
 			},

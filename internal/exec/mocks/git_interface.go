@@ -63,6 +63,24 @@ func (_m *GitInterface) DeleteBranch(_a0 string) error {
 	return r0
 }
 
+// ExecCheckoutBranch provides a mock function with given fields: name
+func (_m *GitInterface) ExecCheckoutBranch(name string) error {
+	ret := _m.Called(name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ExecCheckoutBranch")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(name)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetAffectedFiles provides a mock function with given fields: sha
 func (_m *GitInterface) GetAffectedFiles(sha string) ([]string, error) {
 	ret := _m.Called(sha)

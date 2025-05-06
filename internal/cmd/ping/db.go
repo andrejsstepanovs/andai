@@ -15,7 +15,7 @@ func newDBPingCommand(deps internal.DependenciesLoader) *cobra.Command {
 		Use:   "db",
 		Short: "Ping database connection",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			fmt.Println("Pinging Database")
+			log.Println("Pinging Database")
 			err := pingDB(deps().Model)
 			if err != nil {
 				return err

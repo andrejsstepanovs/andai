@@ -132,6 +132,36 @@ func (_m *APIInterface) CreateWikiPage(projectID int, wikiPage redmine.WikiPage)
 	return r0, r1
 }
 
+// CustomFields provides a mock function with no fields
+func (_m *APIInterface) CustomFields() ([]redmine.CustomField, error) {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for CustomFields")
+	}
+
+	var r0 []redmine.CustomField
+	var r1 error
+	if rf, ok := ret.Get(0).(func() ([]redmine.CustomField, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() []redmine.CustomField); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]redmine.CustomField)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Issue provides a mock function with given fields: id
 func (_m *APIInterface) Issue(id int) (*redmine.Issue, error) {
 	ret := _m.Called(id)

@@ -2,7 +2,6 @@ package file
 
 import (
 	"fmt"
-	"log"
 	"os"
 )
 
@@ -15,7 +14,7 @@ func BuildPromptTextTmpFile(content string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	log.Printf("Created temporary file: %q", tempFile.Name())
+	//log.Printf("Created temporary file: %q", tempFile.Name())
 
 	_, err = tempFile.WriteString(content)
 	if err != nil {

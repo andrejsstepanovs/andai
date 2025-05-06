@@ -2,6 +2,7 @@ package settings
 
 import (
 	"fmt"
+	"log"
 )
 
 // LlmModelNormal is the name of the normal model
@@ -34,7 +35,7 @@ func (m LlmModels) ForCommand(name, command string) LlmModel {
 	for _, model := range m {
 		for _, cmd := range model.Commands {
 			if cmd == command {
-				fmt.Printf("Command %q found in model %q\n", command, model.Name)
+				log.Printf("Command %q found in model %q\n", command, model.Name)
 				return model
 			}
 		}

@@ -163,7 +163,7 @@ func processTriggerWho(
 			if err != nil {
 				return fmt.Errorf("failed to transition issue err: %v", err)
 			}
-			fmt.Printf("Successfully moved %d to: %d - %s\n", child.Id, nextIssueStatus.Id, nextIssueStatus.Name)
+			log.Printf("Successfully moved %d to: %d - %s\n", child.Id, nextIssueStatus.Id, nextIssueStatus.Name)
 			// todo, check if this transition triggers something else
 		}
 	case settings.TriggerTransitionWhoParent:

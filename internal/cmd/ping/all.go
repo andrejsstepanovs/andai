@@ -1,7 +1,6 @@
 package ping
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/andrejsstepanovs/andai/internal"
@@ -24,19 +23,19 @@ func newPingAllCommand(deps internal.DependenciesLoader) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println("Git Repo OK")
+			log.Println("Git Repo OK")
 
 			err = pingDB(redmine)
 			if err != nil {
 				return err
 			}
-			fmt.Println("DB OK")
+			log.Println("DB OK")
 
 			err = pingAPI(redmine)
 			if err != nil {
 				return err
 			}
-			fmt.Println("API OK")
+			log.Println("API OK")
 
 			err = pingLLM(d.LlmPool)
 			if err != nil {

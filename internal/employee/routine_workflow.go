@@ -26,26 +26,33 @@ import (
 //   - bool: true if all steps completed successfully
 //   - error: any error encountered during execution
 func (i *Routine) ExecuteWorkflow() (bool, error) {
-	log.Printf("Working on %q %q (ID: %d)", i.state.Name, i.issueType.Name, i.issue.Id)
+	log.Printf("Working on %q issue (%d) in state: %q", i.issueType.Name, i.issue.Id, i.state.Name)
 
-	var parentIssueID *int
-	if i.parent != nil {
-		parentIssueID = &i.parent.Id
-	}
-	err := i.workbench.PrepareWorkplace(parentIssueID, i.projectCfg.FinalBranch)
-	if err != nil {
-		log.Printf("Failed to prepare workplace: %v", err)
-		return false, err
+	needSetup := true
+	if len(i.job.Steps) == 1 && i.job.Steps[0].Command == "next" {
+		needSetup = false
 	}
 
-	log.Printf("Total steps: %d", len(i.job.Steps))
+	if needSetup {
+		var parentIssueID *int
+		if i.parent != nil {
+			parentIssueID = &i.parent.Id
+		}
+		err := i.workbench.PrepareWorkplace(parentIssueID, i.projectCfg.FinalBranch)
+		if err != nil {
+			log.Printf("Failed to prepare workplace: %v", err)
+			return false, err
+		}
+	}
+
 	for stepIndex, step := range i.job.Steps {
-		log.Printf("Step: %d", stepIndex+1)
+		log.Printf("Step: %d / %d", stepIndex+1, len(i.job.Steps))
 
 		step.History = i.history
 		if len(i.contextFiles) > 0 {
 			step.ContextFiles = i.contextFiles
 		}
+
 		executionOutput, err := i.executeWorkflowStep(step)
 		if err != nil {
 			if errors.Is(err, ErrNegativeOutcome) {
@@ -60,9 +67,11 @@ func (i *Routine) ExecuteWorkflow() (bool, error) {
 		log.Println("Success")
 	}
 
-	err = i.model.APISyncRepo(i.project)
-	if err != nil {
-		log.Printf("Failed to sync repo in redmine: %v", err)
+	if needSetup {
+		err := i.model.APISyncRepo(i.project)
+		if err != nil {
+			log.Printf("Failed to sync repo in redmine: %v", err)
+		}
 	}
 
 	return true, nil
@@ -80,7 +89,7 @@ func (i *Routine) ExecuteWorkflow() (bool, error) {
 //   - Output: The execution results including command, stdout and stderr
 //   - error: Any error that occurred during execution
 func (i *Routine) executeWorkflowStep(workflowStep settings.Step) (exec.Output, error) {
-	log.Printf("Execute Step: %s - %s", workflowStep.Command, workflowStep.Action)
+	log.Println(workflowStep.String("Execute Step"))
 
 	comments, err := i.getComments()
 	if err != nil {
@@ -108,7 +117,7 @@ func (i *Routine) executeWorkflowStep(workflowStep settings.Step) (exec.Output, 
 	}
 
 	if contextFile != "" {
-		log.Printf("Context file: %q\n", contextFile)
+		//log.Printf("Context file: %q\n", contextFile)
 		defer func(name string) {
 			err := os.Remove(name)
 			if err != nil {
@@ -127,8 +136,6 @@ func (i *Routine) executeWorkflowStep(workflowStep settings.Step) (exec.Output, 
 }
 
 func (i *Routine) executeCommand(workflowStep settings.Step, contextFile string) (exec.Output, error) {
-	log.Printf("Execute Command: %s - %s", workflowStep.Command, workflowStep.Action)
-
 	type commandHandler func(settings.Step, string) (exec.Output, error)
 
 	handlers := map[string]commandHandler{

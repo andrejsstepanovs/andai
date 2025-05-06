@@ -9,21 +9,23 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	redminemodels "github.com/andrejsstepanovs/andai/internal/redmine/models"
 	"github.com/andrejsstepanovs/andai/internal/settings"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 // BranchPrefix is the prefix for the branch name
 const BranchPrefix = "AI"
 
 type Git struct {
-	path    string
-	repo    *git.Repository
-	headRef *plumbing.Reference
-	Opened  bool
+	path     string
+	repo     *git.Repository
+	worktree *git.Worktree
+	Opened   bool
 }
 
 func NewGit(path string) *Git {
@@ -50,18 +52,29 @@ func (g *Git) Reload() {
 func (g *Git) Open() error {
 	var err error
 
-	g.repo, err = git.PlainOpen(g.GetPath())
+	//log.Printf("Opening git repository at path: %s", g.GetPath())
+	g.repo, err = git.PlainOpenWithOptions(g.GetPath(), &git.PlainOpenOptions{
+		DetectDotGit: true,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to open git repository %s: %v", g.GetPath(), err)
 	}
 
-	g.headRef, err = g.repo.Head()
+	g.worktree, err = g.repo.Worktree()
 	if err != nil {
-		return fmt.Errorf("failed to get HEAD reference: %v", err)
+		return fmt.Errorf("failed to get worktree: %v", err)
 	}
 
 	g.Opened = true
 	return nil
+}
+
+func (g *Git) getHeadRef() (*plumbing.Reference, error) {
+	headRef, err := g.repo.Head()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get HEAD reference: %v", err)
+	}
+	return headRef, nil
 }
 
 func (g *Git) GetAffectedFiles(sha string) ([]string, error) {
@@ -92,8 +105,14 @@ func (g *Git) GetAffectedFiles(sha string) ([]string, error) {
 
 // GetLastCommits returns the last n commit hashes. First commit is the most recent one.
 func (g *Git) GetLastCommits(count int) ([]string, error) {
+	headRef, err := g.getHeadRef()
+	if err != nil {
+		log.Printf("failed to get HEAD reference: %v", err)
+		return nil, err
+	}
+
 	commitIter, err := g.repo.Log(&git.LogOptions{
-		From: g.headRef.Hash(),
+		From: headRef.Hash(),
 	})
 	if err != nil {
 		log.Printf("failed to get commit iterator: %v", err)
@@ -128,23 +147,37 @@ func (g *Git) GetCurrentBranchName() (string, error) {
 	return "", errors.New("not on a branch")
 }
 
-//func (g *Git) GetBranchRef(branch string) (*plumbing.Reference, error) {
-//	branchRefName := plumbing.NewBranchReferenceName(branch)
-//	branchRef, err := g.repo.Reference(branchRefName, false)
-//	if err != nil {
-//		return nil, fmt.Errorf("failed to get branch reference: %v", err)
-//	}
-//	return branchRef, nil
-//}
-
 func (g *Git) GetLastCommitHash() (string, error) {
-	commit, err := g.repo.CommitObject(g.headRef.Hash())
+	headRef, err := g.getHeadRef()
+	if err != nil {
+		log.Printf("failed to get HEAD reference: %v", err)
+		return "", err
+	}
+
+	commit, err := g.repo.CommitObject(headRef.Hash())
 	if err != nil {
 		log.Printf("failed to get commit object: %v", err)
 		return "", err
 	}
 
 	return commit.Hash.String(), nil
+}
+
+func (g *Git) Add(path string) error {
+	_, err := g.worktree.Add(path)
+	return err
+}
+
+func (g *Git) Commit(message string) (string, error) {
+	opts := &git.CommitOptions{
+		Author: &object.Signature{},
+	}
+
+	sha, err := g.worktree.Commit(message, opts)
+	if err != nil {
+		return "", err
+	}
+	return sha.String(), nil
 }
 
 func (g *Git) BranchName(issueID int) string {
@@ -162,38 +195,94 @@ func (g *Git) DeleteBranch(branchName string) error {
 	return nil
 }
 
-// CheckoutBranch checks out a branch.
-// TODO this is not working as expected. After checkout last commit files are staged. Best if we could use worktree.
-// Looks like this works if branch do not exist.
-func (g *Git) CheckoutBranch(branchName string) error {
-	branchRefName := plumbing.NewBranchReferenceName(branchName)
-
-	// Check if the branch already exists
-	_, err := g.repo.Reference(branchRefName, false)
-	if errors.Is(err, plumbing.ErrReferenceNotFound) {
-		// Create the new branch reference
-		newBranch := plumbing.NewHashReference(branchRefName, g.headRef.Hash())
-		err = g.repo.Storer.SetReference(newBranch)
-		if err != nil {
-			return fmt.Errorf("failed to create branch: %v", err)
-		}
-		fmt.Printf("Created new branch: %s\n", branchName)
-	} else if err != nil {
-		return fmt.Errorf("failed to check branch existence: %v", err)
-	} else {
-		fmt.Printf("Branch already exists: %s\n", branchName)
-	}
-
-	// Update HEAD to point to the new branch
-	headRef := plumbing.NewSymbolicReference(plumbing.HEAD, branchRefName)
-	err = g.repo.Storer.SetReference(headRef)
+func (g *Git) BranchExists(branchName string) (bool, error) {
+	branches, err := g.repo.Branches()
 	if err != nil {
-		return fmt.Errorf("failed to update HEAD: %v", err)
+		return false, fmt.Errorf("failed to get branches: %v", err)
 	}
 
-	fmt.Printf("Successfully checked out branch: %s\n", branchName)
+	mappedBranches := make(map[string]string)
+	err = branches.ForEach(func(branch *plumbing.Reference) error {
+		mappedBranches[branch.Name().Short()] = branch.Hash().String()
+		return nil
+	})
 
-	return err
+	_, exists := mappedBranches[branchName]
+	return exists, err
+}
+
+func (g *Git) ExecCheckoutBranch(branchName string) error {
+	respGit, err := Exec("git", time.Second*10, "branch")
+	if err != nil {
+		log.Printf("stderr: %s", respGit.Stderr)
+		return fmt.Errorf("failed to check if branch exists err: %v", err)
+	}
+	branches := strings.Split(respGit.Stdout, "\n")
+	branchExists := false
+	for _, branch := range branches {
+		if strings.HasPrefix(branch, "*") && strings.TrimSpace(strings.TrimPrefix(branch, "*")) == branchName {
+			log.Printf("Already on branch %s\n", branchName)
+			return nil
+		}
+		if strings.TrimSpace(branch) == branchName {
+			branchExists = true
+			break
+		}
+	}
+
+	var checkoutResp Output
+	var checkoutErr error
+
+	if branchExists {
+		log.Printf("Branch %s already exists\n", branchName)
+		checkoutResp, checkoutErr = Exec("git", time.Second*10, "checkout", branchName)
+	} else {
+		log.Printf("Branch %s does not exist\n", branchName)
+		checkoutResp, checkoutErr = Exec("git", time.Second*10, "checkout", "-b", branchName)
+	}
+
+	if checkoutErr != nil {
+		return fmt.Errorf("failed to checkout branch err: %v", checkoutErr)
+	}
+	if checkoutResp.Stderr != "" {
+		log.Printf("git: %s", checkoutResp.Stderr)
+	}
+	if checkoutResp.Stdout != "" {
+		log.Printf("git: %s", checkoutResp.Stdout)
+	}
+
+	return nil
+}
+
+// CheckoutBranch checks out a branch or creates if missing.
+// go-git can fail if there are files that are not in gitignore.
+func (g *Git) CheckoutBranch(branchName string) error {
+	currentBranch, err := g.GetCurrentBranchName()
+	if err != nil {
+		return fmt.Errorf("failed to get current branch name: %v", err)
+	}
+	if currentBranch == branchName {
+		log.Printf("Already on branch %s", branchName)
+		return nil
+	}
+
+	exists, err := g.BranchExists(branchName)
+	if err != nil {
+		return fmt.Errorf("failed to check if branch exists: %v", err)
+	}
+	log.Printf("Branch %s exists: %v", branchName, exists)
+
+	err = g.worktree.Checkout(&git.CheckoutOptions{
+		Branch: plumbing.NewBranchReferenceName(branchName),
+		Create: !exists,
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to checkout branch %s: %v", branchName, err)
+	}
+
+	log.Printf("Checked out branch %s", branchName)
+	return nil
 }
 
 func GetAllPossiblePaths(projectConfig settings.Project, projectRepo redminemodels.Repository, forGit bool) ([]string, error) {
@@ -259,4 +348,24 @@ func FindProjectGit(projectConfig settings.Project, projectRepo redminemodels.Re
 	}
 
 	return gitRet, nil
+}
+
+func IsGitInstalled() bool {
+	out, err := Exec("git", time.Second*10, "--version")
+	if err != nil {
+		log.Printf("Git is not installed: %v", err)
+		return false
+	}
+	log.Println(out.Stdout)
+	return true
+}
+
+func IsAiderInstalled() bool {
+	out, err := Exec("aider", time.Second*10, "--version")
+	if err != nil {
+		log.Printf("Aider is not installed: %v", err)
+		return false
+	}
+	log.Println(out.Stdout)
+	return true
 }

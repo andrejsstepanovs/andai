@@ -41,8 +41,22 @@ func TestNewGit(t *testing.T) {
 		err = g.CheckoutBranch("BRANCH-1")
 		require.NoError(t, err)
 
-		hash3 := commit(t, repo, tmpDir, "Branch commit 1")
-		hash4 := commit(t, repo, tmpDir, "Branch commit 2")
+		exists, err := g.BranchExists("BRANCH-1")
+		require.NoError(t, err)
+		require.True(t, exists)
+
+		err = g.Add(tempFile(t, tmpDir))
+		require.NoError(t, err)
+		hash3, err := g.Commit("Branch commit 1")
+		require.NoError(t, err)
+
+		err = g.Add(tempFile(t, tmpDir))
+		require.NoError(t, err)
+		hash4, err := g.Commit("Branch commit 2")
+		require.NoError(t, err)
+
+		err = g.CheckoutBranch("BRANCH-4")
+		require.NoError(t, err)
 
 		// TEST getting all branch commits
 		err = g.Open()
@@ -59,6 +73,10 @@ func TestNewGit(t *testing.T) {
 
 		_, err = g.GetLastCommits(200)
 		require.NoError(t, err)
+
+		exists, err = g.BranchExists("BRANCH-4")
+		require.NoError(t, err)
+		require.True(t, exists)
 	})
 }
 
@@ -82,6 +100,16 @@ func commit(t *testing.T, repo *gitlib.Repository, dir string, commitMessage str
 	require.NoError(t, err)
 
 	return hash1.String()
+}
+
+// tempFile Create a test file and commit it
+func tempFile(t *testing.T, dir string) string {
+	file := randomString("test.txt")
+	testFile := filepath.Join(dir, file)
+	err := os.WriteFile(testFile, []byte("test content"), 0644)
+	require.NoError(t, err)
+
+	return file
 }
 
 func randomString(postfix string) string {

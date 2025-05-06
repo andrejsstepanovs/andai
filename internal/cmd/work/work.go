@@ -170,12 +170,12 @@ func workNext(deps *internal.AppDependencies, params *settings.Settings) (bool, 
 			continue
 		}
 
-		fmt.Printf("WORKING ON: %q in %q ID=%d: %s\n",
-			params.Workflow.IssueTypes.Get(settings.IssueTypeName(issue.Tracker.Name)).Name,
-			params.Workflow.States.Get(settings.StateName(issue.Status.Name)).Name,
-			issue.Id,
-			issue.Subject,
-		)
+		//log.Printf("WORKING ON: %q in %q ID=%d: %s\n",
+		//	params.Workflow.IssueTypes.Get(settings.IssueTypeName(issue.Tracker.Name)).Name,
+		//	params.Workflow.States.Get(settings.StateName(issue.Status.Name)).Name,
+		//	issue.Id,
+		//	issue.Subject,
+		//)
 
 		parent, err := deps.Model.APIGetParent(issue)
 		if err != nil {
@@ -216,18 +216,18 @@ func workNext(deps *internal.AppDependencies, params *settings.Settings) (bool, 
 			return false, fmt.Errorf("failed to get redmine issue siblings err: %v", err)
 		}
 
-		log.Printf("Issue %d: %s", issue.Id, issue.Subject)
+		//log.Printf("Issue %d: %s", issue.Id, issue.Subject)
 		project, err := deps.Model.API().Project(issue.Project.Id)
 		if err != nil {
 			return false, fmt.Errorf("failed to get redmine project err: %v", err)
 		}
-		log.Printf("Project %d: %s", project.Id, project.Name)
+		log.Printf("Project (%d) %q - Issue (%d): %q", project.Id, project.Name, issue.Id, issue.Subject)
 
 		projectRepo, err := deps.Model.DBGetRepository(*project)
 		if err != nil {
 			return false, fmt.Errorf("failed to get redmine repository err: %v", err)
 		}
-		log.Printf("Repository %d: %s", projectRepo.ID, projectRepo.RootURL)
+		//log.Printf("Repository %d: %s", projectRepo.ID, projectRepo.RootURL)
 
 		projectConfig := params.Projects.Find(project.Identifier)
 		git, err := exec.FindProjectGit(projectConfig, projectRepo)

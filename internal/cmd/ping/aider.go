@@ -27,7 +27,7 @@ func newPingAiderCommand(deps internal.DependenciesLoader) *cobra.Command {
 				return err
 			}
 
-			fmt.Println("Pinging Aider")
+			log.Println("Pinging Aider")
 			err = pingAider(d.Model, settings.Projects, settings.CodingAgents.Aider)
 			if err != nil {
 				return err
@@ -40,6 +40,10 @@ func newPingAiderCommand(deps internal.DependenciesLoader) *cobra.Command {
 }
 
 func pingAider(redmine *redmine.Model, projects settings.Projects, aider settings.Aider) error {
+	if !exec.IsAiderInstalled() {
+		return fmt.Errorf("aider is not installed")
+	}
+
 	redmineProjects, err := redmine.API().Projects()
 	if err != nil {
 		return fmt.Errorf("failed to get redmine project err: %v", err)
@@ -113,7 +117,7 @@ func pingAider(redmine *redmine.Model, projects settings.Projects, aider setting
 	sent = strings.TrimSpace(sent)
 	received = strings.TrimSpace(received)
 
-	fmt.Printf("Sent: %s\nReceived: %s\n", sent, received)
+	log.Printf("Sent: %s\nReceived: %s", sent, received)
 
 	return nil
 }
