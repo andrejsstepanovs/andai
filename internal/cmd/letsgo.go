@@ -11,9 +11,10 @@ import (
 )
 
 func LetsGo(deps internal.DependenciesLoader) *cobra.Command {
+	var project string
 	cmd := &cobra.Command{
 		Use:   "go",
-		Short: "Setup and Run the workflow loop",
+		Short: "Setup and Run the workflow loop. [OPTIONAL...] --project <identifier>",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			d := deps()
 			settings, err := d.Config.Load()
@@ -27,9 +28,10 @@ func LetsGo(deps internal.DependenciesLoader) *cobra.Command {
 			}
 			ctx := context.Background()
 
-			return work.Loop(ctx, deps)
+			return work.Loop(ctx, deps, project)
 		},
 	}
+	cmd.Flags().StringVar(&project, "project", "", "Project identifier (optional)")
 
 	return cmd
 }

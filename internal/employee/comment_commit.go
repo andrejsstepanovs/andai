@@ -9,13 +9,13 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/exec"
 )
 
-func (i *Routine) commentCommitsSince(currentCommitSku, commitMessage string) error {
+func (i *Routine) commentCommitsSince(currentCommitSku, commitMessage string) (int, error) {
 	newCommits, getShaErr := i.workbench.GetCommitsSinceInReverseOrder(currentCommitSku)
 
 	//commits, getShaErr := i.workbench.GetBranchCommits(10)
 	if getShaErr != nil {
 		log.Printf("Failed to get last commit sha: %v", getShaErr)
-		return nil
+		return 0, fmt.Errorf("failed to get last commit sha: %v", getShaErr)
 	}
 
 	//if len(commits) == 0 {
@@ -38,7 +38,7 @@ func (i *Routine) commentCommitsSince(currentCommitSku, commitMessage string) er
 
 	if len(newCommits) == 0 {
 		log.Println("No new commits found")
-		return nil
+		return 0, nil
 	}
 
 	branchName := i.workbench.GetIssueBranchName(i.issue)
@@ -52,10 +52,10 @@ func (i *Routine) commentCommitsSince(currentCommitSku, commitMessage string) er
 
 	err := i.AddComment(strings.Join(txt, "\n"))
 	if err != nil {
-		return err
+		return len(newCommits), err
 	}
 
-	return nil
+	return len(newCommits), nil
 }
 
 func (i *Routine) commitUncommitted(commitMessage string) (exec.Output, error) {
@@ -89,7 +89,7 @@ func (i *Routine) commitUncommitted(commitMessage string) (exec.Output, error) {
 	if err != nil {
 		return ret, err
 	}
-	err = i.commentCommitsSince(lastCommit, commitMessage)
+	_, err = i.commentCommitsSince(lastCommit, commitMessage)
 	if err != nil {
 		return out, err
 	}

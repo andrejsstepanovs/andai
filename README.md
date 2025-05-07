@@ -37,7 +37,6 @@ Maintain full responsibility for your codebase while leveraging AI as a powerful
 ### ✅ Structured Git Integration
 - **Branch-per-task workflow**: Every ticket and subtask gets its own isolated git branch
 - **Controlled merging**: Changes are only merged after explicit approval
-- **Clean history**: Squash your and AI colab code into a clean commits before shipping
 
 ### ✅ Complete Workflow Control
 - **Review flexibility**: Accept, reject, or edit AI-generated changes at any stage (or auto merge everything)
@@ -72,7 +71,7 @@ Maintain full responsibility for your codebase while leveraging AI as a powerful
 - [Workflow States](docs/setup/workflow/STATES.md)
 
 # License
-TODO
+Apache License 2.0
 
 # Contributing
 Please reach out if you want to contribute to this project.

@@ -429,10 +429,23 @@ func (i *Routine) aiderCode(workflowStep settings.Step, contextFile string) (exe
 		return out, err
 	}
 
-	err = i.commentCommitsSince(currentCommitSku, "code changes")
+	commitCount, err := i.commentCommitsSince(currentCommitSku, "code changes")
 	if err != nil {
 		return out, err
 	}
+
+	if commitCount == 0 {
+		msg := fmt.Sprintf("No new commits found. Check tool output:\nstdout: %s \n\nstderr:%s", out.Stdout, out.Stderr)
+		errComment := i.AddComment(msg)
+		if errComment != nil {
+			return out, errComment
+		}
+
+		// TODO evaluate if response is error or missing info.
+
+		return out, fmt.Errorf("no new commits found")
+	}
+
 	return out, nil
 }
 
@@ -479,7 +492,7 @@ func (i *Routine) aiderCommit(workflowStep settings.Step) (exec.Output, error) {
 		return commitResult, err
 	}
 
-	err = i.commentCommitsSince(lastSha, "code changes")
+	_, err = i.commentCommitsSince(lastSha, "code changes")
 	if err != nil {
 		return commitResult, fmt.Errorf("failed to get commits since %q: %v", lastSha, err)
 	}

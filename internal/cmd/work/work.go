@@ -19,22 +19,25 @@ import (
 )
 
 func newLoopCommand(deps internal.DependenciesLoader) *cobra.Command {
-	return &cobra.Command{
+	var project string
+	cmd := &cobra.Command{
 		Use:   "loop",
-		Short: "Work forever",
+		Short: "Work forever. [OPTIONAL...] --project <identifier>",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
-			return Loop(ctx, deps)
+			return Loop(ctx, deps, project)
 		},
 	}
+	cmd.Flags().StringVar(&project, "project", "", "Project identifier (optional)")
+	return cmd
 }
 
 // Loop runs work next loop forever
 // TODO fix this
 //
 //nolint:cyclop
-func Loop(ctx context.Context, deps internal.DependenciesLoader) error {
+func Loop(ctx context.Context, deps internal.DependenciesLoader, project string) error {
 	lastSuccessfulTask := time.Now()
 	consecutiveEmptyChecks := 0
 	currentSleepDuration := time.Duration(0)
@@ -57,7 +60,13 @@ func Loop(ctx context.Context, deps internal.DependenciesLoader) error {
 		if err != nil {
 			return fmt.Errorf("failed to process triggers err: %v", err)
 		}
-		wasWorking, err := workNext(d, params)
+		projects, err := getProjects(d, project)
+		if err != nil {
+			return fmt.Errorf("failed to get projects: %v", err)
+		}
+		log.Printf("Searching workable issues (in %d projects)", len(projects))
+
+		wasWorking, err := workNext(d, params, projects)
 		if err != nil {
 			return fmt.Errorf("failed to work next err: %v", err)
 		}
@@ -121,9 +130,10 @@ func Loop(ctx context.Context, deps internal.DependenciesLoader) error {
 }
 
 func newNextCommand(deps internal.DependenciesLoader) *cobra.Command {
-	return &cobra.Command{
+	var project string
+	cmd := &cobra.Command{
 		Use:   "next",
-		Short: "Work with redmine",
+		Short: "Works on single next available task. [OPTIONAL...] --project <identifier>",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			d := deps()
 			params, err := d.Config.Load()
@@ -131,11 +141,41 @@ func newNextCommand(deps internal.DependenciesLoader) *cobra.Command {
 				return err
 			}
 
-			log.Println("Searching for workable issues")
-			_, err = workNext(d, params)
+			projects, err := getProjects(d, project)
+			if err != nil {
+				return fmt.Errorf("failed to get projects: %v", err)
+			}
+			log.Printf("Searching workable issues (in %d projects)", len(projects))
+
+			_, err = workNext(d, params, projects)
 			return err
 		},
 	}
+
+	cmd.Flags().StringVar(&project, "project", "", "Project identifier (optional)")
+	return cmd
+}
+
+func getProjects(deps *internal.AppDependencies, project string) ([]redmine.Project, error) {
+	projects, err := deps.Model.GetValidProjects()
+	if project != "" {
+		if err != nil {
+			return nil, fmt.Errorf("failed to get projects: %v", err)
+		}
+		var forProject *redmine.Project
+		for _, p := range projects {
+			if p.Identifier == project {
+				forProject = &p
+				break
+			}
+		}
+		if forProject == nil {
+			return nil, fmt.Errorf("project %q not found", project)
+		}
+		projects = []redmine.Project{*forProject}
+	}
+
+	return projects, nil
 }
 
 func getFirstWorkableIssuePerProjects(issues []redmine.Issue) []redmine.Issue {
@@ -152,8 +192,8 @@ func getFirstWorkableIssuePerProjects(issues []redmine.Issue) []redmine.Issue {
 	return workableProjectIssues
 }
 
-func workNext(deps *internal.AppDependencies, params *settings.Settings) (bool, error) {
-	issues, err := deps.Model.APIGetWorkableIssues(params.Workflow)
+func workNext(deps *internal.AppDependencies, params *settings.Settings, projects []redmine.Project) (bool, error) {
+	issues, err := deps.Model.APIGetWorkableIssues(params.Workflow, projects)
 	if err != nil {
 		log.Println("Failed to get workable issue")
 		return false, err

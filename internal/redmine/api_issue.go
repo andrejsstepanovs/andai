@@ -88,7 +88,7 @@ func (c *Model) APIGetProjectIssues(project redmine.Project) ([]redmine.Issue, e
 	return projectIssues, nil
 }
 
-func (c *Model) getValidProjects() ([]redmine.Project, error) {
+func (c *Model) GetValidProjects() ([]redmine.Project, error) {
 	allProjects, err := c.APIGetProjects()
 	if err != nil {
 		return nil, fmt.Errorf("error redmine issue status: %v", err)
@@ -112,12 +112,7 @@ func (c *Model) getValidProjects() ([]redmine.Project, error) {
 	return projects, nil
 }
 
-func (c *Model) APIGetWorkableIssues(workflow settings.Workflow) ([]redmine.Issue, error) {
-	projects, err := c.getValidProjects()
-	if err != nil {
-		return nil, err
-	}
-
+func (c *Model) APIGetWorkableIssues(workflow settings.Workflow, projects []redmine.Project) ([]redmine.Issue, error) {
 	for _, project := range projects {
 		//log.Printf("Project %q\n", project.Identifier)
 		activeProjectIssues, err := c.APIGetProjectIssues(project)
