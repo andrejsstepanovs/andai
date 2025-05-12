@@ -10,13 +10,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newAdminCommand(deps *internal.AppDependencies) *cobra.Command {
+func newAdminCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "admin",
 		Short: "Fix admin login no need to change password and other settings",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			log.Println("Update redmine admin must_change_passwd = 0")
-			return setupAdmin(deps.Model)
+			return setupAdmin(deps().Model)
 		},
 	}
 	return cmd

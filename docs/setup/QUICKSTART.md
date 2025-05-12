@@ -79,7 +79,7 @@ andai work loop
 Alternative (all in one):
 ```bash
 cd /tmp/test/
-andai lets go
+andai go
 ```
 
 ## Create Ticket

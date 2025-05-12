@@ -1,6 +1,9 @@
 package settings
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // ContextTicket is a special context that matches the ticket
 const ContextTicket = "ticket"
@@ -80,6 +83,13 @@ type Step struct {
 	CommentSummary bool       `yaml:"comment-summary"`
 	History        []string
 	ContextFiles   []string
+}
+
+func (s *Step) String(prefixMessage string) string {
+	if s.Action != "" {
+		return fmt.Sprintf("%s: %s - %s", prefixMessage, s.Command, s.Action)
+	}
+	return fmt.Sprintf("%s: %s", prefixMessage, s.Command)
 }
 
 func (j *Jobs) Get(name StateName) Job {

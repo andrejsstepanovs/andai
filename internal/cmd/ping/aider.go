@@ -16,18 +16,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newPingAiderCommand(deps *internal.AppDependencies) *cobra.Command {
+func newPingAiderCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "aider",
 		Short: "Ping aider connection",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			settings, err := deps.Config.Load()
+			d := deps()
+			settings, err := d.Config.Load()
 			if err != nil {
 				return err
 			}
 
-			fmt.Println("Pinging Aider")
-			err = pingAider(deps.Model, settings.Projects, settings.Aider)
+			log.Println("Pinging Aider")
+			err = pingAider(d.Model, settings.Projects, settings.CodingAgents.Aider)
 			if err != nil {
 				return err
 			}
@@ -39,6 +40,10 @@ func newPingAiderCommand(deps *internal.AppDependencies) *cobra.Command {
 }
 
 func pingAider(redmine *redmine.Model, projects settings.Projects, aider settings.Aider) error {
+	if !exec.IsAiderInstalled() {
+		return fmt.Errorf("aider is not installed")
+	}
+
 	redmineProjects, err := redmine.API().Projects()
 	if err != nil {
 		return fmt.Errorf("failed to get redmine project err: %v", err)
@@ -112,7 +117,7 @@ func pingAider(redmine *redmine.Model, projects settings.Projects, aider setting
 	sent = strings.TrimSpace(sent)
 	received = strings.TrimSpace(received)
 
-	fmt.Printf("Sent: %s\nReceived: %s\n", sent, received)
+	log.Printf("Sent: %s\nReceived: %s", sent, received)
 
 	return nil
 }

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"sort"
-	"strconv"
-	"strings"
 
 	"github.com/andrejsstepanovs/andai/internal/settings"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
@@ -90,7 +88,7 @@ func (c *Model) APIGetProjectIssues(project redmine.Project) ([]redmine.Issue, e
 	return projectIssues, nil
 }
 
-func (c *Model) getValidProjects() ([]redmine.Project, error) {
+func (c *Model) GetValidProjects() ([]redmine.Project, error) {
 	allProjects, err := c.APIGetProjects()
 	if err != nil {
 		return nil, fmt.Errorf("error redmine issue status: %v", err)
@@ -114,24 +112,26 @@ func (c *Model) getValidProjects() ([]redmine.Project, error) {
 	return projects, nil
 }
 
-func (c *Model) APIGetWorkableIssues(workflow settings.Workflow) ([]redmine.Issue, error) {
-	projects, err := c.getValidProjects()
-	if err != nil {
-		return nil, err
-	}
-
+func (c *Model) APIGetWorkableIssues(workflow settings.Workflow, projects []redmine.Project) ([]redmine.Issue, error) {
 	for _, project := range projects {
-		projectIssues, err := c.APIGetProjectIssues(project)
+		//log.Printf("Project %q\n", project.Identifier)
+		activeProjectIssues, err := c.APIGetProjectIssues(project)
 		if err != nil {
 			return nil, fmt.Errorf("error redmine issues of project: %v", err)
 		}
 
-		dependencies, err := c.issueDependencies(projectIssues)
+		//for _, issue := range activeProjectIssues {
+		//	log.Printf("Issue %d: %s\n", issue.Id, issue.Subject)
+		//}
+
+		// dependencies can contain closed issue ids
+		dependencies, err := c.issueDependencies(activeProjectIssues)
 		if err != nil {
 			return nil, fmt.Errorf("error redmine issue dependencies: %v", err)
 		}
 
-		//for issueID, blockedByIDs := range dependencies {
+		cleanedDependencies := c.removeClosedDependencies(dependencies, activeProjectIssues)
+		//for issueID, blockedByIDs := range cleanedDependencies {
 		//	if len(blockedByIDs) == 0 {
 		//		log.Printf("Issue (%d) is not blocked at all\n", issueID)
 		//		continue
@@ -143,18 +143,18 @@ func (c *Model) APIGetWorkableIssues(workflow settings.Workflow) ([]redmine.Issu
 		//	log.Printf("Issue (%d) BLOCKED BY: %v\n", issueID, strings.Join(blocked, ", "))
 		//}
 
-		cleanedDependencies := c.removeClosedDependencies(dependencies, projectIssues)
-		for issueID, blockedByIDs := range cleanedDependencies {
-			if len(blockedByIDs) == 0 {
-				//log.Printf("Issue (%d) is not blocked at all\n", issueID)
-				continue
-			}
-			blocked := make([]string, 0)
-			for _, blockedBy := range blockedByIDs {
-				blocked = append(blocked, strconv.Itoa(blockedBy))
-			}
-			log.Printf("Issue (%d) BLOCKED BY: %v\n", issueID, strings.Join(blocked, ", "))
-		}
+		//for issueID, blockedByIDs := range cleanedDependencies {
+		//	if len(blockedByIDs) == 0 {
+		//		log.Printf("Issue (%d) is not blocked at all\n", issueID)
+		//		continue
+		//	}
+		//
+		//	blocked := make([]string, 0)
+		//	for _, blockedBy := range blockedByIDs {
+		//		blocked = append(blocked, strconv.Itoa(blockedBy))
+		//	}
+		//	log.Printf("Issue (%d) BLOCKED BY: %v\n", issueID, strings.Join(blocked, ", "))
+		//}
 
 		unblockedIDs := make([]int, 0)
 		for issueID, depIDs := range cleanedDependencies {
@@ -164,7 +164,7 @@ func (c *Model) APIGetWorkableIssues(workflow settings.Workflow) ([]redmine.Issu
 		}
 
 		if len(unblockedIDs) == 0 {
-			log.Printf("No workable issues for %q", project.Identifier)
+			//log.Printf("No workable issues for %q", project.Identifier)
 			continue
 		}
 		//ids := make([]string, 0)
@@ -175,10 +175,9 @@ func (c *Model) APIGetWorkableIssues(workflow settings.Workflow) ([]redmine.Issu
 
 		validIssues := make([]redmine.Issue, 0)
 		for _, okIssueID := range unblockedIDs {
-			for _, issue := range projectIssues {
+			for _, issue := range activeProjectIssues {
 				if issue.Id == okIssueID {
 					validIssues = append(validIssues, issue)
-					break
 				}
 			}
 		}
@@ -188,8 +187,12 @@ func (c *Model) APIGetWorkableIssues(workflow settings.Workflow) ([]redmine.Issu
 		//	fmt.Println("ISSUE:", issue.Tracker.Name, issue.Id)
 		//}
 
-		issues := c.getCorrectIssue(validIssues, workflow.Priorities, workflow.States)
+		issues := c.getCorrectIssue(validIssues, workflow.Priorities)
 		if len(issues) > 0 {
+			//log.Println("Found workable issues:")
+			//for _, issue := range issues {
+			//	log.Println(" > ", issue.Id, issue.Subject)
+			//}
 			return issues, nil
 		}
 	}
@@ -201,7 +204,7 @@ func (c *Model) removeClosedDependencies(dependencies map[int][]int, issues []re
 	cleaned := make(map[int][]int)
 	for issueID, blockedByIDs := range dependencies {
 		if len(blockedByIDs) == 0 {
-			cleaned[issueID] = blockedByIDs
+			cleaned[issueID] = make([]int, 0)
 			continue
 		}
 		cleaned[issueID] = make([]int, 0)
@@ -251,7 +254,7 @@ func (c *Model) issueDependencies(projectIssues []redmine.Issue) (map[int][]int,
 			if relation.RelationType != RelationBlocks {
 				continue
 			}
-			log.Printf("Issue (%d) - %d is blocked by %d <- needs to be done first\n", issue.Id, relation.IssueToId, relation.IssueId)
+			//log.Printf("Issue (%d) - %d is blocked by %d <- needs to be done first\n", issue.Id, relation.IssueToId, relation.IssueId)
 			dependencies[relation.IssueToId] = append(dependencies[relation.IssueId], relation.IssueId)
 		}
 	}
@@ -259,16 +262,11 @@ func (c *Model) issueDependencies(projectIssues []redmine.Issue) (map[int][]int,
 	return dependencies, nil
 }
 
-func (c *Model) getCorrectIssue(issues []redmine.Issue, priorities settings.Priorities, states settings.States) []redmine.Issue {
+func (c *Model) getCorrectIssue(issues []redmine.Issue, priorities settings.Priorities) []redmine.Issue {
 	valid := make([]redmine.Issue, 0)
 	for _, priority := range priorities {
+		//log.Printf("%d PRIORITY: %q @ %q\n", i, priority.Type, priority.State)
 		//fmt.Printf("PRIORITY: %q @ %q\n", priority.Type, priority.State)
-
-		state := states.Get(priority.State)
-		if !state.UseAI.Yes(priority.Type) {
-			//fmt.Printf("SKIP %q @ %q - NOT FOR UseAI\n", priority.Type, priority.State)
-			continue
-		}
 
 		for _, issue := range issues {
 			//fmt.Printf("ISSUE: %q (%d) - %q\n", issue.Tracker.Name, issue.Id, issue.Status.Name)

@@ -26,9 +26,10 @@ func NewAI(config settings.LlmModel) (*AI, error) {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
+	modelsWithNoTemp := []string{"r1", "o1"}
 	var temp float64
 	useTemperature := true
-	for _, model := range []string{"r1", "o1"} {
+	for _, model := range modelsWithNoTemp {
 		if strings.Contains(strings.ToLower(config.Model), model) {
 			useTemperature = false
 		}
@@ -37,7 +38,7 @@ func NewAI(config settings.LlmModel) (*AI, error) {
 		temp = config.Temperature
 	}
 
-	maxTokens := 4096
+	maxTokens := 128000
 	if config.MaxTokens > 0 {
 		maxTokens = config.MaxTokens
 	}
@@ -60,13 +61,16 @@ func NewAI(config settings.LlmModel) (*AI, error) {
 		"openrouter": "https://openrouter.ai/api/v1/chat/completions",
 		"mistral":    "https://api.mistral.ai/v1/chat/completions",
 		"google":     "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+		"groq":       "https://api.groq.com/openai/v1/chat/completions",
+		"openai":     "https://api.openai.com/v1/chat/completions",
+		"litellm":    "http://localhost:4000/v1/chat/completions",
 		"custom":     config.BaseURL,
 	}
 
 	endpoint, ok := customProviders[config.Provider]
 	var conn llm.LLM
 	if ok {
-		log.Printf("Using custom OpenAI provider %q", config.Provider)
+		//log.Printf("Using custom OpenAI provider %q", config.Provider)
 		registry := providers.NewProviderRegistry()
 		registry.Register(config.Provider, func(apiKey, model string, extraHeaders map[string]string) providers.Provider {
 			return NewCustomOpenAIProvider(
@@ -83,7 +87,7 @@ func NewAI(config settings.LlmModel) (*AI, error) {
 			return nil, fmt.Errorf("failed to create custom %q LLM err: %v", config.Provider, err)
 		}
 	} else {
-		log.Printf("Using provider %q", config.Provider)
+		//log.Printf("Using provider %q", config.Provider)
 		opts := []gollm.ConfigOption{
 			gollm.SetProvider(cfg.Provider),
 			gollm.SetModel(cfg.Model),
@@ -134,7 +138,7 @@ func (a *AI) Multi(question string, prompts []map[string]string) (exec.Output, e
 		Messages: messages,
 	}
 
-	log.Println(prompt)
+	//log.Println(prompt) // debug
 
 	return a.Generate(context.Background(), prompt)
 }

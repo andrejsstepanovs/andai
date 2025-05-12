@@ -12,19 +12,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newProjectsCommand(deps *internal.AppDependencies) *cobra.Command {
+func newProjectsCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "projects",
 		Short: "Save (Update) projects",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			settings, err := deps.Config.Load()
+			d := deps()
+			settings, err := d.Config.Load()
 			if err != nil {
 				return err
 			}
 
 			log.Println("Processing Projects sync")
 
-			err = setupProjects(deps.Model, settings.Projects)
+			err = setupProjects(d.Model, settings.Projects)
 			if err != nil {
 				return err
 			}

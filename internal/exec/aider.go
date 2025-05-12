@@ -2,7 +2,6 @@ package exec
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/andrejsstepanovs/andai/internal/settings"
@@ -117,7 +116,7 @@ func AiderCommand(contextFile string, step settings.Step, config settings.Aider)
 
 	if len(step.ContextFiles) > 0 {
 		for _, file := range step.ContextFiles {
-			log.Printf("Aider adding file: %q\n", file)
+			//log.Printf("Aider adding file: %q\n", file)
 			paramsCli = append(paramsCli, fmt.Sprintf("--file=%q", file))
 		}
 	}
@@ -130,3 +129,21 @@ func AiderCommand(contextFile string, step settings.Step, config settings.Aider)
 		strings.Join(paramsCli, " "),
 	)
 }
+
+//#### I’ll need to see the existing tests for the other merger components and the API to know exactly what to change. Could you please add the contents of the following test files:
+//####
+//#### - tests/utils/campaign_manager/base_merger_component.py
+//#### - tests/utils/campaign_manager/brand_name_merger.py
+//#### - tests/utils/campaign_manager/campaign_merger_api.py
+//#### - tests/utils/campaign_manager/commodity_groups_merger.py
+//#### - tests/utils/campaign_manager/target_groups_merger.py
+//
+//I don’t currently have those test files in the chat. Could you please share the contents of:
+//
+//- tests/utils/campaign_manager/base_merger_component.py
+//- tests/utils/campaign_manager/brand_name_merger.py
+//- tests/utils/campaign_manager/campaign_merger_api.py
+//- tests/utils/campaign_manager/commodity_groups_merger.py
+//- tests/utils/campaign_manager/target_groups_merger.py
+//
+//Once I have them, I can review and make the appropriate updates.

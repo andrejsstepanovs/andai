@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func SetupValidateCmd(deps *internal.AppDependencies) *cobra.Command {
+func SetupValidateCmd(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validate",
 		Short: "Validate config files for project",

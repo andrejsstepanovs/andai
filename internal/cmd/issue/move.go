@@ -14,25 +14,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newMoveCommand(deps *internal.AppDependencies) *cobra.Command {
+func newMoveCommand(deps internal.DependenciesLoader) *cobra.Command {
 	return &cobra.Command{
 		Use:   "move",
 		Short: "Move Issue to next successful or failed step. First param - issue Subject, Second param - success|fail",
 		RunE: func(_ *cobra.Command, args []string) error {
+			d := deps()
 			log.Println("Moving issue")
-			settings, err := deps.Config.Load()
+			settings, err := d.Config.Load()
 			if err != nil {
 				return err
 			}
 
-			foundIssue, success, nestStatus, err := findIssue(deps.Model, args, settings.Workflow)
+			foundIssue, success, nestStatus, err := findIssue(d.Model, args, settings.Workflow)
 			if err != nil {
 				return err
 			}
 
 			if nestStatus != "" {
 				log.Printf("Moving issue %d to %s", foundIssue.Id, nestStatus)
-				nextIssueStatus, err := deps.Model.APIGetIssueStatus(string(nestStatus))
+				nextIssueStatus, err := d.Model.APIGetIssueStatus(string(nestStatus))
 				if err != nil {
 					return fmt.Errorf("failed to get next issue status err: %v", err)
 				}
@@ -40,7 +41,7 @@ func newMoveCommand(deps *internal.AppDependencies) *cobra.Command {
 					return errors.New("next status not found")
 				}
 
-				err = deps.Model.Transition(foundIssue, nextIssueStatus)
+				err = d.Model.Transition(foundIssue, nextIssueStatus)
 				if err != nil {
 					return fmt.Errorf("failed to comment issue err: %v", err)
 				}
@@ -51,7 +52,7 @@ func newMoveCommand(deps *internal.AppDependencies) *cobra.Command {
 					log.Printf("Moving issue %d to fail", foundIssue.Id)
 				}
 
-				err = actions.TransitionToNextStatus(settings.Workflow, deps.Model, foundIssue, success)
+				err = actions.TransitionToNextStatus(settings.Workflow, d.Model, foundIssue, success)
 				if err != nil {
 					return fmt.Errorf("failed to comment issue err: %v", err)
 				}
@@ -61,24 +62,25 @@ func newMoveCommand(deps *internal.AppDependencies) *cobra.Command {
 	}
 }
 
-func newMoveChildrenCommand(deps *internal.AppDependencies) *cobra.Command {
+func newMoveChildrenCommand(deps internal.DependenciesLoader) *cobra.Command {
 	return &cobra.Command{
 		Use:   "move-children",
 		Short: "Moves All Issue children to next successful or failed step. First param - issue Subject, Second param - success|fail",
 		RunE: func(_ *cobra.Command, args []string) error {
+			d := deps()
 			log.Println("Moving issue children")
 
-			settings, err := deps.Config.Load()
+			settings, err := d.Config.Load()
 			if err != nil {
 				return err
 			}
 
-			foundIssue, success, useStatus, err := findIssue(deps.Model, args, settings.Workflow)
+			foundIssue, success, useStatus, err := findIssue(d.Model, args, settings.Workflow)
 			if err != nil {
 				return err
 			}
 
-			children, err := deps.Model.APIGetChildren(foundIssue)
+			children, err := d.Model.APIGetChildren(foundIssue)
 			if err != nil {
 				return err
 			}
@@ -99,7 +101,7 @@ func newMoveChildrenCommand(deps *internal.AppDependencies) *cobra.Command {
 				}
 
 				for _, child := range children {
-					err = actions.TransitionToNextStatus(settings.Workflow, deps.Model, child, success)
+					err = actions.TransitionToNextStatus(settings.Workflow, d.Model, child, success)
 					if err != nil {
 						return fmt.Errorf("failed to comment issue err: %v", err)
 					}

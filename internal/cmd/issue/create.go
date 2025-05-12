@@ -9,11 +9,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newCreateCommand(deps *internal.AppDependencies) *cobra.Command {
+func newCreateCommand(deps internal.DependenciesLoader) *cobra.Command {
 	return &cobra.Command{
 		Use:   "create",
 		Short: "Creates new Issue. First param Issue Type, Second param Issue Subject, Third param Issue Description",
 		RunE: func(_ *cobra.Command, args []string) error {
+			d := deps()
 			log.Println("Creating new Issue")
 
 			if len(args) < 3 {
@@ -21,7 +22,7 @@ func newCreateCommand(deps *internal.AppDependencies) *cobra.Command {
 				return nil
 			}
 
-			projects, err := deps.Model.APIGetProjects()
+			projects, err := d.Model.APIGetProjects()
 			if err != nil {
 				log.Println("Failed to get projects")
 				return err
@@ -41,7 +42,7 @@ func newCreateCommand(deps *internal.AppDependencies) *cobra.Command {
 			issueDescription := args[2]
 			log.Printf("Issue Type: %s, Issue Subject: %s, Issue Description: %s", issueType, issueSubject, issueDescription)
 
-			trackerID, err := deps.Model.DBGetTrackersByName(issueType)
+			trackerID, err := d.Model.DBGetTrackersByName(issueType)
 			if err != nil {
 				log.Printf("Failed to find issue type (tracker): %s", issueType)
 				return err
@@ -57,7 +58,7 @@ func newCreateCommand(deps *internal.AppDependencies) *cobra.Command {
 				TrackerId: trackerID,
 			}
 
-			issue, err = deps.Model.CreateIssue(issue)
+			issue, err = d.Model.CreateIssue(issue)
 			if err != nil {
 				log.Println("Failed to create issue")
 				return err

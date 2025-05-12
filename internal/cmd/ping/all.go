@@ -1,50 +1,49 @@
 package ping
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/andrejsstepanovs/andai/internal"
 	"github.com/spf13/cobra"
 )
 
-func newPingAllCommand(deps *internal.AppDependencies) *cobra.Command {
+func newPingAllCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "all",
 		Short: "Ping (open) Git repository",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			settings, err := deps.Config.Load()
+			d := deps()
+			sett, err := d.Config.Load()
 			if err != nil {
 				return err
 			}
-			redmine := deps.Model
-			llm := deps.LlmNorm
+			redmine := d.Model
 
-			err = pingGit(redmine, settings.Projects)
+			err = pingGit(redmine, sett.Projects)
 			if err != nil {
 				return err
 			}
-			fmt.Println("Git Repo OK")
+			log.Println("Git Repo OK")
 
 			err = pingDB(redmine)
 			if err != nil {
 				return err
 			}
-			fmt.Println("DB OK")
+			log.Println("DB OK")
 
 			err = pingAPI(redmine)
 			if err != nil {
 				return err
 			}
-			fmt.Println("API OK")
+			log.Println("API OK")
 
-			err = pingLLM(llm)
+			err = pingLLM(d.LlmPool)
 			if err != nil {
 				return err
 			}
 			log.Println("LLM OK")
 
-			err = pingAider(redmine, settings.Projects, settings.Aider)
+			err = pingAider(redmine, sett.Projects, sett.CodingAgents.Aider)
 			if err != nil {
 				return err
 			}

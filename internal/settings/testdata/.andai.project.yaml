@@ -10,10 +10,11 @@ llm_models:
     model: "claude-3-5-sonnet-latest"
     api_key: "sk-aaaaaaaaaaaaaaaaaaaa"
 
-aider:
-  config: "/tmp/.aider.conf.yml"
-  map_tokens: 100
-  timeout: "1m"
+coding_agents:
+  aider:
+    config: "/tmp/.aider.conf.yml"
+    map_tokens: 100
+    timeout: "1m"
 
 projects:
   - identifier: "test"

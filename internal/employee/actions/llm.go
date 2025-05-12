@@ -31,6 +31,7 @@ func EvaluateOutcome(llm *ai.AI, knowledgeFile string) (exec.Output, bool, error
 			"# Instructions:\n"+
 			"- Use Context and specifically last comments section to evaluate final outcome of the topic.\n"+
 			"- It can be either positive or negative.\n"+
+			"- If no comments are present, it probably means that tests were successful and result is positive.\n"+
 			"- Clarification: Negative outcome will mean that task needs to be re-visited and is not ready. Positive outcome means that issue can be moved forward to next step (usually being closed).\n"+
 			"- In case of positive outcome, answer with 1 word \"Positive\".\n"+
 			"- In case of negative outcome, answer with 1 word \"Negative\".\n"+

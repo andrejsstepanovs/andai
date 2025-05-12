@@ -10,14 +10,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newIDAutoIncrementCommand(deps *internal.AppDependencies) *cobra.Command {
+func newIDAutoIncrementCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "auto-increments",
 		Short: "Changes issue, project, user auto increment number so it's easier to identify and work with in browser",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			log.Println("Update auto increment value")
 
-			err := setupAutoIncrement(deps.Model)
+			err := setupAutoIncrement(deps().Model)
 			if err != nil {
 				return err
 			}

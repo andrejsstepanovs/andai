@@ -23,7 +23,7 @@ func TestTriggers_GetTriggers(t *testing.T) {
 		{
 			name: "single trigger",
 			triggers: settings.Triggers{
-				{IssueType: settings.IssueTypeName("bug")},
+				settings.Trigger{IssueType: settings.IssueTypeName("bug")},
 			},
 			issueType: settings.IssueTypeName("bug"),
 			expected: []settings.Trigger{
@@ -33,8 +33,8 @@ func TestTriggers_GetTriggers(t *testing.T) {
 		{
 			name: "multiple triggers",
 			triggers: settings.Triggers{
-				{IssueType: settings.IssueTypeName("bug")},
-				{IssueType: settings.IssueTypeName("feature")},
+				settings.Trigger{IssueType: settings.IssueTypeName("bug")},
+				settings.Trigger{IssueType: settings.IssueTypeName("feature")},
 			},
 			issueType: settings.IssueTypeName("feature"),
 			expected: []settings.Trigger{
@@ -44,8 +44,8 @@ func TestTriggers_GetTriggers(t *testing.T) {
 		{
 			name: "no triggers for issue type",
 			triggers: settings.Triggers{
-				{IssueType: settings.IssueTypeName("bug")},
-				{IssueType: settings.IssueTypeName("feature")},
+				settings.Trigger{IssueType: settings.IssueTypeName("bug")},
+				settings.Trigger{IssueType: settings.IssueTypeName("feature")},
 			},
 			issueType: settings.IssueTypeName("task"),
 			expected:  []settings.Trigger{},

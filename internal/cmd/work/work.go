@@ -1,8 +1,12 @@
 package work
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/andrejsstepanovs/andai/internal"
@@ -14,33 +18,55 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newLoopCommand(deps *internal.AppDependencies) *cobra.Command {
-	return &cobra.Command{
+func newLoopCommand(deps internal.DependenciesLoader) *cobra.Command {
+	var project string
+	cmd := &cobra.Command{
 		Use:   "loop",
-		Short: "Work forever",
+		Short: "Work forever. [OPTIONAL...] --project <identifier>",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return Loop(deps)
+			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+			defer stop()
+			return Loop(ctx, deps, project)
 		},
 	}
+	cmd.Flags().StringVar(&project, "project", "", "Project identifier (optional)")
+	return cmd
 }
 
-func Loop(deps *internal.AppDependencies) error {
-	// AI: Initialize tracking variables for incremental sleep
+// Loop runs work next loop forever
+// TODO fix this
+//
+//nolint:cyclop
+func Loop(ctx context.Context, deps internal.DependenciesLoader, project string) error {
 	lastSuccessfulTask := time.Now()
 	consecutiveEmptyChecks := 0
-	currentSleepDuration := time.Duration(0) // Start with no sleep
+	currentSleepDuration := time.Duration(0)
 
 	for {
-		params, err := deps.Config.Load()
+		select {
+		case <-ctx.Done():
+			log.Println("Received interrupt signal, exiting work loop.")
+			return nil
+		default:
+		}
+
+		d := deps()
+		params, err := d.Config.Load()
 		if err != nil {
 			return err
 		}
 
-		err = processTriggers(deps.Model, params.Workflow)
+		err = processTriggers(d.Model, params.Workflow)
 		if err != nil {
 			return fmt.Errorf("failed to process triggers err: %v", err)
 		}
-		wasWorking, err := workNext(deps, params)
+		projects, err := getProjects(d, project)
+		if err != nil {
+			return fmt.Errorf("failed to get projects: %v", err)
+		}
+		log.Printf("Searching workable issues (in %d projects)", len(projects))
+
+		wasWorking, err := workNext(d, params, projects)
 		if err != nil {
 			return fmt.Errorf("failed to work next err: %v", err)
 		}
@@ -90,49 +116,106 @@ func Loop(deps *internal.AppDependencies) error {
 					currentSleepDuration,
 					time.Since(lastSuccessfulTask).Round(time.Second),
 					consecutiveEmptyChecks)
-				time.Sleep(currentSleepDuration)
-				continue // Skip the rest of the loop after sleeping
+
+				select {
+				case <-ctx.Done():
+					log.Println("Received interrupt signal during sleep, exiting work loop.")
+					return nil
+				case <-time.After(currentSleepDuration):
+				}
+				continue
 			}
 		}
 	}
 }
 
-func newNextCommand(deps *internal.AppDependencies) *cobra.Command {
-	return &cobra.Command{
+func newNextCommand(deps internal.DependenciesLoader) *cobra.Command {
+	var project string
+	cmd := &cobra.Command{
 		Use:   "next",
-		Short: "Work with redmine",
+		Short: "Works on single next available task. [OPTIONAL...] --project <identifier>",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			params, err := deps.Config.Load()
+			d := deps()
+			params, err := d.Config.Load()
 			if err != nil {
 				return err
 			}
 
-			log.Println("Searching for workable issue")
-			_, err = workNext(deps, params)
+			projects, err := getProjects(d, project)
+			if err != nil {
+				return fmt.Errorf("failed to get projects: %v", err)
+			}
+			log.Printf("Searching workable issues (in %d projects)", len(projects))
+
+			_, err = workNext(d, params, projects)
 			return err
 		},
 	}
+
+	cmd.Flags().StringVar(&project, "project", "", "Project identifier (optional)")
+	return cmd
 }
 
-func workNext(deps *internal.AppDependencies, params *settings.Settings) (bool, error) {
-	issues, err := deps.Model.APIGetWorkableIssues(params.Workflow)
+func getProjects(deps *internal.AppDependencies, project string) ([]redmine.Project, error) {
+	projects, err := deps.Model.GetValidProjects()
+	if project != "" {
+		if err != nil {
+			return nil, fmt.Errorf("failed to get projects: %v", err)
+		}
+		var forProject *redmine.Project
+		for _, p := range projects {
+			if p.Identifier == project {
+				forProject = &p
+				break
+			}
+		}
+		if forProject == nil {
+			return nil, fmt.Errorf("project %q not found", project)
+		}
+		projects = []redmine.Project{*forProject}
+	}
+
+	return projects, nil
+}
+
+func getFirstWorkableIssuePerProjects(issues []redmine.Issue) []redmine.Issue {
+	issuesPerProject := make(map[int][]redmine.Issue)
+	for _, issue := range issues {
+		if len(issuesPerProject[issue.Project.Id]) == 0 {
+			issuesPerProject[issue.Project.Id] = append(issuesPerProject[issue.Project.Id], issue)
+		}
+	}
+	workableProjectIssues := make([]redmine.Issue, 0)
+	for _, projectIssues := range issuesPerProject {
+		workableProjectIssues = append(workableProjectIssues, projectIssues...)
+	}
+	return workableProjectIssues
+}
+
+func workNext(deps *internal.AppDependencies, params *settings.Settings, projects []redmine.Project) (bool, error) {
+	issues, err := deps.Model.APIGetWorkableIssues(params.Workflow, projects)
 	if err != nil {
 		log.Println("Failed to get workable issue")
 		return false, err
 	}
 
-	if len(issues) == 0 {
-		return false, nil
-	}
+	for _, issue := range getFirstWorkableIssuePerProjects(issues) {
+		// check if AI is allowed to work on it
+		currentIssueState := params.Workflow.States.Get(settings.StateName(issue.Status.Name))
+		currentIssueType := params.Workflow.IssueTypes.Get(settings.IssueTypeName(issue.Tracker.Name))
 
-	log.Printf("FOUND WORKABLE ISSUES (%d)", len(issues))
-	for _, issue := range issues {
-		fmt.Printf("WORKING ON: %q in %q ID=%d: %s\n",
-			params.Workflow.IssueTypes.Get(settings.IssueTypeName(issue.Tracker.Name)).Name,
-			params.Workflow.States.Get(settings.StateName(issue.Status.Name)).Name,
-			issue.Id,
-			issue.Subject,
-		)
+		if !currentIssueState.UseAI.Yes(currentIssueType.Name) {
+			f := "Waiting on USER to finish work on %q (ID: %d) in %q - %q\n"
+			log.Printf(f, currentIssueType.Name, issue.Id, currentIssueState.Name, issue.Subject)
+			continue
+		}
+
+		//log.Printf("WORKING ON: %q in %q ID=%d: %s\n",
+		//	params.Workflow.IssueTypes.Get(settings.IssueTypeName(issue.Tracker.Name)).Name,
+		//	params.Workflow.States.Get(settings.StateName(issue.Status.Name)).Name,
+		//	issue.Id,
+		//	issue.Subject,
+		//)
 
 		parent, err := deps.Model.APIGetParent(issue)
 		if err != nil {
@@ -173,18 +256,18 @@ func workNext(deps *internal.AppDependencies, params *settings.Settings) (bool, 
 			return false, fmt.Errorf("failed to get redmine issue siblings err: %v", err)
 		}
 
-		log.Printf("Issue %d: %s", issue.Id, issue.Subject)
+		//log.Printf("Issue %d: %s", issue.Id, issue.Subject)
 		project, err := deps.Model.API().Project(issue.Project.Id)
 		if err != nil {
 			return false, fmt.Errorf("failed to get redmine project err: %v", err)
 		}
-		log.Printf("Project %d: %s", project.Id, project.Name)
+		log.Printf("Project (%d) %q - Issue (%d): %q", project.Id, project.Name, issue.Id, issue.Subject)
 
 		projectRepo, err := deps.Model.DBGetRepository(*project)
 		if err != nil {
 			return false, fmt.Errorf("failed to get redmine repository err: %v", err)
 		}
-		log.Printf("Repository %d: %s", projectRepo.ID, projectRepo.RootURL)
+		//log.Printf("Repository %d: %s", projectRepo.ID, projectRepo.RootURL)
 
 		projectConfig := params.Projects.Find(project.Identifier)
 		git, err := exec.FindProjectGit(projectConfig, projectRepo)
@@ -200,7 +283,7 @@ func workNext(deps *internal.AppDependencies, params *settings.Settings) (bool, 
 
 		work := employee.NewRoutine(
 			deps.Model,
-			deps.LlmNorm,
+			deps.LlmPool,
 			issue,
 			parent,
 			parents,
@@ -210,7 +293,7 @@ func workNext(deps *internal.AppDependencies, params *settings.Settings) (bool, 
 			*project,
 			projectConfig,
 			wb,
-			params.Aider,
+			params.CodingAgents,
 			params.Workflow.States.Get(settings.StateName(issue.Status.Name)),
 			params.Workflow.IssueTypes.Get(settings.IssueTypeName(issue.Tracker.Name)),
 			params.Workflow.IssueTypes,

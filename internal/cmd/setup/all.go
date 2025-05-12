@@ -11,18 +11,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newSetupAllCommand(deps *internal.AppDependencies) *cobra.Command {
+func newSetupAllCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "all",
 		Short: "Setup everything",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			settings, err := deps.Config.Load()
+			d := deps()
+			s, err := d.Config.Load()
 			if err != nil {
 				return err
 			}
 
 			log.Println("Setup ALL")
-			return Setup(deps.Model, settings.Projects, settings.Workflow)
+			return Setup(d.Model, s.Projects, s.Workflow)
 		},
 	}
 	return cmd
@@ -79,6 +80,12 @@ func setupAll(model *model.Model, projectsConf settings.Projects, workflowConfig
 	log.Println("Projects OK")
 
 	err = setupWorkflow(model, workflowConfig)
+	if err != nil {
+		return err
+	}
+	log.Println("Workflow OK")
+
+	err = setupCustomFields(model)
 	if err != nil {
 		return err
 	}

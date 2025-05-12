@@ -48,13 +48,13 @@ func (k Knowledge) BuildPromptTmpFile() (string, error) {
 		return "", err
 	}
 	content := buf.String()
-	fmt.Println("\n##############\n", content, "\n##############")
+	//fmt.Println("\n##############\n", content, "\n##############")
 
 	tempFile, err := os.CreateTemp("", fmt.Sprintf(tmpFile, k.Issue.Id))
 	if err != nil {
 		return "", err
 	}
-	log.Printf("Created temporary file: %q", tempFile.Name())
+	//log.Printf("Created temporary file: %q", tempFile.Name())
 
 	_, err = tempFile.WriteString(content)
 	if err != nil {
@@ -105,7 +105,7 @@ func (k Knowledge) BuildIssueKnowledgeTmpFile() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	log.Printf("Created temporary file: %q", tempFile.Name())
+	//log.Printf("Created temporary file: %q", tempFile.Name())
 
 	_, err = tempFile.WriteString(content)
 	if err != nil {

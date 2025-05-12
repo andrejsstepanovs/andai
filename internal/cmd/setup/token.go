@@ -12,12 +12,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-func newGetTokenCommand(deps *internal.AppDependencies) *cobra.Command {
+func newGetTokenCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
 		Short: "Set (or get) redmine admin token",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return setupToken(deps.Model)
+			return setupToken(deps().Model)
 		},
 	}
 	return cmd
@@ -72,6 +72,13 @@ func setupToken(redmine *redmine.Model) error {
 		return fmt.Errorf("after created err: %v", err)
 	}
 	log.Println("New token created")
+
+	// enable sys api key used for repo api requests
+	err = redmine.DBSettingsSetSysAPIKey(newToken)
+	if err != nil {
+		log.Println("Redmine Settings Failed to set sys api key")
+		return fmt.Errorf("error redmine: %v", err)
+	}
 
 	_, err = getToken()
 	return err

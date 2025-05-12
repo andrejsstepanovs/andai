@@ -12,22 +12,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newGitPingCommand(deps *internal.AppDependencies) *cobra.Command {
+func newGitPingCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "git",
 		Short: "Ping (open) repository",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			settings, err := deps.Config.Load()
+			d := deps()
+			sett, err := d.Config.Load()
 			if err != nil {
 				return err
 			}
 
-			fmt.Println("Pinging Git Repo")
-			err = pingGit(deps.Model, settings.Projects)
+			log.Println("Pinging Git Repo")
+			err = pingGit(d.Model, sett.Projects)
 			if err != nil {
 				return err
 			}
-			fmt.Println("Git Repo Open Success")
+			log.Println("Git Repo Open Success")
 			return nil
 		},
 	}
@@ -35,6 +36,11 @@ func newGitPingCommand(deps *internal.AppDependencies) *cobra.Command {
 }
 
 func pingGit(model *redmine.Model, projects settings.Projects) error {
+	gitInstalled := exec.IsGitInstalled()
+	if !gitInstalled {
+		return fmt.Errorf("git is not installed")
+	}
+
 	allProjects, err := model.API().Projects()
 	if err != nil {
 		return fmt.Errorf("failed to get redmine project err: %v", err)

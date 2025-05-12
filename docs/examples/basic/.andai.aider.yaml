@@ -1,3 +1,47 @@
-model: "claude-3-7-sonnet-latest"
-anthropic-api-key: "sk-******"
 subtree-only: true
+cache-prompts: true
+
+# Ollama
+#model: ollama_chat/deepseek-r1:32b-qwen-distill-q4_K_M
+#set-env:
+#  - OLLAMA_API_BASE=http://localhost:11434
+
+# LM-Studio
+#model: lm_studio/qwq-32b
+#lmstudio-api-key: "lmstudio"
+#set-env:
+#  - LM_STUDIO_API_BASE=http://localhost:1234/v1
+
+# Anthropic
+#model: "claude-3-7-sonnet-latest"
+#anthropic-api-key: "sk-****"
+
+# Google
+#model: gemini/gemini-2.5-pro-exp-03-25
+#weak-model: gemini/gemini-2.0-flash
+#set-env:
+#  - GEMINI_API_KEY=AI****
+
+# OpenRouter
+#model: openrouter/meta-llama/llama-4-maverick
+#weak-model: openrouter/meta-llama/llama-4-scout
+#set-env:
+#  - OPENROUTER_API_KEY=sk-****
+
+# Groq
+#model: groq/qwen-2.5-coder-32b
+#weak-model: groq/deepseek-r1-distill-llama-70b
+#set-env:
+#  - GROQ_API_KEY=gsk_****
+
+# OpenAI
+#model: openai/gpt-4.1
+#weak-model: openai/gpt-4.1-mini
+#set-env:
+# - OPENAI_API_KEY=sk-****
+
+# LiteLLM (local)
+#model: openai/gpt4.1
+#weak-model: openai/gpt-4.1-mini
+#openai-api-key: "sk-1234"
+#openai-api-base: http://localhost:4000/v1/

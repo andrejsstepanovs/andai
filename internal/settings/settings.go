@@ -6,10 +6,22 @@ import (
 )
 
 type Settings struct {
-	Workflow  Workflow  `yaml:"workflow"`
-	Projects  Projects  `yaml:"projects"`
-	LlmModels LlmModels `yaml:"llm_models"`
-	Aider     Aider     `yaml:"aider"`
+	Workflow     Workflow     `yaml:"workflow"`
+	Projects     Projects     `yaml:"projects"`
+	LlmModels    LlmModels    `yaml:"llm_models"`
+	CodingAgents CodingAgents `yaml:"coding_agents"`
+}
+
+func (s *Settings) getAllIssueTypesAndStates() map[IssueTypeName]map[StateName]State {
+	issueTypesAndStates := make(map[IssueTypeName]map[StateName]State)
+	for issueTypeName := range s.Workflow.IssueTypes {
+		states := make(map[StateName]State)
+		for stateName, state := range s.Workflow.States {
+			states[stateName] = state
+		}
+		issueTypesAndStates[issueTypeName] = states
+	}
+	return issueTypesAndStates
 }
 
 func (s *Settings) validateStates(issueTypeNames map[IssueTypeName]bool) error {
@@ -167,10 +179,6 @@ func (s *Settings) validateStep(
 		}
 	}
 
-	if step.Command == "summarize-task" && s.Aider.TaskSummaryPrompt == "" {
-		return fmt.Errorf("%q step %q must have aider.task_summary_prompt set in settings", step.Command, step.Action)
-	}
-
 	if step.Command == "evaluate" {
 		if len(step.Context) == 0 {
 			return fmt.Errorf("%q step %q must have at least one context", step.Command, step.Action)
@@ -256,20 +264,52 @@ func (s *Settings) validateProjects() error {
 	return nil
 }
 
+func (s *Settings) validateCodingAgents() error {
+	if err := s.validateAider(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *Settings) validateAider() error {
 	//if s.Aider.MapTokens == 0 {
 	//	return fmt.Errorf("aider map_tokens is required")
 	//}
-	if s.Aider.Config == "" {
+	if s.CodingAgents.Aider.Config == "" {
 		return fmt.Errorf("aider config is required")
 	}
-	if s.Aider.Timeout == 0 {
+	if s.CodingAgents.Aider.Timeout == 0 {
 		return fmt.Errorf("aider timeout (duration) is required. Example: 5m")
 	}
 	return nil
 }
 
+// TODO fix this
+//
+//nolint:cyclop
 func (s *Settings) validateLlmModels() error {
+	// Collect all unique commands used in workflow steps
+	usedCommands := make(map[string]bool)
+	for _, issueType := range s.Workflow.IssueTypes {
+		for _, job := range issueType.Jobs {
+			for _, step := range job.Steps {
+				usedCommands[step.Command] = true
+			}
+		}
+	}
+
+	// Define the set of commands allowed to be specified in the llm_models section
+	allowedLlmCommands := map[string]bool{
+		"evaluate":       true,
+		"summarize-task": true,
+		"ai":             true,
+		"create-issues":  true,
+	}
+
+	commandModelMap := make(map[string]string)
+	primaryModelExists := false
+
 	for _, model := range s.LlmModels {
 		if model.Model == "" {
 			return fmt.Errorf("llm model model is required")
@@ -280,12 +320,102 @@ func (s *Settings) validateLlmModels() error {
 		if model.APIKey == "" {
 			return fmt.Errorf("llm model api_key is required")
 		}
-		switch model.Name {
-		case LlmModelNormal:
-		default:
-			return fmt.Errorf("llm model %q is not valid", model.Name)
+
+		// Check for duplicate commands within this specific model's list
+		seenCommands := make(map[string]bool)
+		for _, command := range model.Commands {
+			if seenCommands[command] {
+				return fmt.Errorf("llm model %q has duplicate command %q in its commands list", model.Name, command)
+			}
+			seenCommands[command] = true
+		}
+
+		// Validate that only specific commands are used if Commands list is defined
+		if len(model.Commands) > 0 {
+			for _, command := range model.Commands {
+				if _, ok := allowedLlmCommands[command]; !ok {
+					// Collect allowed command names for the error message
+					allowedKeys := make([]string, 0, len(allowedLlmCommands))
+					for k := range allowedLlmCommands {
+						allowedKeys = append(allowedKeys, k)
+					}
+					return fmt.Errorf("llm model %q has invalid command %q in its commands list. Allowed commands are: %s", model.Name, command, strings.Join(allowedKeys, ", "))
+				}
+			}
+		}
+
+		for _, command := range model.Commands {
+			prevModel, ok := commandModelMap[command]
+			if ok && prevModel != model.Name {
+				return fmt.Errorf("command %q is assigned to multiple LLM models: %q and %q", command, prevModel, model.Name)
+			}
+			if !ok {
+				commandModelMap[command] = model.Name
+			}
+		}
+
+		// Validate that model.Commands are actually used in workflow steps
+		if len(model.Commands) > 0 {
+			for _, command := range model.Commands {
+				if !usedCommands[command] {
+					return fmt.Errorf("llm model %q command %q is not used in any workflow step", model.Name, command)
+				}
+			}
+		}
+
+		if model.Name == LlmModelNormal {
+			primaryModelExists = true
 		}
 	}
+
+	if !primaryModelExists {
+		return fmt.Errorf("llm model %q not found (there must be one model with this name defined)", LlmModelNormal)
+	}
+
+	return nil
+}
+
+func (s *Settings) validatePriorities(issueTypeNames map[IssueTypeName]bool, stateNames map[StateName]bool) error {
+	for _, priority := range s.Workflow.Priorities {
+		if _, ok := stateNames[priority.State]; !ok {
+			return fmt.Errorf("priority state %s does not exist", priority.State)
+		}
+		if _, ok := issueTypeNames[priority.Type]; !ok {
+			return fmt.Errorf("priority issue type %s does not exist", priority.Type)
+		}
+	}
+
+	// check for duplicates
+	priorityMap := make(map[string]bool)
+	for _, priority := range s.Workflow.Priorities {
+		key := fmt.Sprintf("%s-%s", priority.Type, priority.State)
+		if _, ok := priorityMap[key]; ok {
+			return fmt.Errorf("priority %q is duplicated", key)
+		}
+		priorityMap[key] = true
+	}
+
+	// check that all are defined
+	for typeName, typeStates := range s.getAllIssueTypesAndStates() {
+		for stateName, state := range typeStates {
+			if state.IsClosed || state.IsDefault {
+				continue
+			}
+
+			exists := false
+			for _, priority := range s.Workflow.Priorities {
+				if priority.Type == typeName && priority.State == stateName {
+					exists = true
+					break
+				}
+			}
+
+			if !exists {
+				return fmt.Errorf("issue type %q state %q does not have a priority defined", typeName, stateName)
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -431,6 +561,15 @@ func (s *Settings) validateStepContexts() error {
 }
 
 func (s *Settings) validateIssueTypes(stateNames map[StateName]bool) (map[IssueTypeName]bool, error) {
+	for issueTypeName, issueType := range s.Workflow.IssueTypes {
+		if len(issueType.Name) > 30 {
+			return nil, fmt.Errorf("issue type %q name is too long (by %d) (max 30)", issueTypeName, len(issueType.Name)-30)
+		}
+		if len(issueType.Description) > 255 {
+			return nil, fmt.Errorf("issue type %q description is too long (by %d) (max 255)", issueTypeName, len(issueType.Description)-255)
+		}
+	}
+
 	issueStateNames, err := s.validateIssueTypeStates(stateNames)
 	if err != nil {
 		return nil, err
@@ -470,14 +609,8 @@ func (s *Settings) Validate() error {
 		return err
 	}
 
-	// validate priorities
-	for _, priority := range s.Workflow.Priorities {
-		if _, ok := stateNames[priority.State]; !ok {
-			return fmt.Errorf("priority state %s does not exist", priority.State)
-		}
-		if _, ok := issueTypeNames[priority.Type]; !ok {
-			return fmt.Errorf("priority issue type %s does not exist", priority.Type)
-		}
+	if err := s.validatePriorities(issueTypeNames, stateNames); err != nil {
+		return err
 	}
 
 	if err := s.validateLlmModels(); err != nil {
@@ -488,7 +621,7 @@ func (s *Settings) Validate() error {
 		return err
 	}
 
-	if err := s.validateAider(); err != nil {
+	if err := s.validateCodingAgents(); err != nil {
 		return err
 	}
 

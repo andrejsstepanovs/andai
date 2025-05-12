@@ -55,14 +55,15 @@ andai ping all              # Test all connections
 andai ping aider            # Test aider connection
 andai ping api              # Test Redmine API connection
 andai ping db               # Test database connection
-andai ping git              # Test Git repository access
-andai ping llm              # Test LLM connection
+andai ping git              # Test Git repository access and existence of git command line tool
+andai ping llm              # Test LLM connection for all configured models
 ```
 
 ### Workflow Execution
 ```bash
-andai work next             # Run a single work cycle
-andai work loop             # Run continuous work cycles
+andai work next             # Run a single work cycle.                                                              Optional parameter --project <identifier>
+andai work loop             # Run continuous work cycles.                                                           Optional parameter --project <identifier>
+andai go                    # Setups everything (setup all) and continuous execution (work loop) in single command. Optional parameter --project <identifier>
 ```
 
 ### Issue Management
@@ -75,7 +76,6 @@ andai issue move-children <subject> <success|fail>  # Move all child issues to n
 ### Utility Commands
 ```bash
 andai nothing               # Sleep indefinitely (useful for Docker containers)
-andai lets go               # Comprehensive setup and continuous execution
 ```
 
 ## Development Philosophy

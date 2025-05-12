@@ -10,13 +10,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newSettingsCommand(deps *internal.AppDependencies) *cobra.Command {
+func newSettingsCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "settings",
 		Short: "Enable REST API in Redmine",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			log.Println("Update Redmine settings")
-			return setupSettings(deps.Model)
+			return setupSettings(deps().Model)
 		},
 	}
 	return cmd
@@ -41,6 +41,24 @@ func setupSettings(redmine *redmine.Model) error {
 	}
 
 	log.Printf("Worker Role OK. Identifier: %d\n", roleID)
+
+	err = redmine.DBSettingsEnableSysAPIEnabled()
+	if err != nil {
+		log.Println("Redmine Settings Failed to enable Sys API")
+		return fmt.Errorf("error redmine: %v", err)
+	}
+
+	err = redmine.DBSettingsEnableAutofetchChengesets()
+	if err != nil {
+		log.Println("Redmine Settings Failed to enable repo autofetch chengesets")
+		return fmt.Errorf("error redmine: %v", err)
+	}
+
+	err = redmine.DBSettingsEnableSCM()
+	if err != nil {
+		log.Println("Redmine Settings Failed to enable repo repo scm")
+		return fmt.Errorf("error redmine: %v", err)
+	}
 
 	return nil
 }

@@ -12,11 +12,19 @@ import (
 
 const (
 	// TokenActionAPI is a constant for API token action
-	TokenActionAPI = "APIInterface"
-	// SettingRestAPIEnabled is a constant for setting name
+	TokenActionAPI = "api"
+	// SettingRestAPIEnabled setting for enabling REST API
 	SettingRestAPIEnabled = "rest_api_enabled"
-	settingsValueEnabled  = "1"
+	// SettingEnableSCM setting for enabling SCM (source control)
+	SettingEnableSCM = "enabled_scm"
+	// SettingAutofetchChengesets setting name for auto repo reading
+	SettingAutofetchChengesets = "autofetch_changesets"
+	// SettingSysAPIEnabled setting name to enable system api resource
+	SettingSysAPIEnabled = "sys_api_enabled"
+	// SettingSysAdminKey defines system api key value setting
+	SettingSysAdminKey = "sys_api_key"
 
+	settingsValueEnabled = "1"
 	autoIncrementDefault = 100
 )
 
@@ -154,6 +162,129 @@ func (c *Model) DBSettingsEnableAPI() error {
 		return fmt.Errorf("insert settings db err: %v", err)
 	}
 	log.Printf("Setting %s created with value: %s\n", SettingRestAPIEnabled, settingsValueEnabled)
+	return nil
+}
+
+func (c *Model) DBSettingsEnableSysAPIEnabled() error {
+	rows, err := c.DBGetSettings(SettingSysAPIEnabled)
+	if err != nil {
+		return fmt.Errorf("get settings db err: %v", err)
+	}
+	if len(rows) > 0 {
+		row := rows[0]
+		log.Printf("Setting Identifier: %d, Name: %s, Value: %s\n", row.ID, row.Name, row.Value)
+		if row.Value != settingsValueEnabled {
+			log.Printf("Setting %s is not enabled\n", SettingSysAPIEnabled)
+			err = c.DBSettingsUpdate(SettingSysAPIEnabled, settingsValueEnabled)
+			if err != nil {
+				return fmt.Errorf("update settings db err: %v", err)
+			}
+			log.Printf("Setting %s updated to %s\n", SettingSysAPIEnabled, settingsValueEnabled)
+			return nil
+		}
+		log.Printf("Setting %s is OK\n", SettingSysAPIEnabled)
+		return nil
+	}
+
+	log.Printf("Setting %s is not present\n", SettingSysAPIEnabled)
+	err = c.DBSettingsInsert(SettingSysAPIEnabled, settingsValueEnabled)
+	if err != nil {
+		return fmt.Errorf("insert settings db err: %v", err)
+	}
+	log.Printf("Setting %s created with value: %s\n", SettingSysAPIEnabled, settingsValueEnabled)
+	return nil
+}
+
+func (c *Model) DBSettingsEnableAutofetchChengesets() error {
+	rows, err := c.DBGetSettings(SettingAutofetchChengesets)
+	if err != nil {
+		return fmt.Errorf("get settings db err: %v", err)
+	}
+	if len(rows) > 0 {
+		row := rows[0]
+		log.Printf("Setting Identifier: %d, Name: %s, Value: %s\n", row.ID, row.Name, row.Value)
+		if row.Value != settingsValueEnabled {
+			log.Printf("Setting %s is not enabled\n", SettingAutofetchChengesets)
+			err = c.DBSettingsUpdate(SettingAutofetchChengesets, settingsValueEnabled)
+			if err != nil {
+				return fmt.Errorf("update settings db err: %v", err)
+			}
+			log.Printf("Setting %s updated to %s\n", SettingAutofetchChengesets, settingsValueEnabled)
+			return nil
+		}
+		log.Printf("Setting %s is OK\n", SettingAutofetchChengesets)
+		return nil
+	}
+
+	log.Printf("Setting %s is not present\n", SettingAutofetchChengesets)
+	err = c.DBSettingsInsert(SettingAutofetchChengesets, settingsValueEnabled)
+	if err != nil {
+		return fmt.Errorf("insert settings db err: %v", err)
+	}
+	log.Printf("Setting %s created with value: %s\n", SettingAutofetchChengesets, settingsValueEnabled)
+	return nil
+}
+
+func (c *Model) DBSettingsEnableSCM() error {
+	rows, err := c.DBGetSettings(SettingEnableSCM)
+	if err != nil {
+		return fmt.Errorf("get settings db err: %v", err)
+	}
+
+	val := "---\n- Subversion\n- Mercurial\n- Cvs\n- Bazaar\n- Git\n"
+	if len(rows) > 0 {
+		row := rows[0]
+		log.Printf("Setting Identifier: %d, Name: %s, Value: %s\n", row.ID, row.Name, row.Value)
+		if row.Value != val {
+			log.Printf("Setting %s is not enabled\n", SettingEnableSCM)
+			err = c.DBSettingsUpdate(SettingEnableSCM, val)
+			if err != nil {
+				return fmt.Errorf("update settings db err: %v", err)
+			}
+			log.Printf("Setting %s updated to %s\n", SettingEnableSCM, val)
+			return nil
+		}
+		log.Printf("Setting %s is OK\n", SettingEnableSCM)
+		return nil
+	}
+
+	log.Printf("Setting %s is not present\n", SettingEnableSCM)
+	err = c.DBSettingsInsert(SettingEnableSCM, val)
+	if err != nil {
+		return fmt.Errorf("insert settings db err: %v", err)
+	}
+	log.Printf("Setting %s created with value: %s\n", SettingEnableSCM, val)
+	return nil
+}
+
+func (c *Model) DBSettingsSetSysAPIKey(tokenValue string) error {
+	rows, err := c.DBGetSettings(SettingSysAdminKey)
+	if err != nil {
+		return fmt.Errorf("get settings db err: %v", err)
+	}
+
+	if len(rows) > 0 {
+		row := rows[0]
+		log.Printf("Setting Identifier: %d, Name: %s, Value: %s\n", row.ID, row.Name, row.Value)
+		if row.Value != tokenValue {
+			log.Printf("Setting %s is not enabled\n", SettingSysAdminKey)
+			err = c.DBSettingsUpdate(SettingSysAdminKey, tokenValue)
+			if err != nil {
+				return fmt.Errorf("update settings db err: %v", err)
+			}
+			log.Printf("Setting %s updated to %s\n", SettingSysAdminKey, tokenValue)
+			return nil
+		}
+		log.Printf("Setting %s is OK\n", SettingSysAdminKey)
+		return nil
+	}
+
+	log.Printf("Setting %s is not present\n", SettingSysAdminKey)
+	err = c.DBSettingsInsert(SettingSysAdminKey, tokenValue)
+	if err != nil {
+		return fmt.Errorf("insert settings db err: %v", err)
+	}
+	log.Printf("Setting %s created with value: %s\n", SettingSysAdminKey, tokenValue)
 	return nil
 }
 

@@ -25,6 +25,7 @@ type APIInterface interface {
 	IssueRelations(issueID int) ([]redmine.IssueRelation, error)
 	CreateIssueRelation(issueRelation redmine.IssueRelation) (*redmine.IssueRelation, error)
 	IssuesOf(projectID int) ([]redmine.Issue, error)
+	CustomFields() ([]redmine.CustomField, error)
 	Issue(id int) (*redmine.Issue, error)
 	Project(id int) (*redmine.Project, error)
 	UpdateIssue(issue redmine.Issue) error

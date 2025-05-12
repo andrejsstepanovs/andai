@@ -11,7 +11,7 @@ BUILD_FLAGS          := -mod=readonly -v
 TEST_FLAGS           := -race -count=1 -mod=readonly -cover -coverprofile $(COVER_FILE) -tags=integration
 LD_FLAGS             := -X main.Version=$(VERSION) -X main.GitHead=$(GIT_HEAD)
 
-PACKAGES             := $(shell find . -path ./data -prune -o -name "*.go" | grep -v -E "vendor|tools|mocks|data" | xargs -n1 dirname | sort -u)
+PACKAGES             := $(shell go list -f '{{.Dir}}' ./...)
 MOCK_PACKAGES        := $(shell find . -path ./data -prune , -name "mocks" | grep -v -E "data")
 
 ENGINE_NAME            := "andai"
@@ -64,12 +64,9 @@ help: ## Show this help
 
 ## General:
 
-download:
-	@echo Download go.mod dependencies
-	@go mod download
-
 # usually unnecessary to clean, and may require downloads to restore, so this folder is not automatically cleaned
 BIN   := $(shell pwd)/.bin
+TOOLS := $(shell pwd)/tools
 
 # helper for executing bins, just `$(BIN_PATH) the_command ...`
 BIN_PATH := PATH=".bin:$(abspath $(BIN)):$$PATH:"
@@ -109,6 +106,24 @@ generate: clean ## Run go generators
 
 .PHONY: test-generate
 test-generate: generate test
+
+# BEGIN of <download>
+
+.PHONY: download
+download:
+	@echo "Download go.mod dependencies"
+	@go mod download
+
+# END of <download>
+
+# BEGIN of <install>
+
+.PHONY: install
+install: download
+	@echo Installing tools from tools//tools.go
+	@cd $(TOOLS) && cat tools.go | grep _ | awk -F'"' '{print $$2}' | GOBIN=$(BIN) xargs -tI % go install %
+
+# END of <install>
 
 # BEGIN of <build>
 

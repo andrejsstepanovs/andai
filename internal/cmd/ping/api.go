@@ -10,13 +10,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newAPIPingCommand(deps *internal.AppDependencies) *cobra.Command {
+func newAPIPingCommand(deps internal.DependenciesLoader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "api",
 		Short: "Ping connection to redmine",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			log.Println("Ping API")
-			err := pingAPI(deps.Model)
+			err := pingAPI(deps().Model)
 			if err != nil {
 				return err
 			}

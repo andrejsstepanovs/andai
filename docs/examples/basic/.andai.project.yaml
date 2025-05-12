@@ -1,9 +1,57 @@
 llm_models:
   - name: "normal"
-    model: "claude-3-7-sonnet-latest"
-    provider: "anthropic"
-    api_key: "sk-*****"
+
+    # Anthropic
+    # model: "claude-3-7-sonnet-latest"
+    # provider: "anthropic"
+    # api_key: "sk-*****"
+    # temperature: 0.2
+    # max_tokens: 128000
+
+    # LM-Studio
+    # model: "qwq-32b"
+    # base_url: "http://localhost:1234/v1/chat/completions"
+    # api_key: "lmstudio"
+
+    # Google
+    model: "gemini-2.0-flash"
+    provider: google
+    api_key: "*****"
+
+    # OpenAI
+    # model: "gpt-4.1"
+    # provider: openai
+    # max_tokens: 32768
+    # api_key: "sk-****"
+
+    # Groq
+    # model: "deepseek-r1-distill-llama-70b"
+    # provider: groq
+    # max_tokens: 128000
+    # api_key: "gsk_*****"
+
+    # OpenRouter
+    # model: "meta-llama/llama-4-maverick"
+    # provider: openrouter
+    # api_key: "sk-or-v1-*****"
+
+    # LiteLLM (local)
+    # model: llama3-1-70b
+    # provider: litellm
+    # api_key: "sk-1234"
+
+  # Define other models and bind them to specific commands. Optional.
+  - name: "long"
     temperature: 0.2
+    model: "gemini-2.0-flash"
+    provider: google
+    max_tokens: 2000000
+    api_key: "*****"
+    commands:
+      - summarize-task
+      #- create-issues
+      #- evaluate
+      #- ai
 
 # redmine is running within docker and this config can stay hardcoded. Keep api-key as is. It plays no role in anything.
 redmine:
@@ -12,10 +60,11 @@ redmine:
   api_key: "2159cef2fb6c82c4f66981f199798781e161c694"
   repositories: "/var/repositories/"
 
-aider:
-  #map_tokens: 1024
-  timeout: "180m"
-  config: "/tmp/test/.andai.aider.yaml" # configure aider model in that file
+coding_agents:
+  aider:
+    #map_tokens: 1024
+    timeout: "180m"
+    config: "/tmp/test/.andai.aider.yaml" # configure aider model in that file
 
 projects:
   - identifier: "test"
@@ -23,7 +72,8 @@ projects:
     description: "Test project"
     git_path: "/test-repo/.git" # path to git repo from within redmine container
     git_local_dir: "/tmp/test-repo/.git" # path to git repo on local machine or if run from within container - path to git repo from within container
-    final_branch: "main" # branch where final code will be merged into. Can be anything. If branch does not exist, it will be created.
+    final_branch: "main" # branch where issue with no parent will be merged into. Can be anything. If branch does not exist, it will be created.
+    delete_branch_after_merge: True # delete child task branch after merge into parent task branch
     wiki: |
       # My Test Project
       More info about the project here.

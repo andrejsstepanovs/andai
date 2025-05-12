@@ -6,7 +6,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
+	model "github.com/andrejsstepanovs/andai/internal/redmine"
 	"github.com/mattn/go-redmine"
 )
 
@@ -22,6 +24,7 @@ type GitInterface interface {
 	GetLastCommitHash() (string, error)
 	BranchName(issueID int) string
 	CheckoutBranch(name string) error
+	ExecCheckoutBranch(name string) error
 	GetPath() string
 	SetPath(path string)
 	Reload()
@@ -47,25 +50,28 @@ func (i *Workbench) PrepareWorkplace(parentIssueID *int, finalBranch string) err
 	}
 
 	if parentIssueID != nil {
+		log.Printf("First checkout parent issue branch")
 		branchName := i.GetIssueBranchName(redmine.Issue{Id: *parentIssueID})
-		err = i.checkoutBranch(branchName)
+		err = i.CheckoutBranch(branchName)
 		if err != nil {
-			log.Printf("Failed to checkout parent branch: %v", err)
+			log.Printf("Prepare workplace: failed to checkout parent branch: %v", err)
+			return err
 		}
 	} else {
 		if finalBranch != "" {
-			err = i.checkoutBranch(finalBranch)
+			err = i.CheckoutBranch(finalBranch)
 			if err != nil {
-				log.Printf("Failed to checkout project final branch: %v", err)
+				log.Printf("Prepare workplace: failed to checkout project final branch: %v", err)
+				return err
 			}
 		}
 	}
 	i.Git.Reload()
 
 	branchName := i.GetIssueBranchName(i.Issue)
-	err = i.checkoutBranch(branchName)
+	err = i.CheckoutBranch(branchName)
 	if err != nil {
-		log.Printf("Failed to checkout branch: %v", err)
+		log.Printf("Prepare workplace: failed to checkout branch: %v", err)
 		return err
 	}
 
@@ -83,7 +89,7 @@ func (i *Workbench) changeDirectory() error {
 		return fmt.Errorf("failed to get current directory err: %v", err)
 	}
 	if currentDir != targetPath {
-		log.Printf("Changing directory from %s to %s\n", currentDir, targetPath)
+		log.Printf("Changing directory to %s\n", targetPath)
 	}
 
 	err = os.Chdir(targetPath)
@@ -91,21 +97,63 @@ func (i *Workbench) changeDirectory() error {
 		return fmt.Errorf("failed to change directory err: %v", err)
 	}
 
-	log.Printf("Active in project directory %s\n", targetPath)
+	//log.Printf("Active in project directory %s\n", targetPath)
 	i.WorkingDir = targetPath
 
 	return nil
 }
 
-func (i *Workbench) checkoutBranch(branchName string) error {
-	err := i.Git.CheckoutBranch(branchName)
-	if err != nil {
-		return fmt.Errorf("failed to checkout branch err: %v", err)
+func (i *Workbench) CheckoutBranch(branchName string) error {
+	return i.Git.ExecCheckoutBranch(branchName)
+}
+
+// GetIssueBranchNameOverride in UI user can set branch name override. Use it if set.
+func (i *Workbench) GetIssueBranchNameOverride(issue redmine.Issue) string {
+	if issue.CustomFields == nil {
+		return ""
 	}
-	return nil
+	for _, field := range issue.CustomFields {
+		if field.Name != model.CustomFieldBranch {
+			continue
+		}
+		if field.Value == nil {
+			continue
+		}
+		s := field.Value.(string)
+		s = strings.TrimSpace(s)
+		if s != "" {
+			return s
+		}
+	}
+	return ""
+}
+
+// GetIssueSkipMergeOverride in UI user can set flag to not merge into parent. Use it if set.
+func (i *Workbench) GetIssueSkipMergeOverride(issue redmine.Issue) bool {
+	if issue.CustomFields == nil {
+		return false
+	}
+	for _, field := range issue.CustomFields {
+		if field.Name != model.CustomFieldSkipMerge {
+			continue
+		}
+		if field.Value == nil {
+			continue
+		}
+		s := field.Value.(string)
+		s = strings.TrimSpace(s)
+		if s == "1" {
+			return true
+		}
+	}
+	return false
 }
 
 func (i *Workbench) GetIssueBranchName(issue redmine.Issue) string {
+	overrideBranch := i.GetIssueBranchNameOverride(issue)
+	if overrideBranch != "" {
+		return overrideBranch
+	}
 	return i.Git.BranchName(issue.Id)
 }
 
@@ -120,7 +168,7 @@ func (i *Workbench) GetLastCommit() (string, error) {
 
 func (i *Workbench) GetCommitsSinceInReverseOrder(sinceSha string) ([]string, error) {
 	// from newest to oldest
-	allCommits, err := i.GetBranchCommits(100)
+	allCommits, err := i.GetBranchCommits(20)
 	if err != nil {
 		return nil, errors.New("failed to get last commits")
 	}
@@ -134,10 +182,11 @@ func (i *Workbench) GetCommitsSinceInReverseOrder(sinceSha string) ([]string, er
 	}
 
 	// reverse the order of commits
-	for i, j := 0, len(commits)-1; i < j; i, j = i+1, j-1 {
-		commits[i], commits[j] = commits[j], commits[i]
+	for k, j := 0, len(commits)-1; k < j; k, j = k+1, j-1 {
+		commits[k], commits[j] = commits[j], commits[k]
 	}
 
+	// returns in order from oldest to newest
 	return commits, nil
 }
 
