@@ -1,4 +1,4 @@
-# AndAI
+# [AndAI](https://www.andai.pro)
 
 A local tool for organizing AI-assisted coding tasks with ticketing system and git integration.
 
