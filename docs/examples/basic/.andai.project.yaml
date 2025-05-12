@@ -30,10 +30,15 @@ llm_models:
     # max_tokens: 128000
     # api_key: "gsk_*****"
 
-    # openrouter
+    # OpenRouter
     # model: "meta-llama/llama-4-maverick"
     # provider: openrouter
     # api_key: "sk-or-v1-*****"
+
+    # LiteLLM (local)
+    # model: llama3-1-70b
+    # provider: litellm
+    # api_key: "sk-1234"
 
   # Define other models and bind them to specific commands. Optional.
   - name: "long"

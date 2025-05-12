@@ -63,6 +63,7 @@ func NewAI(config settings.LlmModel) (*AI, error) {
 		"google":     "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
 		"groq":       "https://api.groq.com/openai/v1/chat/completions",
 		"openai":     "https://api.openai.com/v1/chat/completions",
+		"litellm":    "http://localhost:4000/v1/chat/completions",
 		"custom":     config.BaseURL,
 	}
 
