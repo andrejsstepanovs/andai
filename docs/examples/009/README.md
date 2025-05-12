@@ -197,3 +197,56 @@ sequenceDiagram
         Note over AndAI: AndAI will pick up rejected task in the next cycle
     end
 ```
+
+
+* State Diagram *
+
+```mermaid
+stateDiagram-v2
+    direction LR  // Arrange states left-to-right for better flow visibility
+
+    [*] --> Backlog : New Story Created
+
+    state StoryLifecycle {
+        direction TB // Arrange Story states top-to-bottom
+
+        Backlog --> Analysis : Start Analysis
+        Analysis --> InProgress_Story : Plan Ready / Start Work
+        InProgress_Story --> InProgress_Story : User Adds Details/Comments
+        InProgress_Story --> SplitTasks : Execute 'create-issues' command
+        SplitTasks --> WaitingForTasks : Story triggers Task creation
+        SplitTasks --> Backlog_Task : Task Created
+
+        state WaitingForTasks {
+            [*] --> TasksInProgress : Children Tasks Active
+            TasksInProgress --> TasksDone : All Children Done
+        }
+
+        WaitingForTasks --> QA_Story : All Tasks Completed
+        QA_Story --> Review_Story : Automated Checks Pass
+        QA_Story --> Analysis : Automated Checks Fail (Needs Rework)
+        Review_Story --> Deployment_Story : User Approves Story
+        Review_Story --> Analysis : User Rejects Story (Needs Rework)
+        Deployment_Story --> Done_Story : Merge Story to Final Branch
+        Done_Story --> [*]
+    }
+
+
+    state TaskLifecycle <<fork>>
+       
+       state IndividualTask {
+            direction TB // Arrange Task states top-to-bottom
+            Backlog_Task --> InProgress_Task : AI Picks Up Task
+            InProgress_Task --> InProgress_Task : AI Coding (e.g., Aider) / Commits
+            InProgress_Task --> QA_Task : Coding Step Complete
+            QA_Task --> QA_Task : Run Tests/Lint (project-cmd)
+            QA_Task --> Review_Task : Automated Checks Pass (Evaluate Success)
+            QA_Task --> Backlog_Task : Automated Checks Fail (Evaluate Fail)
+            Review_Task --> Deployment_Task : User Approves Task (Optional Step)
+            Review_Task --> Backlog_Task : User Rejects Task (Optional Step)
+            Deployment_Task --> Done_Task : Merge Task to Parent (Story) Branch
+            Done_Task --> [*]
+       }
+```
+
+*sorry for AI generated mermaid charts. They are in places a bit off, but they explain the workflow quite well.
