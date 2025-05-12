@@ -79,6 +79,14 @@ components:
           type: string
           description: Path to repositories within Redmine container
 
+    CodingAgents:
+      type: object
+      properties:
+        aider:
+          $ref: '#/components/schemas/AiderConfig'
+      required:
+        - aider
+
     AiderConfig:
       type: object
       properties:
@@ -351,8 +359,8 @@ components:
             $ref: '#/components/schemas/LlmModel'
         redmine:
           $ref: '#/components/schemas/RedmineConfig'
-        aider:
-          $ref: '#/components/schemas/AiderConfig'
+        coding_agents:
+          $ref: '#/components/schemas/CodingAgents'
         projects:
           type: array
           items:
