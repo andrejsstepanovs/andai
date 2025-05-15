@@ -342,7 +342,7 @@ func (i *Routine) summarizeTask(workflowStep settings.Step, contextFile string, 
 		return "", fmt.Errorf("failed to get AI response: %w", lastError)
 	}
 
-	log.Printf("AI response: %s", ret.Stdout)
+	//log.Printf("AI response: %s", ret.Stdout)
 
 	if workflowStep.CommentSummary {
 		if err := i.AddComment(ret.Stdout); err != nil {
@@ -515,8 +515,6 @@ func (i *Routine) simpleAI(promptFile string) (exec.Output, error) {
 	ret, err := llmModel.Simple(prompt)
 	if err != nil {
 		log.Printf("Failed to run AI: %v", err)
-	} else {
-		log.Printf("AI response: %s", ret.Stdout)
 	}
 
 	return ret, err

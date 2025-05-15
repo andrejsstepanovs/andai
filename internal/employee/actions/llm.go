@@ -50,7 +50,7 @@ func EvaluateOutcome(llm *ai.AI, knowledgeFile string) (exec.Output, bool, error
 
 	ctx := context.Background()
 
-	log.Println("Query: " + prompt.String())
+	//log.Println("Query: " + prompt.String())
 
 	out, err := llm.Generate(ctx, prompt)
 	if err != nil {
