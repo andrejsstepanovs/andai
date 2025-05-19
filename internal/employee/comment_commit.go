@@ -135,6 +135,8 @@ func (i *Routine) commentParentBranchDiff() error {
 	if !i.parentExists() {
 		return nil
 	}
+
+	// TODO. url is not working as expected.
 	targetBranch := i.getTargetBranch()
 	branchDiffURL := fmt.Sprintf("[Git Diff: %s <-> %s](/projects/%s/repository/%s/diff?rev=%s&rev_to=%s)", targetBranch, i.projectCfg.FinalBranch, i.project.Identifier, i.project.Identifier, targetBranch, i.projectCfg.FinalBranch)
 
