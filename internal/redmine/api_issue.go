@@ -113,6 +113,7 @@ func (c *Model) GetValidProjects() ([]redmine.Project, error) {
 }
 
 func (c *Model) APIGetWorkableIssues(workflow settings.Workflow, projects []redmine.Project) ([]redmine.Issue, error) {
+	retIssues := make([]redmine.Issue, 0)
 	for _, project := range projects {
 		//log.Printf("Project %q\n", project.Identifier)
 		activeProjectIssues, err := c.APIGetProjectIssues(project)
@@ -193,11 +194,11 @@ func (c *Model) APIGetWorkableIssues(workflow settings.Workflow, projects []redm
 			//for _, issue := range issues {
 			//	log.Println(" > ", issue.Id, issue.Subject)
 			//}
-			return issues, nil
+			retIssues = append(retIssues, issues...)
 		}
 	}
 
-	return nil, nil
+	return retIssues, nil
 }
 
 func (c *Model) removeClosedDependencies(dependencies map[int][]int, issues []redmine.Issue) map[int][]int {

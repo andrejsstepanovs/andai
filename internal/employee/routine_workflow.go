@@ -163,7 +163,7 @@ func (i *Routine) executeCommand(workflowStep settings.Step, contextFile string)
 				log.Printf("Failed to create new issues: %v", err)
 				return exec.Output{}, err
 			}
-			fmt.Printf("AI evaluation response %q; result is: %t\n", resp.Stdout, success)
+			log.Printf("AI evaluation response %q; result is: %t\n", resp.Stdout, success)
 			if success {
 				return exec.Output{Stdout: "Positive outcome"}, nil
 			}
@@ -244,8 +244,13 @@ func (i *Routine) runProjectCmd(workflowStep settings.Step) (exec.Output, error)
 	ret, err := exec.Exec(cmd, time.Minute*30, arguments...)
 
 	if err != nil {
+		hardErr := i.checkCommandHardFailure(err, parts)
+		if hardErr != nil {
+			return ret, hardErr
+		}
+
 		if command.IgnoreError {
-			fmt.Printf("Ignoring error: %v\n", err)
+			log.Printf("Ignoring error: %v\n", err)
 		} else {
 			return ret, err
 		}
@@ -259,6 +264,26 @@ func (i *Routine) runProjectCmd(workflowStep settings.Step) (exec.Output, error)
 	}
 
 	return ret, nil
+}
+
+func (i *Routine) checkCommandHardFailure(err error, command []string) error {
+	failedIf := [][]string{
+		{"make:", "No rule to make target"},
+		{"make:", " command not found:"},
+	}
+	for _, fail := range failedIf {
+		realFail := false
+		for _, f := range fail {
+			if strings.Contains(err.Error(), f) {
+				realFail = true
+			}
+		}
+		if realFail {
+			return fmt.Errorf("Project command %q failed err: %v\n", strings.Join(command, " "), err)
+		}
+	}
+
+	return nil
 }
 
 func (i *Routine) runBash(workflowStep settings.Step) (exec.Output, error) {
@@ -603,7 +628,9 @@ func (i *Routine) createIssueCommand(workflowStep settings.Step, contextFile str
 	)
 	if err != nil {
 		if errors.Is(err, models.ErrNoIssues) {
-			return exec.Output{Stdout: "No new issues are needed here"}, nil
+			msg := "No new issues are needed here"
+			log.Println(msg)
+			return exec.Output{Stdout: msg}, nil
 		}
 		return executionOutput, err
 	}
@@ -613,5 +640,8 @@ func (i *Routine) createIssueCommand(workflowStep settings.Step, contextFile str
 		log.Printf("Failed to create new issues: %v", err)
 		return exec.Output{}, err
 	}
-	return exec.Output{Stdout: fmt.Sprintf("Created %d Issues", len(issues))}, nil
+	msg := fmt.Sprintf("Created %d Issues", len(issues))
+	log.Println(msg)
+
+	return exec.Output{Stdout: msg}, nil
 }

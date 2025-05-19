@@ -205,8 +205,8 @@ func workNext(deps *internal.AppDependencies, params *settings.Settings, project
 		currentIssueType := params.Workflow.IssueTypes.Get(settings.IssueTypeName(issue.Tracker.Name))
 
 		if !currentIssueState.UseAI.Yes(currentIssueType.Name) {
-			f := "Waiting on USER to finish work on %q (ID: %d) in %q - %q\n"
-			log.Printf(f, currentIssueType.Name, issue.Id, currentIssueState.Name, issue.Subject)
+			f := "Project: %q - Waiting on USER to finish work on %q (ID: %d) in %q - %q\n"
+			log.Printf(f, issue.Project.Name, currentIssueType.Name, issue.Id, currentIssueState.Name, issue.Subject)
 			continue
 		}
 
