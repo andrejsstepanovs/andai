@@ -34,11 +34,7 @@ func (i *Routine) ExecuteWorkflow() (bool, error) {
 	}
 
 	if needSetup {
-		var parentIssueID *int
-		if i.parent != nil {
-			parentIssueID = &i.parent.Id
-		}
-		err := i.workbench.PrepareWorkplace(parentIssueID, i.projectCfg.FinalBranch)
+		err := i.workbench.PrepareWorkplace(i.getTargetBranch())
 		if err != nil {
 			log.Printf("Failed to prepare workplace: %v", err)
 			return false, err

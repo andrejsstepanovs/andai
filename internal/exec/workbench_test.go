@@ -177,7 +177,7 @@ func TestWorkbench_PrepareWorkplace(t *testing.T) {
 			wb, targetPath := tt.setup()
 			wb.Git.SetPath(targetPath)
 
-			err = wb.PrepareWorkplace(nil, "")
+			err = wb.PrepareWorkplace("")
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

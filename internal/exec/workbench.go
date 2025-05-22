@@ -42,38 +42,29 @@ func (i *Workbench) GoToRepo() error {
 	return nil
 }
 
-func (i *Workbench) PrepareWorkplace(parentIssueID *int, finalBranch string) error {
+func (i *Workbench) PrepareWorkplace(targetBranch string) error {
 	err := i.GoToRepo()
 	if err != nil {
 		log.Printf("Failed to change directory: %v", err)
 		return err
 	}
 
-	if parentIssueID != nil {
-		log.Printf("First checkout parent issue branch")
-		branchName := i.GetIssueBranchName(redmine.Issue{Id: *parentIssueID})
-		err = i.CheckoutBranch(branchName)
-		if err != nil {
-			log.Printf("Prepare workplace: failed to checkout parent branch: %v", err)
-			return err
-		}
-	} else {
-		if finalBranch != "" {
-			err = i.CheckoutBranch(finalBranch)
-			if err != nil {
-				log.Printf("Prepare workplace: failed to checkout project final branch: %v", err)
-				return err
-			}
-		}
+	log.Printf("First checkout target branch %q", targetBranch)
+	err = i.CheckoutBranch(targetBranch)
+	if err != nil {
+		log.Printf("Prepare workplace: failed to checkout parent branch: %v", err)
+		return err
 	}
 	i.Git.Reload()
 
 	branchName := i.GetIssueBranchName(i.Issue)
+	log.Printf("Now current branch %q", branchName)
 	err = i.CheckoutBranch(branchName)
 	if err != nil {
 		log.Printf("Prepare workplace: failed to checkout branch: %v", err)
 		return err
 	}
+	i.Git.Reload()
 
 	return nil
 }
