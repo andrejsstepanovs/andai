@@ -9,6 +9,9 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/exec"
 )
 
+// CommitCommentFormat is the format for the commit comment
+const CommitCommentFormat = "%d. Commit [%s](/projects/%s/repository/%s/revisions/%s/diff) - %s"
+
 func (i *Routine) commentCommitsSince(currentCommitSku, commitMessage string) (int, error) {
 	newCommits, getShaErr := i.workbench.GetCommitsSinceInReverseOrder(currentCommitSku)
 
@@ -46,8 +49,7 @@ func (i *Routine) commentCommitsSince(currentCommitSku, commitMessage string) (i
 	txt := make([]string, 0)
 	txt = append(txt, fmt.Sprintf(format, branchName, i.project.Identifier, i.project.Identifier, branchName))
 	for n, sha := range newCommits {
-		format = "%d. Commit [%s](/projects/%s/repository/%s/revisions/%s/diff) - %s"
-		txt = append(txt, fmt.Sprintf(format, n+1, sha, i.project.Identifier, i.project.Identifier, sha, commitMessage))
+		txt = append(txt, fmt.Sprintf(CommitCommentFormat, n+1, sha, i.project.Identifier, i.project.Identifier, sha, commitMessage))
 	}
 
 	err := i.AddComment(strings.Join(txt, "\n"))

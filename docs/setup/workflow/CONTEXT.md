@@ -14,6 +14,7 @@ Context is building knowledge prompt that is given to LLM. Available context val
 - `siblings` - Includes all siblings issues with same info as `ticket`. Is not including Closed issues.
 - `parent` - Includes first single parent issue with same info as `ticket`.
 - `parents` - Includes parent and parent parents issues with same info as `ticket`.
+- `parent-comments` - Includes parent comment messages.
 - `issue_types` - Includes all issue type names with descriptions.
 - `affected-files` - Includes all files that were touched by closed children git commits.
 

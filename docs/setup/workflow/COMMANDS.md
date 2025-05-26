@@ -91,7 +91,7 @@ workflow:
               context: ["issue_types", "ticket", "comments"]
 ```
 
-It is useful to chain this command with `summarize-task` and `context-files` commands.
+It is useful to chain this command with `summarize-task` and `context-files`, `context-commits` commands.
 
 # summarize-task
 
@@ -154,6 +154,28 @@ workflow:
               action: Task
               prompt: |
                 Create small workable Task issues that will result successful implementation of given Story issue.
+```
+
+# context-commits
+
+This command will traverse all given context text and match existing git sha (long).
+If it exists in git, will include the commit path message to context.
+
+```yaml
+workflow:
+  issue_types:
+    Bug:
+      description: Bug issue type that defines specific bug that needs to be fixed.
+      jobs:
+        Work:
+          steps:
+            - command: context-commits
+              context: ["parents", "comments", "parent-comments"]
+              remember: True
+            - command: code
+              comment: True
+              context: ["project", "wiki", "ticket", "comments"]
+              prompt: Fix linter issues introduced in previous commits.
 ```
 
 # commit

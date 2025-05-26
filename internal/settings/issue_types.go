@@ -5,46 +5,49 @@ import (
 	"strings"
 )
 
-// ContextTicket is a special context that matches the ticket
+// ContextTicket matches the ticket
 const ContextTicket = "ticket"
 
-// ContextComments is a special context that matches comments
+// ContextComments matches comments
 const ContextComments = "comments"
 
-// ContextLastComment is a special context that matches the last comment
+// ContextParentComments matches the parent comments
+const ContextParentComments = "parent-comments"
+
+// ContextLastComment matches the last comment
 const ContextLastComment = "last-comment"
 
-// ContextTwoComment is a special context that matches the last two comment
+// ContextTwoComment matches the last two comment
 const ContextTwoComment = "last-2-comments"
 
-// ContextThreeComment is a special context that matches the last three comment
+// ContextThreeComment matches the last three comment
 const ContextThreeComment = "last-3-comments"
 
-// ContextFourComment is a special context that matches the last four comment
+// ContextFourComment matches the last four comment
 const ContextFourComment = "last-4-comments"
 
-// ContextFifeComment is a special context that matches the last fife comment
+// ContextFifeComment matches the last fife comment
 const ContextFifeComment = "last-5-comments"
 
-// ContextProject is a special context that matches the project
+// ContextProject matches the project
 const ContextProject = "project"
 
-// ContextProjectWiki is a special context that matches the project wiki
+// ContextProjectWiki matches the project wiki
 const ContextProjectWiki = "wiki"
 
-// ContextChildren is a special context that matches the children
+// ContextChildren matches the children
 const ContextChildren = "children"
 
-// ContextSiblings is a special context that matches the siblings
+// ContextSiblings matches the siblings
 const ContextSiblings = "siblings"
 
-// ContextParent is a special context that matches the parent
+// ContextParent matches the parent
 const ContextParent = "parent"
 
-// ContextParents is a special context that matches the parents
+// ContextParents matches the parents
 const ContextParents = "parents"
 
-// ContextIssueTypes is a special context that explains what each issue represents
+// ContextIssueTypes explains what each issue represents
 const ContextIssueTypes = "issue_types"
 
 // ContextAffectedFiles provides all files that were touched in children and siblings branches.

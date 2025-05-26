@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/andrejsstepanovs/andai/internal/ai"
 	"github.com/andrejsstepanovs/andai/internal/exec"
@@ -13,7 +14,7 @@ import (
 // AiderExecute executes the command and returns the output.
 // If contextFile is provided step.Prompt will be ignored. (don't worry, it should be part of contextFile).
 // If you want to use step.Prompt, provide empty string for contextFile.
-func AiderExecute(contextFile string, step settings.Step, aiderConfig settings.Aider) (exec.Output, error) {
+func AiderExecute(contextFile string, step settings.Step, aiderConfig settings.Aider, retry bool) (exec.Output, error) {
 	//if contextFile != "" {
 	//	log.Printf("Context file: %q\n", contextFile)
 	//}
@@ -36,6 +37,22 @@ func AiderExecute(contextFile string, step settings.Step, aiderConfig settings.A
 
 	if output.Stdout != "" {
 		lines := strings.Split(output.Stdout, "\n")
+
+		tokenLimitReached := aiderHitTokenLimit(output)
+		if tokenLimitReached {
+			if retry {
+				log.Println("Aider has hit a token limit, removing chat history and trying again once more")
+				_, err = exec.Exec("truncate", time.Minute, "-s", "0", ".aider.chat.history.md")
+
+				retry = false                                   // Prevent infinite loop
+				aiderConfig.Config = aiderConfig.ConfigFallback // TODO implement config fallback properly
+				return AiderExecute(contextFile, step, aiderConfig, retry)
+			}
+
+			output.Stderr = "Aider has hit a token limit."
+			return output, errors.New("aider has hit a token limit")
+		}
+
 		lines = aiderRemoveUnnecessaryLines(lines)
 
 		output.Stdout = strings.Join(lines, "\n")
@@ -129,4 +146,23 @@ func aiderRemoveUnnecessaryLines(lines []string) []string {
 	}
 
 	return cleanLines
+}
+
+func aiderHitTokenLimit(output exec.Output) bool {
+	matchAll := []string{"aider.chat", "token-limits", "has hit a token limit"}
+
+	for _, s := range matchAll {
+		if strings.Contains(output.Stdout, s) {
+			continue
+		}
+
+		if strings.Contains(output.Stderr, s) {
+			continue
+		}
+
+		log.Printf("Failed to find %s", s)
+		return false
+	}
+
+	return true
 }

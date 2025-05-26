@@ -29,6 +29,7 @@ type Knowledge struct {
 	Project           settings.Project
 	IssueTypes        settings.IssueTypes
 	Comments          redminemodels.Comments
+	ParentComments    redminemodels.Comments
 	Step              settings.Step
 }
 
@@ -146,6 +147,8 @@ func (k Knowledge) getCommentContext(context string) (string, error) {
 		return k.getLastNComments(5, settings.ContextFifeComment)
 	case settings.ContextComments:
 		return k.getComments(k.Comments, settings.ContextComments)
+	case settings.ContextParentComments:
+		return k.getComments(k.ParentComments, settings.ContextParentComments)
 	default:
 		return "", fmt.Errorf("unknown comment context: %q", context)
 	}
@@ -199,7 +202,6 @@ func (k Knowledge) getComments(comments redminemodels.Comments, tag string) (str
 	cleanComments := make(redminemodels.Comments, 0)
 	kickCommentsIfMatch := [][]string{
 		{"Merged", "branch", "into"},
-		{"Branch", exec.BranchPrefix, "Commit"},
 	}
 	for _, c := range comments {
 		kickComment := false

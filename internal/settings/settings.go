@@ -107,6 +107,7 @@ func (s *Settings) validateStep(
 	case "ai":
 	case "bash":
 	case "context-files":
+	case "context-commits":
 	case "aider":
 	default:
 		return fmt.Errorf("step command %q is not valid", step.Command)
@@ -169,7 +170,7 @@ func (s *Settings) validateStep(
 		}
 	}
 
-	if step.Command == "context-files" {
+	if step.Command == "context-files" || step.Command == "context-commits" {
 		if len(step.Context) == 0 {
 			return fmt.Errorf("%q step %q must have at least one context file", step.Command, step.Action)
 		}
@@ -278,6 +279,9 @@ func (s *Settings) validateAider() error {
 	//}
 	if s.CodingAgents.Aider.Config == "" {
 		return fmt.Errorf("aider config is required")
+	}
+	if s.CodingAgents.Aider.ConfigFallback == "" {
+		return fmt.Errorf("aider fallback config is required (that is able to use more tokens)")
 	}
 	if s.CodingAgents.Aider.Timeout == 0 {
 		return fmt.Errorf("aider timeout (duration) is required. Example: 5m")
@@ -547,6 +551,7 @@ func (s *Settings) validateStepContexts() error {
 					case ContextChildren:
 					case ContextSiblings:
 					case ContextParent:
+					case ContextParentComments:
 					case ContextParents:
 					case ContextIssueTypes:
 					case ContextAffectedFiles:

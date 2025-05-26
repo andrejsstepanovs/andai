@@ -93,6 +93,12 @@ func (i *Routine) executeWorkflowStep(workflowStep settings.Step) (exec.Output, 
 		return exec.Output{}, err
 	}
 
+	parentComments, err := i.getParentComments()
+	if err != nil {
+		log.Printf("Failed to get parent comments: %v", err)
+		return exec.Output{}, err
+	}
+
 	understanding := knowledge.Knowledge{
 		Issue:             i.issue,
 		Parent:            i.parent,
@@ -104,6 +110,7 @@ func (i *Routine) executeWorkflowStep(workflowStep settings.Step) (exec.Output, 
 		Project:           i.projectCfg,
 		IssueTypes:        i.issueTypes,
 		Comments:          comments,
+		ParentComments:    parentComments,
 		Step:              workflowStep,
 	}
 
@@ -112,12 +119,17 @@ func (i *Routine) executeWorkflowStep(workflowStep settings.Step) (exec.Output, 
 		log.Printf("Failed to build issue context tmp file: %v", err)
 	}
 
+	removeContextFile := true
 	if contextFile != "" {
 		//log.Printf("Context file: %q\n", contextFile)
 		defer func(name string) {
-			err := os.Remove(name)
-			if err != nil {
-				log.Printf("Failed to remove context file: %v", err)
+			if removeContextFile {
+				err := os.Remove(name)
+				if err != nil {
+					log.Printf("Failed to remove context file: %v", err)
+				}
+			} else {
+				log.Printf("Not removing context file: %q, it may be useful for debugging", name)
 			}
 		}(contextFile)
 
@@ -128,7 +140,11 @@ func (i *Routine) executeWorkflowStep(workflowStep settings.Step) (exec.Output, 
 		//log.Printf("Context file contents: \n------------------\n%s\n------------------\n", contents)
 	}
 
-	return i.executeCommand(workflowStep, contextFile)
+	out, err := i.executeCommand(workflowStep, contextFile)
+	if err != nil {
+		removeContextFile = false // Don't remove context file if we have an error, it may be useful for debugging
+	}
+	return out, err
 }
 
 func (i *Routine) executeCommand(workflowStep settings.Step, contextFile string) (exec.Output, error) {
@@ -180,6 +196,18 @@ func (i *Routine) executeCommand(workflowStep settings.Step, contextFile string)
 		"commit": func(step settings.Step, _ string) (exec.Output, error) {
 			return i.commitUncommitted(string(step.Prompt))
 		},
+		"context-commits": func(_ settings.Step, contextFile string) (exec.Output, error) {
+			commits, err := i.findMentionedCommits(contextFile)
+			if err != nil {
+				log.Printf("Failed to find mentioned commits: %v", err)
+				return exec.Output{}, err
+			}
+			if len(commits) == 0 {
+				log.Println("No commits found in context file")
+				return exec.Output{Stdout: "No recent commits found"}, nil
+			}
+			return i.findCommitPatches(commits)
+		},
 		"context-files": func(_ settings.Step, contextFile string) (exec.Output, error) {
 			return i.findMentionedFiles(contextFile)
 		},
@@ -219,6 +247,32 @@ func (i *Routine) findMentionedFiles(contextFile string) (exec.Output, error) {
 	i.contextFiles = foundFiles.GetAbsolutePaths()
 
 	return exec.Output{Stdout: foundFiles.String()}, nil
+}
+
+func (i *Routine) findMentionedCommits(contextFile string) ([]string, error) {
+	content, err := file.GetContents(contextFile)
+	if err != nil {
+		log.Printf("Failed to get file contents: %v", err)
+		return nil, err
+	}
+
+	return knowledge.GitSHA1(content), nil
+}
+
+func (i *Routine) findCommitPatches(commits []string) (exec.Output, error) {
+	patches := make([]string, 0)
+	for n, commit := range commits {
+		execOut, err := exec.Exec("git", time.Minute, "format-patch", "-1", "--stdout", "--no-binary", "--no-stat", commit)
+		if err != nil {
+			log.Printf("Failed to get commit patch for %q: %v", commit, err)
+			continue
+		}
+		patches = append(patches, fmt.Sprintf("Commit %d: ```patch\n%s\n```", n, execOut.Stdout))
+	}
+
+	msg := fmt.Sprintf("# Recent project git commits:\n%s", strings.Join(patches, "\n\n"))
+
+	return exec.Output{Stdout: msg}, nil
 }
 
 func (i *Routine) runProjectCmd(workflowStep settings.Step) (exec.Output, error) {
@@ -275,7 +329,7 @@ func (i *Routine) checkCommandHardFailure(err error, command []string) error {
 			}
 		}
 		if realFail {
-			return fmt.Errorf("Project command %q failed err: %v\n", strings.Join(command, " "), err)
+			return fmt.Errorf("project command %q failed err: %v", strings.Join(command, " "), err)
 		}
 	}
 
@@ -445,7 +499,7 @@ func (i *Routine) aiderCode(workflowStep settings.Step, contextFile string) (exe
 		return exec.Output{}, err
 	}
 
-	out, err := actions.AiderExecute(contextFile, workflowStep, i.codingAgents.Aider)
+	out, err := actions.AiderExecute(contextFile, workflowStep, i.codingAgents.Aider, true)
 	if err != nil {
 		return out, err
 	}
@@ -479,7 +533,7 @@ func (i *Routine) aiderArchitect(workflowStep settings.Step, contextFile string)
 		}
 	}
 
-	architectResult, err := actions.AiderExecute(contextFile, workflowStep, i.codingAgents.Aider)
+	architectResult, err := actions.AiderExecute(contextFile, workflowStep, i.codingAgents.Aider, true)
 	if err != nil {
 		return architectResult, err
 	}
@@ -508,6 +562,7 @@ func (i *Routine) aiderCommit(workflowStep settings.Step) (exec.Output, error) {
 		"Commit any uncommitted changes. Do nothing if no uncommitted changes are present.",
 		workflowStep,
 		i.codingAgents.Aider,
+		true,
 	)
 	if err != nil {
 		return commitResult, err
