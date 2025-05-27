@@ -518,7 +518,26 @@ func (i *Routine) aiderCode(workflowStep settings.Step, contextFile string) (exe
 			return out, errComment
 		}
 
-		// TODO evaluate if response is error or missing info.
+		prompt := "Evaluate this stdout and stderr. Developer did not made any changes in the code. " +
+			"You need to evaluate if this is a positive outcome or not. " +
+			"If it is positive, answer with single word: 'Positive' or 'Negative'. " +
+			"'Positive' means that the task is already OK and there indeed is nothing to do, i.e it was intentional. " +
+			"'Negative' is everything else."
+
+		txt := fmt.Sprintf("stdout:\n%s\n\nstderr:\n%s\n\n# Your task:\n%s", out.Stdout, out.Stderr, prompt)
+		promptFile, err := file.BuildPromptTextTmpFile(txt)
+		if err != nil {
+			log.Printf("Failed to build prompt text tmp file: %v", err)
+			return out, fmt.Errorf("failed to build prompt text tmp file: %w", err)
+		}
+		result, err := i.simpleAI(promptFile)
+		if err != nil {
+			return out, fmt.Errorf("failed to evaluate no comments message with AI: %w", err)
+		}
+		if strings.Trim(strings.TrimSpace(result.Stdout), "\"") == "Positive" {
+			log.Println("AI evaluation: Positive outcome, no new commits found, task is already OK.")
+			return out, nil
+		}
 
 		return out, fmt.Errorf("no new commits found")
 	}
