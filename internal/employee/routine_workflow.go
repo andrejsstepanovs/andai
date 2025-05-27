@@ -244,6 +244,8 @@ func (i *Routine) findMentionedFiles(contextFile string) (exec.Output, error) {
 		log.Printf("Failed to find files: %v", err)
 		return exec.Output{}, err
 	}
+
+	// TODO ignore go.mod and go.sum - use config
 	i.contextFiles = foundFiles.GetAbsolutePaths()
 
 	return exec.Output{Stdout: foundFiles.String()}, nil

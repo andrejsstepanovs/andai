@@ -6,7 +6,7 @@ Arguments:
 - timeout - how long to wait for aider to respond
 - config - path to `.andai.aider.yaml` file. See [Aider configuration documentation](https://aider.chat/docs/config/aider_conf.html)
 - config_fallback - same as `config`, but used when `aider` hits token-limit error. Setup bigger context model here.
-- model_metadata_file - Optional. Path to `.andai.aider.model.json` file. See [Aider model metadata documentation](https://aider.chat/docs/config/adv-model-settings.html)
+- model_metadata_file - Optional. Path to `.andai.aider.model.json` file. See [Aider model metadata documentation](https://aider.chat/docs/config/adv-model-settings.html) and [default values](https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json)
 - map_tokens - Optional. How many project map tokens aider will use. Default is 1024. It is good value.
 - task_summary_prompt - Optional override prompt for `summarize-task` and aider `summarize` option. Example: `andai` command `command: aider` `summarize: True` configured in `workflow`.
 
