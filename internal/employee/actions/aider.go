@@ -49,6 +49,10 @@ func AiderExecute(contextFile string, step settings.Step, aiderConfig settings.A
 				return AiderExecute(contextFile, step, aiderConfig, retry)
 			}
 
+			log.Println("---------------")
+			log.Println(output.Stdout)
+			log.Println(output.Stderr)
+			log.Println("---------------")
 			output.Stderr = "Aider has hit a token limit."
 			return output, errors.New("aider has hit a token limit")
 		}
