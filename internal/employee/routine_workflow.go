@@ -538,6 +538,11 @@ func (i *Routine) aiderCode(workflowStep settings.Step, contextFile string) (exe
 			log.Println("AI evaluation: Positive outcome, no new commits found, task is already OK.")
 			return out, nil
 		}
+		log.Println("AI evaluation: Negative outcome")
+
+		// TODO check if he wants more files and find them.
+		// use tree ./ -f
+		// or similar
 
 		return out, fmt.Errorf("no new commits found")
 	}

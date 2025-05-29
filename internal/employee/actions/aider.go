@@ -83,6 +83,7 @@ func aiderRemoveUnnecessaryLines(lines []string) []string {
 
 	removeLinesContaining := [][]string{
 		{"CONVENTIONS.md"},
+		{"Scanning repo"},
 		{"Added", "to the chat"},
 		{"Tokens:", "sent", "received"},
 		{"Model:", "with architect"},
