@@ -69,7 +69,6 @@ func (c *Model) APIGetAllParents(issue redmine.Issue) ([]redmine.Issue, error) {
 		issue = *parent
 	}
 
-	parents = sortDescID(parents)
 	return parents, nil
 }
 

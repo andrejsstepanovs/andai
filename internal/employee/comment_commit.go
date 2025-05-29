@@ -3,6 +3,7 @@ package employee
 import (
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 	"time"
 
@@ -104,22 +105,30 @@ func (i *Routine) parentExists() bool {
 
 // getTargetBranch
 // if no parent left, merge it into final branch defined in project config yaml
-func (i *Routine) getTargetBranch() string {
-	finalBranch := i.projectCfg.FinalBranch
-	if !i.parentExists() {
-		return finalBranch
+// returning slice in order. Example:
+// 1. main
+// 2. issue parents parent branch
+// 3. issue parent branch
+func (i *Routine) getTargetBranch() []string {
+	orderedList := make([]string, 0)
+	if i.parentExists() {
+		for _, p := range i.parents {
+			if p.Id != 0 {
+				branchName := i.workbench.GetIssueBranchName(p)
+				if branchName != "" {
+					orderedList = append(orderedList, branchName)
+				}
+			}
+		}
 	}
-
-	override := i.workbench.GetIssueBranchNameOverride(*i.parent)
-	if override != "" {
-		return override
-	}
-
-	return i.workbench.GetIssueBranchName(*i.parent)
+	orderedList = append(orderedList, i.projectCfg.FinalBranch)
+	slices.Reverse(orderedList)
+	return orderedList
 }
 
 func (i *Routine) commentCurrentAboutMerge() error {
-	parentBranchName := i.getTargetBranch()
+	parentBranches := i.getTargetBranch()
+	parentBranchName := parentBranches[len(parentBranches)-1]
 	currentBranchName := i.workbench.GetIssueBranchName(i.issue)
 
 	commentText := fmt.Sprintf("Merged #%d - Branch %q -> %q", i.issue.Id, currentBranchName, parentBranchName)
@@ -134,29 +143,31 @@ func (i *Routine) commentCurrentAboutMerge() error {
 }
 
 func (i *Routine) commentParentBranchDiff() error {
-	if !i.parentExists() {
-		return nil
-	}
-
-	// TODO. url is not working as expected.
-	targetBranch := i.getTargetBranch()
-	branchDiffURL := fmt.Sprintf("[Git Diff: %s <-> %s](/projects/%s/repository/%s/diff?rev=%s&rev_to=%s)", targetBranch, i.projectCfg.FinalBranch, i.project.Identifier, i.project.Identifier, targetBranch, i.projectCfg.FinalBranch)
-
-	existingComments, err := i.getParentComments()
-	if err != nil {
-		return fmt.Errorf("failed to get parent comments: %v", err)
-	}
-	for _, comment := range existingComments {
-		if comment.Text == branchDiffURL {
-			return nil
-		}
-	}
-
-	err = i.AddCommentToParent(branchDiffURL)
-	if err != nil {
-		return fmt.Errorf("failed to add merge comment to parent: %v", err)
-	}
 	return nil
+	//if !i.parentExists() {
+	//	return nil
+	//}
+	//
+	//// TODO. url is not working as expected.
+	//parentBranches := i.getTargetBranch()
+	//targetBranch := parentBranches[len(parentBranches)-1]
+	//branchDiffURL := fmt.Sprintf("[Git Diff: %s <-> %s](/projects/%s/repository/%s/diff?rev=%s&rev_to=%s)", targetBranch, i.projectCfg.FinalBranch, i.project.Identifier, i.project.Identifier, targetBranch, i.projectCfg.FinalBranch)
+	//
+	//existingComments, err := i.getParentComments()
+	//if err != nil {
+	//	return fmt.Errorf("failed to get parent comments: %v", err)
+	//}
+	//for _, comment := range existingComments {
+	//	if comment.Text == branchDiffURL {
+	//		return nil
+	//	}
+	//}
+	//
+	//err = i.AddCommentToParent(branchDiffURL)
+	//if err != nil {
+	//	return fmt.Errorf("failed to add merge comment to parent: %v", err)
+	//}
+	//return nil
 }
 
 func (i *Routine) commentParentAboutMerge() error {
@@ -164,7 +175,8 @@ func (i *Routine) commentParentAboutMerge() error {
 		return nil
 	}
 
-	parentBranchName := i.getTargetBranch()
+	parentBranches := i.getTargetBranch()
+	parentBranchName := parentBranches[len(parentBranches)-1]
 	currentBranchName := i.workbench.GetIssueBranchName(i.issue)
 
 	commentText := fmt.Sprintf("Merged #%d branch %q into %q", i.issue.Id, currentBranchName, parentBranchName)

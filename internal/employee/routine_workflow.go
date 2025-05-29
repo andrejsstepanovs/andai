@@ -34,7 +34,8 @@ func (i *Routine) ExecuteWorkflow() (bool, error) {
 	}
 
 	if needSetup {
-		err := i.workbench.PrepareWorkplace(i.getTargetBranch())
+		parentBranches := i.getTargetBranch()
+		err := i.workbench.PrepareWorkplace(parentBranches...)
 		if err != nil {
 			log.Printf("Failed to prepare workplace: %v", err)
 			return false, err
@@ -624,7 +625,8 @@ func (i *Routine) simpleAI(promptFile string) (exec.Output, error) {
 
 func (i *Routine) mergeIntoParent(deleteBranchAfterMerge bool) (exec.Output, error) {
 	currentBranchName := i.workbench.GetIssueBranchName(i.issue)
-	parentBranchName := i.getTargetBranch()
+	parentBranches := i.getTargetBranch()
+	parentBranchName := parentBranches[len(parentBranches)-1] // last is our first parent
 
 	skipMerge := i.workbench.GetIssueSkipMergeOverride(i.issue)
 	if skipMerge {

@@ -43,6 +43,11 @@ func AiderExecute(contextFile string, step settings.Step, aiderConfig settings.A
 			if retry {
 				log.Println("Aider has hit a token limit, removing chat history and trying again once more")
 				_, err = exec.Exec("truncate", time.Minute, "-s", "0", ".aider.chat.history.md")
+				if err != nil {
+					log.Printf("Failed to truncate .aider.chat.history.md: %v", err)
+					output.Stderr = "Failed to truncate .aider.chat.history.md"
+					return output, err
+				}
 
 				retry = false                                   // Prevent infinite loop
 				aiderConfig.Config = aiderConfig.ConfigFallback // TODO implement config fallback properly

@@ -13,6 +13,7 @@ llm_models:
 coding_agents:
   aider:
     config: "/tmp/.aider.conf.yml"
+    config_fallback: "/tmp/.aider.conf.yml"
     map_tokens: 100
     timeout: "1m"
 

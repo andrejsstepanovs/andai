@@ -42,20 +42,24 @@ func (i *Workbench) GoToRepo() error {
 	return nil
 }
 
-func (i *Workbench) PrepareWorkplace(targetBranch string) error {
+func (i *Workbench) PrepareWorkplace(targetBranches ...string) error {
 	err := i.GoToRepo()
 	if err != nil {
 		log.Printf("Failed to change directory: %v", err)
 		return err
 	}
 
-	log.Printf("First checkout target branch %q", targetBranch)
-	err = i.CheckoutBranch(targetBranch)
-	if err != nil {
-		log.Printf("Prepare workplace: failed to checkout parent branch: %v", err)
-		return err
+	// start with first target branch and create new from it until we reach the issue branch
+	// this will always keep the issue branch up to date with the parent branches
+	for k, targetBranch := range targetBranches {
+		log.Printf("Checkout %d target branch %q", k+1, targetBranch)
+		err = i.CheckoutBranch(targetBranch)
+		if err != nil {
+			log.Printf("Prepare workplace: failed to checkout parent branch: %v", err)
+			return err
+		}
+		i.Git.Reload()
 	}
-	i.Git.Reload()
 
 	branchName := i.GetIssueBranchName(i.Issue)
 	log.Printf("Now current branch %q", branchName)
