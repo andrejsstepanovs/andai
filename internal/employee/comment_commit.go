@@ -111,17 +111,25 @@ func (i *Routine) parentExists() bool {
 // 3. issue parent branch
 func (i *Routine) getTargetBranch() []string {
 	orderedList := make([]string, 0)
+	seen := make(map[string]bool)
+
 	if i.parentExists() {
 		for _, p := range i.parents {
 			if p.Id != 0 {
 				branchName := i.workbench.GetIssueBranchName(p)
-				if branchName != "" {
+				if branchName != "" && !seen[branchName] {
 					orderedList = append(orderedList, branchName)
+					seen[branchName] = true
 				}
 			}
 		}
 	}
-	orderedList = append(orderedList, i.projectCfg.FinalBranch)
+
+	// Only add final branch if it's not already present
+	if !seen[i.projectCfg.FinalBranch] {
+		orderedList = append(orderedList, i.projectCfg.FinalBranch)
+	}
+
 	slices.Reverse(orderedList)
 	return orderedList
 }
