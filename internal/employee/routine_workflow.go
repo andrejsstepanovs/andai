@@ -519,11 +519,13 @@ func (i *Routine) aiderCode(workflowStep settings.Step, contextFile string) (exe
 			return out, errComment
 		}
 
-		prompt := "Evaluate this stdout and stderr. Developer did not made any changes in the code. " +
-			"For example, this output means that there was no change needed: ```diff\n\n```." +
-			"You need to evaluate if this is a positive outcome or not. " +
-			"If it is positive, answer with single word: 'Positive' or 'Negative'. " +
-			"'Positive' means that the task is already OK and there indeed is nothing to do, i.e it was intentional. " +
+		prompt := "Evaluate this stdout and stderr. Developer did not made any changes in the code.\n" +
+			"You need to evaluate if this is a positive outcome or not.\n" +
+			"If it is positive, answer starting with word: 'Positive' or 'Negative' and proceed to shortly explain why.\n" +
+			"For example, this empty diff means that there was no change needed and outcome is positive: ```diff\n\n```.\n" +
+			"Evaluate text content and ignore if it is stderr or stdout, it do not matter.\n" +
+			"If diff is provided and is empty then outcome is Positive and you sould ignore everything what was said about work. It is just a thinking process right *before* the job that developer wrote down without not knowing yet what will happen later.\n" +
+			"'Positive' means that the task is already OK and there indeed is nothing to do, i.e it was intentional.\n" +
 			"'Negative' is everything else."
 
 		txt := fmt.Sprintf("stdout:\n%s\n\nstderr:\n%s\n\n# Your task:\n%s", out.Stdout, out.Stderr, prompt)
@@ -536,7 +538,8 @@ func (i *Routine) aiderCode(workflowStep settings.Step, contextFile string) (exe
 		if err != nil {
 			return out, fmt.Errorf("failed to evaluate no comments message with AI: %w", err)
 		}
-		if strings.Trim(strings.TrimSpace(result.Stdout), "\"") == "Positive" {
+		log.Println("AI:", result.Stdout)
+		if strings.HasPrefix(strings.Trim(strings.TrimSpace(result.Stdout), "\""), "Positive") {
 			log.Println("AI evaluation: Positive outcome, no new commits found, task is already OK.")
 			return out, nil
 		}
