@@ -26,6 +26,11 @@ If you plan to run `andai` locally, you will need to install [aider](https://aid
 Install it and make sure it is available in your PATH. No other configuration is necessary, 
 as most of the `aider` configuration will be done via command line arguments.
 
+```
+uv tool install aider
+uv tool upgrade aider-chat
+```
+
 ## Quick Start
 
 After this follow [Quick Start](QUICKSTART.md) guide to get you up and running.
