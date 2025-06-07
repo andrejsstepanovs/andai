@@ -520,6 +520,7 @@ func (i *Routine) aiderCode(workflowStep settings.Step, contextFile string) (exe
 		}
 
 		prompt := "Evaluate this stdout and stderr. Developer did not made any changes in the code. " +
+			"For example, this output means that there was no change needed: ```diff\n\n```." +
 			"You need to evaluate if this is a positive outcome or not. " +
 			"If it is positive, answer with single word: 'Positive' or 'Negative'. " +
 			"'Positive' means that the task is already OK and there indeed is nothing to do, i.e it was intentional. " +
