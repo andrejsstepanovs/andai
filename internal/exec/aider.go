@@ -55,7 +55,7 @@ var (
 	}
 
 	aiderCodeParams = map[string]string{
-		"--chat-mode": "code",
+		//	"--chat-mode": "diff-fenced", // code. by default it is code so no need to set anything.
 	}
 	aiderArchitectParams = map[string]string{
 		"--chat-mode": "ask",
