@@ -1,5 +1,5 @@
 x-project-volumes: &project-volumes
-  - /tmp/test-repo/:/var/repositories/test-repo
+  - /tmp/test-repo/:/var/repositories/test-repo      # <-- replace with your actual project paths. First path is your local system path.
   - ./:/app/ # config files are located here. Used if running andai in docker.
 
 services:
@@ -19,6 +19,15 @@ services:
 
   redmine:
     image: sameersbn/redmine:6.0.4-1
+    # (!) If you are running ARM (Mac), then
+    # you will need to build this image yourself (or ask https://github.com/sameersbn/docker-redmine owner to include it in docker hub)
+    #
+    # Should be as simple as:
+    # cd /tmp
+    # git clone https://github.com/sameersbn/docker-redmine.git
+    # cd docker-redmine
+    # docker build -t sameersbn/redmine:6.0.4-1 .
+
     env_file:
       - .redmine.env
     ports:

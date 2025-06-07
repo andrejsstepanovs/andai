@@ -1,6 +1,16 @@
 subtree-only: true
 cache-prompts: true
 
+### Uncomment and configure the model you want to use
+# (!) aider first prefix name is used to identify provider (and api type).
+# If you run bedrock, then you need to use "openai/bedrock/" prefix.
+
+# Custom
+#model: openai/openai/gpt-4.1
+#weak-model: openai/gemini/gemini-2.0-flash-001
+#openai-api-key: "sk-****"
+#openai-api-base: https://CUSTOM_BASE_URL/v1/
+
 # Ollama
 #model: ollama_chat/deepseek-r1:32b-qwen-distill-q4_K_M
 #set-env:

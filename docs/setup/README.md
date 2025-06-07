@@ -19,6 +19,8 @@ You must create `.andai.project.yaml` file that will contain all the necessary i
 
 All these root elements should exist within single yaml file.
 
+Go to [config_template/](../config_template/) and copy all files into new directory.
+
 ## workflow
 See [workflow/README.md](workflow/README.md) for more information.
 

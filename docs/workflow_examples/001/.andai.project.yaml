@@ -5,16 +5,52 @@ projects:
 # your projects here
 
 redmine:
-  db: redmine:redmine@tcp(localhost:3306)/redmine
-  url: "http://localhost:10083"
-  api_key: "2159cef2fb6c82c4f66981f199798781e161c694"
-  repositories: "/var/repositories/"
+# your redmine config here
 
 coding_agents:
-  aider:
-    timeout: "180m"
-    config: "/path/to/.andai.aider.yaml"
-    map_tokens:  512 #1024
+# your coding agents config here
+
+workflow:
+  states:
+    In Progress:
+      description: Implement what is required.
+      ai: ["Task"] # AI is allowed to work on "Task" issues in this state
+      is_default: True
+      is_first: True
+    Deployment:
+      description: Merge code into to parent Issue branch.
+      ai: ["Task"]
+    Done:
+      description: Issue is completed.
+      ai: []
+      is_closed: True
+
+  transitions:
+    - source: In Progress
+      target: Deployment
+    - source: Deployment
+      target: Done
+
+  issue_types:
+    Task:
+      description: Single small coding task.
+      jobs:
+        In Progress:
+          steps:
+            - command: aider
+              action: architect-code
+              context: ["project", "wiki", "ticket", "comments"]
+              prompt: Implement (code) given Task issue based on available information.
+        Deployment:
+          steps:
+            - command: merge-into-parent # merge into parent task, but in this case we have only one issue type so it will be merged into final_branch
+
+  # order in what tasks should be picked up by AI
+  priorities:
+    - type: Task
+      state: Deployment
+    - type: Task
+      state: In Progress
 
 workflow:
   states:

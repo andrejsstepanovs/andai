@@ -1,14 +1,18 @@
 # Quick Start
 
-We will create new `andai` project config folder in `/tmp/test`
+We will create new `andai` project config folder in `/tmp/test` (use any folder you like),
+copy configuration files from [config_template/](../config_template/) folder and edit them.
 
 ```bash
-mkdir /tmp/test
-touch /tmp/test/.andai.aider.yaml
-touch /tmp/test/.andai.project.yaml
-touch /tmp/test/docker-compose.yaml
-touch /tmp/test/.redmine.env
+mkdir /tmp/test ; cd /tmp/test # or any other folder you like
 
+# Download configuration files
+wget https://raw.githubusercontent.com/andrejsstepanovs/andai/refs/heads/main/docs/config_template/.andai.aider.yaml
+wget https://raw.githubusercontent.com/andrejsstepanovs/andai/refs/heads/main/docs/config_template/.andai.project.yaml
+wget https://raw.githubusercontent.com/andrejsstepanovs/andai/refs/heads/main/docs/config_template/docker-compose.yaml
+wget https://raw.githubusercontent.com/andrejsstepanovs/andai/refs/heads/main/docs/config_template/.redmine.env
+
+# Check that files are there
 ➜  test tree -a /tmp/test
 /tmp/test
 ├── .andai.aider.yaml
@@ -19,25 +23,14 @@ touch /tmp/test/.redmine.env
 0 directories, 4 files
 ```
 
-Follow it up with copy & paste file contents from `/docs/examples/basic` folder.
-
-That config is using anthropic API key with sonnet model.
-
-## Target project
-
-Let's create our first project that `andai` will work with. *You can use real project of course* and skip this step.
-```
-mkdir /tmp/test-repo
-cd /tmp/test-repo
-echo "# Test repo" > README.md
-git init
-git add README.md
-git commit -m "Initial commit"
-```
+Then (!) Edit these 3 files:
+- `.andai.aider.yaml`
+- `.andai.project.yaml`
+- `docker-compose.yaml`
 
 ## Start Ticketing system
 
-Now that you have configuration files in place, you can start ticketing system.
+Now that you have configuration files in place (and adjusted with your project and llm config), you can start ticketing system.
 
 ```bash
 cd /tmp/test
@@ -51,7 +44,7 @@ This will create new redmine (ticketing system) instance with database.
 It will take few seconds until redmine is up and running.
 
 ## andai binary
-Copy `andai` binary there as well or add it to PATH so its available from everywhere.
+Copy `andai` binary there as well or add it to PATH so it's available from everywhere.
 
 ## Configure ticketing system
 Now it's time to start using `AndAI` binary.
@@ -78,7 +71,7 @@ andai work loop
 
 Alternative (all in one):
 ```bash
-cd /tmp/test/
+# from same folder where you have `.andai.project.yaml`
 andai go
 ```
 
@@ -100,8 +93,6 @@ After that observe terminal command that is running `andai`. It should pick up t
 ## Stop and cleanup
 ```bash
 docker-compose down
-rm -rf /tmp/test
-rm -rf /tmp/test-repo
 ```
 Be aware that `docker-compose down` will destroy images. If you want to stop and continue then use `docker-compose stop`.
 
@@ -110,4 +101,4 @@ Be aware that `docker-compose down` will destroy images. If you want to stop and
 Now that you created simple setup, and it is working as expected, 
 you probably want to implement more complex workflows and add more real projects into the mix.
 
-See other examples in [/docs/example](../examples/) folder and [workflow/README.md](workflow/README.md) documentation to see what is available.
+See other examples in [/docs/workflow_examples](../workflow_examples/) folder and [workflow/README.md](workflow/README.md) documentation to see what is available.

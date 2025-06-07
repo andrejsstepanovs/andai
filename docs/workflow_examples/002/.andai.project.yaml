@@ -5,16 +5,10 @@ projects:
 # your projects here
 
 redmine:
-  db: redmine:redmine@tcp(localhost:3306)/redmine
-  url: "http://localhost:10083"
-  api_key: "2159cef2fb6c82c4f66981f199798781e161c694"
-  repositories: "/var/repositories/"
+# your redmine config here
 
 coding_agents:
-  aider:
-    timeout: "180m"
-    config: "/path/to/.andai.aider.yaml"
-    map_tokens:  1024
+# your coding agents config here
 
 workflow:
   states:
