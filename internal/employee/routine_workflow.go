@@ -100,6 +100,12 @@ func (i *Routine) executeWorkflowStep(workflowStep settings.Step) (exec.Output, 
 		return exec.Output{}, err
 	}
 
+	siblingsComments, err := i.getSiblingsComments(i.siblings)
+	if err != nil {
+		log.Printf("Failed to get siblings comments: %v", err)
+		return exec.Output{}, err
+	}
+
 	understanding := knowledge.Knowledge{
 		Issue:             i.issue,
 		Parent:            i.parent,
@@ -107,6 +113,7 @@ func (i *Routine) executeWorkflowStep(workflowStep settings.Step) (exec.Output, 
 		ClosedChildrenIDs: i.closedChildrenIDs,
 		Children:          i.children,
 		Siblings:          i.siblings,
+		SiblingsComments:  siblingsComments,
 		Workbench:         i.workbench,
 		Project:           i.projectCfg,
 		IssueTypes:        i.issueTypes,

@@ -279,6 +279,7 @@ components:
               - wiki
               - children
               - siblings
+              - siblings_comments
               - parent
               - parents
               - issue_types

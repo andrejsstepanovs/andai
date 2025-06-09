@@ -41,6 +41,9 @@ const ContextChildren = "children"
 // ContextSiblings matches the siblings
 const ContextSiblings = "siblings"
 
+// ContextSiblingsComments matches the siblings comments
+const ContextSiblingsComments = "siblings_comments"
+
 // ContextParent matches the parent
 const ContextParent = "parent"
 

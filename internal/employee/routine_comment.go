@@ -8,6 +8,7 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/exec"
 	redminemodels "github.com/andrejsstepanovs/andai/internal/redmine/models"
 	"github.com/andrejsstepanovs/andai/internal/settings"
+	"github.com/mattn/go-redmine"
 )
 
 func (i *Routine) getParentComments() (redminemodels.Comments, error) {
@@ -29,6 +30,18 @@ func (i *Routine) getComments() (redminemodels.Comments, error) {
 	}
 
 	return comments, nil
+}
+
+func (i *Routine) getSiblingsComments(siblings []redmine.Issue) (redminemodels.Comments, error) {
+	var allComments redminemodels.Comments
+	for _, sibling := range siblings {
+		comments, err := i.model.DBGetComments(sibling.Id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get comments for sibling %d err: %v", sibling.Id, err)
+		}
+		allComments = append(allComments, comments...)
+	}
+	return allComments, nil
 }
 
 func (i *Routine) AddCommentToParent(text string) error {

@@ -12,6 +12,7 @@ Context is building knowledge prompt that is given to LLM. Available context val
 - `wiki` - Includes project wiki. Defined in `projects[]` ends up in redmine project wiki. We pick data from there.
 - `children` - Includes all children issues with same info as `ticket`. Is not including Closed issues.
 - `siblings` - Includes all siblings issues with same info as `ticket`. Is not including Closed issues.
+- `siblings_comments` - Includes all siblings comments.
 - `parent` - Includes first single parent issue with same info as `ticket`.
 - `parents` - Includes parent and parent parents issues with same info as `ticket`.
 - `parent-comments` - Includes parent comment messages.

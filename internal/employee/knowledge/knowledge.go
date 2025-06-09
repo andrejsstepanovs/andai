@@ -30,6 +30,7 @@ type Knowledge struct {
 	IssueTypes        settings.IssueTypes
 	Comments          redminemodels.Comments
 	ParentComments    redminemodels.Comments
+	SiblingsComments  redminemodels.Comments
 	Step              settings.Step
 }
 
@@ -149,6 +150,8 @@ func (k Knowledge) getCommentContext(context string) (string, error) {
 		return k.getComments(k.Comments, settings.ContextComments)
 	case settings.ContextParentComments:
 		return k.getComments(k.ParentComments, settings.ContextParentComments)
+	case settings.ContextSiblingsComments:
+		return k.getComments(k.SiblingsComments, settings.ContextSiblingsComments)
 	default:
 		return "", fmt.Errorf("unknown comment context: %q", context)
 	}
