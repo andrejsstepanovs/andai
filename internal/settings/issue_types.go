@@ -42,7 +42,7 @@ const ContextChildren = "children"
 const ContextSiblings = "siblings"
 
 // ContextSiblingsComments matches the siblings comments
-const ContextSiblingsComments = "siblings_comments"
+const ContextSiblingsComments = "siblings-comments"
 
 // ContextParent matches the parent
 const ContextParent = "parent"

@@ -279,7 +279,7 @@ components:
               - wiki
               - children
               - siblings
-              - siblings_comments
+              - siblings-comments
               - parent
               - parents
               - issue_types
