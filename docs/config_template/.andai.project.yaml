@@ -314,8 +314,11 @@ workflow:
         Backlog: {steps: [{command: next}]}
         Think:
           steps:
+            - command: context-commits
+              context: [ "comments", "parent-comments", "siblings-comments" ]
+              remember: True
             - command: context-files
-              context: ["wiki", "parent", "ticket", "comments"]
+              context: ["wiki", "parent", "ticket", "comments", "siblings-comments"]
               remember: True
             - command: summarize-task
               context: ["project", "wiki", "parent", "ticket", "last-5-comments"]
