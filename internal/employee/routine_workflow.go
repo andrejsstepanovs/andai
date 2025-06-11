@@ -531,11 +531,11 @@ func (i *Routine) aiderCode(workflowStep settings.Step, contextFile string) (exe
 			"If it is positive, answer starting with word: 'Positive' or 'Negative' and proceed to shortly explain why.\n" +
 			"For example, this empty diff means that there was no change needed and outcome is positive: ```diff\n\n```.\n" +
 			"Evaluate text content and ignore if it is stderr or stdout, it do not matter.\n" +
-			"If diff is provided and is empty then outcome is Positive and you sould ignore everything what was said about work. It is just a thinking process right *before* the job that developer wrote down without not knowing yet what will happen later.\n" +
+			"If diff is provided and is empty then outcome is Positive and you should ignore everything what was said about work. It is just a thinking process right *before* the job that developer wrote down without not knowing yet what will happen later.\n" +
 			"'Positive' means that the task is already OK and there indeed is nothing to do, i.e it was intentional.\n" +
 			"'Negative' is everything else."
 
-		txt := fmt.Sprintf("stdout:\n%s\n\nstderr:\n%s\n\n# Your task:\n%s", out.Stdout, out.Stderr, prompt)
+		txt := fmt.Sprintf("stdout:\n%s\n\n%s\n\n# Your task:\n%s", out.Stdout, out.Stderr, prompt)
 		promptFile, err := file.BuildPromptTextTmpFile(txt)
 		if err != nil {
 			log.Printf("Failed to build prompt text tmp file: %v", err)
