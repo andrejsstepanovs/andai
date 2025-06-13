@@ -526,12 +526,12 @@ func (i *Routine) aiderCode(workflowStep settings.Step, contextFile string) (exe
 			return out, errComment
 		}
 
-		prompt := "Evaluate this stdout and stderr. Developer did not made any changes in the code.\n" +
+		prompt := "You are tasked to evaluate response text where software developer did not made any changes to the code.\n" +
 			"You need to evaluate if this is a positive outcome or not.\n" +
-			"If it is positive, answer starting with word: 'Positive' or 'Negative' and proceed to shortly explain why.\n" +
-			"For example, this empty diff means that there was no change needed and outcome is positive: ```diff\n\n```.\n" +
-			"Evaluate text content and ignore if it is stderr or stdout, it do not matter.\n" +
-			"If diff is provided and is empty then outcome is Positive and you should ignore everything what was said about work. It is just a thinking process right *before* the job that developer wrote down without not knowing yet what will happen later.\n" +
+			"Please evaluate if this was intended or there was some kind of error in the workflow.\n" +
+			"If there is empty diff mentioned then that means that it was intentional and your evaluation must be Positive. Example of mentioned empty diff: ```diff\n\n```.\n\n" +
+			"\n" +
+			"If it is positive, answer starting with word: 'Positive'. If not start answer with word 'Negative' and proceed to shortly explain why.\n" +
 			"'Positive' means that the task is already OK and there indeed is nothing to do, i.e it was intentional.\n" +
 			"'Negative' is everything else."
 
