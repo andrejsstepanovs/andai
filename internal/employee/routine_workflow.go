@@ -546,7 +546,7 @@ func (i *Routine) aiderCode(workflowStep settings.Step, contextFile string) (exe
 			return out, fmt.Errorf("failed to evaluate no comments message with AI: %w", err)
 		}
 		log.Println("AI:", result.Stdout)
-		if strings.HasPrefix(strings.Trim(strings.TrimSpace(result.Stdout), "\""), "Positive") {
+		if strings.Contains(result.Stdout, "Positive") && !strings.Contains(result.Stdout, "Negative") {
 			log.Println("AI evaluation: Positive outcome, no new commits found, task is already OK.")
 			return out, nil
 		}

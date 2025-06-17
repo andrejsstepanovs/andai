@@ -242,8 +242,19 @@ func (g *Git) ExecCheckoutBranch(branchName string) error {
 	}
 
 	if checkoutErr != nil {
+		exec, errDiff := Exec("git", time.Second*10, "diff", "--name-only")
+		if errDiff == nil && exec.Stdout != "" {
+			files := strings.Split(exec.Stdout, "\n")
+			if len(files) > 0 {
+				for i, file := range files {
+					log.Printf("Unmerged file %d: %s", i+1, file)
+				}
+				return fmt.Errorf("failed to checkout branch. %d unmerged files detected in branch: %s", len(files), branchName)
+			}
+		}
 		return fmt.Errorf("failed to checkout branch err: %v", checkoutErr)
 	}
+
 	if checkoutResp.Stderr != "" {
 		log.Printf("git: %s", checkoutResp.Stderr)
 	}
