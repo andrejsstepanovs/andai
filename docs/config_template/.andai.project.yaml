@@ -210,6 +210,7 @@ workflow:
     - { source: Fixing,  target: QA,     success: true }
     - { source: Fixing,  target: Help,   fail: true }
     - { source: Help,    target: QA }
+    - { source: Help,    target: Think }
     - { source: QA,      target: Deploy, success: true }
     - { source: QA,      target: Think,  fail: true }
     - { source: Deploy,  target: Done }
