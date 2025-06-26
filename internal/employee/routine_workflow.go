@@ -15,6 +15,7 @@ import (
 	"github.com/andrejsstepanovs/andai/internal/employee/knowledge"
 	"github.com/andrejsstepanovs/andai/internal/exec"
 	model "github.com/andrejsstepanovs/andai/internal/redmine"
+	redminemodels "github.com/andrejsstepanovs/andai/internal/redmine/models"
 	"github.com/andrejsstepanovs/andai/internal/settings"
 )
 
@@ -94,10 +95,14 @@ func (i *Routine) executeWorkflowStep(workflowStep settings.Step) (exec.Output, 
 		return exec.Output{}, err
 	}
 
-	parentComments, err := i.getParentComments()
-	if err != nil {
-		log.Printf("Failed to get parent comments: %v", err)
-		return exec.Output{}, err
+	var parentComments redminemodels.Comments
+	if i.parentExists() {
+		var errParentComments error
+		parentComments, errParentComments = i.getParentComments()
+		if errParentComments != nil {
+			log.Printf("Failed to get parent comments: %v", errParentComments)
+			return exec.Output{}, errParentComments
+		}
 	}
 
 	siblingsComments, err := i.getSiblingsComments(i.siblings)
