@@ -203,8 +203,8 @@ func (i *Routine) executeCommand(workflowStep settings.Step, contextFile string)
 		"summarize-task": func(step settings.Step, contextFile string) (exec.Output, error) {
 			return i.summarizeTheTask(step, contextFile)
 		},
-		"project-cmd": func(step settings.Step, _ string) (exec.Output, error) {
-			return i.runProjectCmd(step)
+		"project-cmd": func(step settings.Step, contextFile string) (exec.Output, error) {
+			return i.runProjectCmd(step, contextFile)
 		},
 		"commit": func(step settings.Step, _ string) (exec.Output, error) {
 			return i.commitUncommitted(string(step.Prompt))
@@ -290,7 +290,7 @@ func (i *Routine) findCommitPatches(commits []string) (exec.Output, error) {
 	return exec.Output{Stdout: msg}, nil
 }
 
-func (i *Routine) runProjectCmd(workflowStep settings.Step) (exec.Output, error) {
+func (i *Routine) runProjectCmd(workflowStep settings.Step, contextFile string) (exec.Output, error) {
 	command, err := i.projectCfg.Commands.Find(workflowStep.Action)
 	if err != nil {
 		return exec.Output{}, err
@@ -326,6 +326,22 @@ func (i *Routine) runProjectCmd(workflowStep settings.Step) (exec.Output, error)
 	}
 	if command.IgnoreStdOutIfNoStdErr && ret.Stderr == "" {
 		ret.Stdout = "OK"
+	}
+
+	if workflowStep.Prompt != "" {
+		f := "# Context:\n%s\n\n# Command `%s`:\n%s\n\n# Your task:\n%s"
+		prompt := fmt.Sprintf(f, contextFile, ret.Command, ret.AsPrompt(), workflowStep.Prompt)
+		promptFile, err := file.BuildPromptTextTmpFile(prompt)
+		if err != nil {
+			log.Printf("Failed to build prompt text tmp file: %v", err)
+			return ret, fmt.Errorf("failed to build prompt text tmp file: %w", err)
+		}
+		result, err := i.simpleAI(promptFile)
+		if err != nil {
+			return ret, fmt.Errorf("failed to run project command AI prompt. err: %w", err)
+		}
+		log.Println("AI:", result.Stdout)
+		return result, nil
 	}
 
 	return ret, nil

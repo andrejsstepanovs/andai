@@ -371,6 +371,16 @@ func IsGitInstalled() bool {
 	return true
 }
 
+func IsTreeInstalled() bool {
+	out, err := Exec("tree", time.Second*10, "--version")
+	if err != nil {
+		log.Printf("tree is not installed: %v", err)
+		return false
+	}
+	log.Println(out.Stdout)
+	return true
+}
+
 func IsAiderInstalled() bool {
 	out, err := Exec("aider", time.Second*10, "--version")
 	if err != nil {

@@ -147,11 +147,8 @@ func (s *Settings) validateStep(
 		if step.Action == "" {
 			return fmt.Errorf("%q step action is required for %q in %q", step.Command, types.Name, stateName)
 		}
-		if step.Prompt != "" {
-			return fmt.Errorf("%q step %q in %q cannot have `prompt`", step.Command, step.Action, stateName)
-		}
-		if len(step.Context) > 0 {
-			return fmt.Errorf("%q step %q in %q cannot have `context`", step.Command, step.Action, stateName)
+		if step.Prompt != "" && len(step.Context) == 0 {
+			return fmt.Errorf("%q step %q in %q cannot have `prompt` with no context", step.Command, step.Action, stateName)
 		}
 		if step.Summarize {
 			return fmt.Errorf("%q step %q cannot have `summarize`", step.Command, step.Action)
