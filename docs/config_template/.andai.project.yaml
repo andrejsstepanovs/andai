@@ -155,6 +155,10 @@ projects:
         command: ["gofmt", "-s", "-w", "."]        # <-- change command to run tests in your project (if you don't have it, then can also be `echo "OK"` or remove `reformat` from workflow config.
         ignore_err: True
         success_if_no_output: True
+      - name: "list-code-files"
+        command: [ "tree", "-ift" ]
+        ignore_err: True
+        success_if_no_output: True
 
     # <-- Add more projects if needed. (Remember to add new paths to docker-compose.yaml too)
     # After changing projects run `andai setup projects` to sync this info with redmine.
@@ -235,6 +239,15 @@ workflow:
         Backlog: {steps: [{command: next}]}
         Think:
           steps:
+            - command: project-cmd
+              context: ["project", "wiki", "parents", "ticket", "comments"]
+              action: list-code-files
+              prompt: |
+                Analyze these code files and identify only the 2-6 most critical files
+                a developer must modify or understand to complete this specific task.
+                Answer with a list of relative code file paths. Do not explain file or what it contains, just list them.
+                Include only files directly related to the task - exclude tangential, binary, or reference files.
+              comment: true
             - command: context-files
               context: ["wiki", "ticket", "comments"]
               remember: True
