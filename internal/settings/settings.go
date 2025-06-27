@@ -318,7 +318,7 @@ func (s *Settings) validateLlmModels() error {
 		if model.Provider == "" {
 			return fmt.Errorf("llm model provider is required")
 		}
-		if model.APIKey == "" {
+		if model.APIKey.String() == "" {
 			return fmt.Errorf("llm model api_key is required")
 		}
 

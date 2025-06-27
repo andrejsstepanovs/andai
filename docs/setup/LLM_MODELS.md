@@ -9,7 +9,7 @@ You are required to configure this part and set up proper api-key.
 - temperature - Temperature for the model
 - provider - LLM inference provider 
 - base_url - Base URL for the model
-- api_key - API key for the model
+- api_key - API key for the model. Can be env variable or hardcoded value. For env variable prefix with `os.environ/YOUR_ENV_VAR_API_KEY`.
 - commands - Optional (evaluate, summarize-task, create-issues, ai). List of commands model must be used for. If not set, all commands will use mandatory "normal" model.
 
 
@@ -28,7 +28,7 @@ llm_models:
     temperature: 0.2
     provider: "custom"
     base_url: "https://llm.provider.url.com/v1/chat/completions"
-    api_key: "****"
+    api_key: os.environ/YOUR_ENV_VAR_API_KEY
 ```
 
 ## External Providers

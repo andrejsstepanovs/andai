@@ -48,7 +48,7 @@ func NewAI(config settings.LlmModel) (*AI, error) {
 	}
 
 	cfg.Provider = config.Provider
-	cfg.APIKeys = map[string]string{config.Provider: config.APIKey}
+	cfg.APIKeys = map[string]string{config.Provider: config.APIKey.String()}
 	cfg.Model = config.Model
 	cfg.MaxTokens = maxTokens
 	cfg.MaxRetries = maxRetries
@@ -91,7 +91,7 @@ func NewAI(config settings.LlmModel) (*AI, error) {
 		opts := []gollm.ConfigOption{
 			gollm.SetProvider(cfg.Provider),
 			gollm.SetModel(cfg.Model),
-			gollm.SetAPIKey(config.APIKey),
+			gollm.SetAPIKey(config.APIKey.String()),
 			gollm.SetMaxTokens(cfg.MaxTokens),
 			gollm.SetMaxRetries(cfg.MaxRetries),
 			gollm.SetRetryDelay(cfg.RetryDelay),
