@@ -14,11 +14,11 @@ LD_FLAGS             := -X main.Version=$(VERSION) -X main.GitHead=$(GIT_HEAD)
 PACKAGES             := $(shell go list -f '{{.Dir}}' ./...)
 MOCK_PACKAGES        := $(shell find . -path ./data -prune , -name "mocks" | grep -v -E "data")
 
-ENGINE_NAME            := "andai"
+APPNAME            := "andai"
 
-ENGINE_DIR             := .
+APP_DIR             := .
 
-ENGINE_DOCKER_IMAGE    := $(ENGINE_NAME)
+APP_DOCKER_IMAGE    := $(APPNAME)
 
 GREEN  := $(shell tput -Txterm setaf 2)
 YELLOW := $(shell tput -Txterm setaf 3)
@@ -128,23 +128,23 @@ install: download
 # BEGIN of <build>
 
 .PHONY: build
-build: build-engine
+build: build-app
 
-.PHONY: build-engine
-build-engine: ## Build engine CLI
-	rm -rf $(BUILD_PATH)/$(ENGINE_NAME)
-	$(call fn_build,$@,$(ENGINE_NAME),$(ENGINE_DIR))
+.PHONY: build-app
+build-app: ## Build app CLI
+	rm -rf $(BUILD_PATH)/$(APPNAME)
+	$(call fn_build,$@,$(APPNAME),$(APP_DIR))
 
 # END of <build>
 
 # BEGIN of <build.linux>
 
 .PHONY: build.linux
-build.linux: build-engine.linux
+build.linux: build-app.linux
 
-.PHONY: build-engine.linux
-build-engine.linux: ## Build engine CLI for Linux
-	$(call fn_build_linux,$@,$(ENGINE_NAME),$(ENGINE_DIR))
+.PHONY: build-app.linux
+build-app.linux: ## Build app CLI for Linux
+	$(call fn_build_linux,$@,$(APP_NAME),$(APP_DIR))
 
 # END of <build.linux>
 
@@ -218,8 +218,8 @@ build-docker: build
       --build-arg GROUP_ID=$(GROUP_ID) \
       --build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" \
       --build-arg GIT_USER_NAME="$(GIT_USER_NAME)" \
-	  -t $(ENGINE_DOCKER_IMAGE):$(VERSION) -t $(ENGINE_DOCKER_IMAGE):latest .
-	@echo docker build of image $(ENGINE_DOCKER_IMAGE):$(VERSION) complete
+	  -t $(APP_DOCKER_IMAGE):$(VERSION) -t $(APP_DOCKER_IMAGE):latest .
+	@echo docker build of image $(APP_DOCKER_IMAGE):$(VERSION) complete
 
 
 .PHONY: work-local
@@ -265,3 +265,51 @@ stop:
 
 
 # for BRANCH in $(git branch | grep AI); do git branch -D $BRANCH; done
+
+# Build for all supported platforms
+.PHONY: all
+all: clean windows macos linux
+
+# Build for Windows (various architectures)
+.PHONY: windows
+windows:
+	@echo "Building for Windows/amd64..."
+	GOOS=windows GOARCH=amd64 go build -o $(BUILD_PATH)/$(APPNAME)_windows_amd64.exe $(MAIN_PATH)
+	@echo "Building for Windows/386..."
+	GOOS=windows GOARCH=386 go build -o $(BUILD_PATH)/$(APPNAME)_windows_386.exe $(MAIN_PATH)
+	@echo "Building for Windows/arm64..."
+	GOOS=windows GOARCH=arm64 go build -o $(BUILD_PATH)/$(APPNAME)_windows_arm64.exe $(MAIN_PATH)
+
+# Build for MacOS (various architectures)
+.PHONY: macos
+macos:
+	@echo "Building for MacOS/amd64..."
+	GOOS=darwin GOARCH=amd64 go build -o $(BUILD_PATH)/$(APPNAME)_darwin_amd64 $(MAIN_PATH)
+	@echo "Building for MacOS/arm64..."
+	GOOS=darwin GOARCH=arm64 go build -o $(BUILD_PATH)/$(APPNAME)_darwin_arm64 $(MAIN_PATH)
+
+# Build for Linux (various architectures)
+.PHONY: linux
+linux:
+	@echo "Building for Linux/amd64..."
+	GOOS=linux GOARCH=amd64 go build -o $(BUILD_PATH)/$(APPNAME)_linux_amd64 $(MAIN_PATH)
+	@echo "Building for Linux/386..."
+	GOOS=linux GOARCH=386 go build -o $(BUILD_PATH)/$(APPNAME)_linux_386 $(MAIN_PATH)
+	@echo "Building for Linux/arm64..."
+	GOOS=linux GOARCH=arm64 go build -o $(BUILD_PATH)/$(APPNAME)_linux_arm64 $(MAIN_PATH)
+	@echo "Building for Linux/arm..."
+	GOOS=linux GOARCH=arm go build -o $(BUILD_PATH)/$(APPNAME)_linux_arm $(MAIN_PATH)
+
+# Create compressed archives for distribution
+.PHONY: dist
+dist: all
+	@echo "Creating distribution archives..."
+	cd $(BUILD_PATH) && tar -czvf $(APPNAME)_linux_amd64.tar.gz $(APPNAME)_linux_amd64
+	cd $(BUILD_PATH) && tar -czvf $(APPNAME)_linux_386.tar.gz $(APPNAME)_linux_386
+	cd $(BUILD_PATH) && tar -czvf $(APPNAME)_linux_arm64.tar.gz $(APPNAME)_linux_arm64
+	cd $(BUILD_PATH) && tar -czvf $(APPNAME)_linux_arm.tar.gz $(APPNAME)_linux_arm
+	cd $(BUILD_PATH) && tar -czvf $(APPNAME)_darwin_amd64.tar.gz $(APPNAME)_darwin_amd64
+	cd $(BUILD_PATH) && tar -czvf $(APPNAME)_darwin_arm64.tar.gz $(APPNAME)_darwin_arm64
+	cd $(BUILD_PATH) && zip $(APPNAME)_windows_amd64.zip $(APPNAME)_windows_amd64.exe
+	cd $(BUILD_PATH) && zip $(APPNAME)_windows_386.zip $(APPNAME)_windows_386.exe
+	cd $(BUILD_PATH) && zip $(APPNAME)_windows_arm64.zip $(APPNAME)_windows_arm64.exe
