@@ -1,10 +1,24 @@
 # Quick Start
 
+Please choose a project folder to be used as config and data storage purposes. It will be the main directory with all execution happens.
+
+Please make sure that this path is not under exisitng git repo beause we need to init a new git repo here.
+
 We will create new `andai` project config folder in `/tmp/test` (use any folder you like),
 copy configuration files from [config_template/](../config_template/) folder and edit them.
 
+`test` is the root folder for configuration and `test-repo` will be used as a git repository for code generation.
+
 ```bash
 mkdir /tmp/test ; cd /tmp/test # or any other folder you like
+
+mkdir /test-repo ; cd /test-repo # or any other folder you like
+
+git init
+
+echo "This is the code repo" > README.md
+
+git commit -am "Created with quickstart script"
 
 # Download configuration files
 wget https://raw.githubusercontent.com/andrejsstepanovs/andai/refs/heads/main/docs/config_template/.andai.aider.yaml
@@ -13,7 +27,7 @@ wget https://raw.githubusercontent.com/andrejsstepanovs/andai/refs/heads/main/do
 wget https://raw.githubusercontent.com/andrejsstepanovs/andai/refs/heads/main/docs/config_template/.redmine.env
 
 # Check that files are there
-➜  test tree -a /tmp/test
+➜  ls -la /tmp/test
 /tmp/test
 ├── .andai.aider.yaml
 ├── .andai.project.yaml
