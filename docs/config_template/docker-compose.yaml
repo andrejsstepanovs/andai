@@ -10,7 +10,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./database:/var/lib/mysql
+      - mariadb_data:/var/lib/mysql
     command:
       - mariadbd
       - --transaction-isolation=READ-COMMITTED
@@ -35,3 +35,11 @@ services:
     volumes: *project-volumes
     depends_on:
       - database
+
+volumes:
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/database
+      o: bind
