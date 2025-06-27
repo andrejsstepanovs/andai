@@ -25,12 +25,6 @@ func newPingAllCommand(deps internal.DependenciesLoader) *cobra.Command {
 			}
 			log.Println("Git Repo OK")
 
-			err = pingTree()
-			if err != nil {
-				return err
-			}
-			log.Println("Tree command OK")
-
 			err = pingDB(redmine)
 			if err != nil {
 				return err

@@ -19,7 +19,6 @@ func SetupPingCmd(deps internal.DependenciesLoader) *cobra.Command {
 		newLLMPingCommand(deps),
 		newPingAiderCommand(deps),
 		newGitPingCommand(deps),
-		newTreePingCommand(),
 	)
 
 	return cmd
