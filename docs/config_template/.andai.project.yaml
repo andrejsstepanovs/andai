@@ -81,6 +81,9 @@ coding_agents:
     config: "/tmp/test/.andai.aider.yaml" # configure aider model in that file                            # <-- change path (full) to your .andai.aider.yaml file
     config_fallback: "/tmp/test/.andai.aider.fallback.yaml" # configure fallback aider model in that file # <-- change path (full) to your .andai.aider.fallback.yaml file (can be the same as coding_agents.aider.config)
     # model_metadata_file: "/tmp/test/.andai.aider.model.json" # https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json # Optional, create target config file and change path if you want to use it.
+    # api_key is optional as it will be taken from .andai.aider.yaml file and this is override to set --openai-api-key=sk-1111 if there is a need to use custom env variable or hardcode.
+    # api_key: "sk-1234"
+    # api_key: "os.environ/YOUR_ENV_VAR_API_KEY"
     task_summary_prompt: |
       I need you to REFORMAT the technical information above into a structured developer task.
       DO NOT implement any technical solution - your role is ONLY to organize and present the information.

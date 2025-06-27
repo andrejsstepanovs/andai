@@ -101,6 +101,9 @@ func AiderCommand(contextFile string, step settings.Step, config settings.Aider)
 	} else {
 		params["--message"] = step.Prompt.ForCli()
 	}
+	if config.APIKey != "" {
+		params["--openai-api-key"] = config.APIKey.String()
+	}
 
 	if config.ModelMetadataFile != "" {
 		params["--model-metadata-file"] = config.ModelMetadataFile // https://aider.chat/docs/config/adv-model-settings.html

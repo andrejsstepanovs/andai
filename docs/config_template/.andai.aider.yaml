@@ -8,7 +8,7 @@ cache-prompts: true
 # Custom
 #model: openai/openai/gpt-4.1
 #weak-model: openai/gemini/gemini-2.0-flash-001
-#openai-api-key: "sk-****"
+#openai-api-key: "sk-****"    # If you need env var here, then this can be done by overriding this value in .andai.project.yaml file using api_key parameter. See docs for details.
 #openai-api-base: https://CUSTOM_BASE_URL/v1/
 
 # Ollama
