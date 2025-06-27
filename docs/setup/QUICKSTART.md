@@ -13,7 +13,7 @@ wget https://raw.githubusercontent.com/andrejsstepanovs/andai/refs/heads/main/do
 wget https://raw.githubusercontent.com/andrejsstepanovs/andai/refs/heads/main/docs/config_template/.redmine.env
 
 # Check that files are there
-➜  test tree -a /tmp/test
+➜  ls -la /tmp/test
 /tmp/test
 ├── .andai.aider.yaml
 ├── .andai.project.yaml
