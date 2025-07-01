@@ -28,7 +28,7 @@ func BuildPromptTextTmpFile(content string) (string, error) {
 func GetContents(filename string) (string, error) {
 	file, err := os.ReadFile(filename) // nolint:gosec
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to read file %q err: %v", filename, err)
 	}
 	return string(file), nil
 }

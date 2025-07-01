@@ -210,6 +210,9 @@ func (i *Routine) executeCommand(workflowStep settings.Step, contextFile string)
 			return i.commitUncommitted(string(step.Prompt))
 		},
 		"context-commits": func(_ settings.Step, contextFile string) (exec.Output, error) {
+			if contextFile == "" {
+				return exec.Output{}, nil
+			}
 			commits, err := i.findMentionedCommits(contextFile)
 			if err != nil {
 				log.Printf("Failed to find mentioned commits: %v", err)
@@ -222,6 +225,9 @@ func (i *Routine) executeCommand(workflowStep settings.Step, contextFile string)
 			return i.findCommitPatches(commits)
 		},
 		"context-files": func(_ settings.Step, contextFile string) (exec.Output, error) {
+			if contextFile == "" {
+				return exec.Output{}, nil
+			}
 			return i.findMentionedFiles(contextFile)
 		},
 		"ai": func(_ settings.Step, contextFile string) (exec.Output, error) {

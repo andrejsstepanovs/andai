@@ -27,8 +27,8 @@ Install it and make sure it is available in your PATH. No other configuration is
 as most of the `aider` configuration will be done via command line arguments.
 
 ```shell
-uv tool install aider
-uv tool install aider-chat
+# https://aider.chat/docs/install.html#install-with-uv
+uv tool install --force --python python3.12 --with pip aider-chat@latest
 ```
 
 If installed with uv, adier & aider-chat will be available on PATH by default.

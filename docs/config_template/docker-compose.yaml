@@ -18,7 +18,7 @@ services:
       - --collation-server=utf8mb4_unicode_ci
 
   redmine:
-    image: sameersbn/redmine:6.0.4-1
+    image: sameersbn/redmine:6.0.5
     # (!) If you are running ARM (Mac), then
     # you will need to build this image yourself (or ask https://github.com/sameersbn/docker-redmine owner to include it in docker hub)
     #
@@ -26,7 +26,7 @@ services:
     # cd /tmp
     # git clone https://github.com/sameersbn/docker-redmine.git
     # cd docker-redmine
-    # docker build -t sameersbn/redmine:6.0.4-1 .
+    # docker build -t sameersbn/redmine:6.0.5 .
 
     env_file:
       - .redmine.env
