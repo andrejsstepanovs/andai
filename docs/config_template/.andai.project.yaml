@@ -160,6 +160,7 @@ projects:
         success_if_no_output: True
       - name: "list-code-files"
         command: [ "find", ".", "-print" ]
+        # command: ["tree", "-ift"] # use this if you have tree command installed, it works better
         ignore_err: True
         success_if_no_output: True
 
@@ -247,7 +248,7 @@ workflow:
               action: list-code-files
               prompt: |
                 Analyze these code files and identify only the 2-6 most critical files
-                a developer must modify or understand to complete this specific task.
+                a developer must reference or modify or understand to complete this specific task.
                 Answer with a list of relative code file paths. Do not explain file or what it contains, just list them.
                 Include only files directly related to the task - exclude tangential, binary, or reference files.
               comment: true
@@ -331,6 +332,14 @@ workflow:
         Backlog: {steps: [{command: next}]}
         Think:
           steps:
+            - command: project-cmd
+              context: [ "project", "wiki", "parents", "ticket", "comments" ]
+              action: list-code-files
+              prompt: |
+                Analyze these code files and identify only the 2-6 files
+                a developer must know about for info, reference or modify to complete this task.
+                Answer with a list of relative code file paths. Do not explain file or what it contains, just list them.
+                Include only files directly related to the task - exclude tangential, binary, or reference files.
             - command: context-commits
               context: [ "comments", "parent-comments", "siblings-comments" ]
               remember: True
