@@ -107,7 +107,7 @@ func (c *Model) APIGetIssueSiblings(issue redmine.Issue) ([]redmine.Issue, error
 		return []redmine.Issue{}, nil
 	}
 
-	children, err := c.APIGetChildren(*parent)
+	children, err := c.DBGetChildren(*parent)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get redmine children issue err: %v", err)
 	}
@@ -118,6 +118,7 @@ func (c *Model) APIGetIssueSiblings(issue redmine.Issue) ([]redmine.Issue, error
 		}
 		siblings = append(siblings, child)
 	}
+	log.Printf("Found %d siblings", len(siblings))
 
 	siblings = sortDescID(siblings)
 	return siblings, nil

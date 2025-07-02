@@ -222,6 +222,7 @@ func (i *Routine) executeCommand(workflowStep settings.Step, contextFile string)
 				log.Println("No commits found in context file")
 				return exec.Output{Stdout: "No recent commits found"}, nil
 			}
+			log.Printf("Found %d commits in sibling comments: %v", len(commits), commits)
 			return i.findCommitPatches(commits)
 		},
 		"context-files": func(_ settings.Step, contextFile string) (exec.Output, error) {
@@ -266,6 +267,8 @@ func (i *Routine) findMentionedFiles(contextFile string) (exec.Output, error) {
 
 	// TODO ignore go.mod and go.sum - use config
 	i.contextFiles = foundFiles.GetAbsolutePaths()
+
+	log.Printf("Located %d files in context: %v", len(i.contextFiles), i.contextFiles)
 
 	return exec.Output{Stdout: foundFiles.String()}, nil
 }
