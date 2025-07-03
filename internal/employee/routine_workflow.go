@@ -338,8 +338,16 @@ func (i *Routine) runProjectCmd(workflowStep settings.Step, contextFile string) 
 	}
 
 	if workflowStep.Prompt != "" {
+		var contextText = ""
+		if contextFile != "" {
+			contextText, err = file.GetContents(contextFile)
+			if err != nil {
+				return ret, err
+			}
+		}
+
 		f := "# Context:\n%s\n\n# Command `%s`:\n%s\n\n# Your task:\n%s"
-		prompt := fmt.Sprintf(f, contextFile, ret.Command, ret.AsPrompt(), workflowStep.Prompt)
+		prompt := fmt.Sprintf(f, contextText, ret.Command, ret.AsPrompt(), workflowStep.Prompt)
 		promptFile, err := file.BuildPromptTextTmpFile(prompt)
 		if err != nil {
 			log.Printf("Failed to build prompt text tmp file: %v", err)
