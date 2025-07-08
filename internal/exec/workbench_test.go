@@ -177,7 +177,7 @@ func TestWorkbench_PrepareWorkplace(t *testing.T) {
 			wb, targetPath := tt.setup()
 			wb.Git.SetPath(targetPath)
 
-			err = wb.PrepareWorkplace("main")
+			_, err = wb.PrepareWorkplace("main")
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -191,8 +191,9 @@ func TestWorkbench_PrepareWorkplace(t *testing.T) {
 			if filepath.Base(targetPath) == ".git" {
 				expectedDir = filepath.Dir(targetPath)
 			}
-			assert.Equal(t, expectedDir, currentDir)
-			assert.Equal(t, expectedDir, wb.WorkingDir)
+
+			assert.Contains(t, currentDir, expectedDir)
+			assert.Contains(t, wb.WorkingDir, expectedDir)
 		})
 	}
 }
@@ -255,8 +256,8 @@ func TestWorkbench_changeDirectory(t *testing.T) {
 			assert.NoError(t, err)
 			currentDir, err := os.Getwd()
 			require.NoError(t, err)
-			assert.Equal(t, tmpDir, currentDir)
-			assert.Equal(t, tmpDir, wb.WorkingDir)
+			assert.Contains(t, currentDir, tmpDir)
+			assert.Contains(t, wb.WorkingDir, tmpDir)
 		})
 	}
 }

@@ -36,10 +36,15 @@ func (i *Routine) ExecuteWorkflow() (bool, error) {
 
 	if needSetup {
 		parentBranches := i.getTargetBranch()
-		err := i.workbench.PrepareWorkplace(parentBranches...)
+		_, err := i.workbench.PrepareWorkplace(parentBranches...)
 		if err != nil {
 			log.Printf("Failed to prepare workplace: %v", err)
 			return false, err
+		}
+
+		err = i.saveCustomFieldLastCommitSHA(model.CustomFieldParentSha)
+		if err != nil {
+			return false, fmt.Errorf("failed to save parent SHA: %v", err)
 		}
 	}
 
@@ -73,6 +78,63 @@ func (i *Routine) ExecuteWorkflow() (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (i *Routine) saveCustomFieldLastCommitSHA(fieldName string) error {
+	var customFieldID int
+	for _, issueField := range i.issue.CustomFields {
+		if issueField.Name == fieldName {
+			customFieldID = issueField.Id
+			if issueField.Value != nil && issueField.Value.(string) != "" {
+				return nil // No need to update if the field already has a value
+			}
+		}
+	}
+	// If custom field ID is not found in the issue, find it from custom field definitions
+	if customFieldID == 0 {
+		fields, err := i.model.API().CustomFields()
+		if err != nil {
+			return fmt.Errorf("failed to get custom fields: %v", err)
+		}
+		for _, field := range fields {
+			if field.Name == fieldName {
+				customFieldID = field.Id
+				break
+			}
+		}
+	}
+
+	customValueID, err := i.model.DBFindCustomFieldValueID(i.issue.Id, customFieldID)
+	if err != nil {
+		return fmt.Errorf("failed to find custom field value ID: %v", err)
+	}
+
+	// Get the last commit SHA and save it to the custom field
+	currentCommitSku, err := i.workbench.GetLastCommit()
+	if err != nil {
+		return fmt.Errorf("failed to get last commit: %v", err)
+	}
+
+	if customValueID > 0 {
+		//log.Printf("Found custom field value ID: %v", customValueID)
+		err = i.model.DBUpdateCustomFieldValue(customValueID, currentCommitSku)
+	} else {
+		//log.Printf("No custom field value ID: %v", customFieldID)
+		err = i.model.DBInsertCustomFieldValue(i.issue.Id, customFieldID, currentCommitSku)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	// reload issue to ensure the custom field is updated
+	issue, err := i.model.API().Issue(i.issue.Id)
+	if err != nil {
+		return fmt.Errorf("failed to reload issue after saving custom field: %v", err)
+	}
+	i.issue = *issue
+
+	return nil
 }
 
 // executeWorkflowStep processes a single workflow step for an employee's task.
@@ -677,6 +739,11 @@ func (i *Routine) mergeIntoParent(deleteBranchAfterMerge bool) (exec.Output, err
 	parentBranches := i.getTargetBranch()
 	parentBranchName := parentBranches[len(parentBranches)-1] // last is our first parent
 
+	err := i.saveCustomFieldLastCommitSHA(model.CustomFieldLastSha)
+	if err != nil {
+		return exec.Output{}, fmt.Errorf("failed to save last SHA: %v", err)
+	}
+
 	skipMerge := i.workbench.GetIssueSkipMergeOverride(i.issue)
 	if skipMerge {
 		msg := fmt.Sprintf("Skipped merge (because %q = 1) of current branch: %q into parent branch: %q", model.CustomFieldSkipMerge, currentBranchName, parentBranchName)
@@ -690,7 +757,7 @@ func (i *Routine) mergeIntoParent(deleteBranchAfterMerge bool) (exec.Output, err
 
 	log.Printf("Merging current branch: %q into parent branch: %q", currentBranchName, parentBranchName)
 
-	err := i.workbench.CheckoutBranch(parentBranchName)
+	_, err = i.workbench.CheckoutBranch(parentBranchName)
 	if err != nil {
 		log.Printf("Failed to checkout parent branch: %v", err)
 		return exec.Output{}, err

@@ -6,5 +6,7 @@ type CustomField struct {
 	Type        string
 	Default     string
 	IsFilter    int
+	Visible     int
+	Editable    int
 	FormatStore []string
 }

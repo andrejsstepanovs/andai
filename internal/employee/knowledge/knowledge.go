@@ -329,7 +329,7 @@ func (k Knowledge) getChangedFiles() (string, error) {
 	if len(k.ClosedChildrenIDs) == 0 {
 		return "", nil
 	}
-	commits, err := k.Workbench.GetBranchCommits(len(k.ClosedChildrenIDs))
+	commits, err := k.Workbench.GetBranchCommits(len(k.ClosedChildrenIDs)) // TODO use custom fields to retrieve commits
 	if err != nil {
 		log.Printf("Failed to get branch commits: %v", err)
 		return "", err

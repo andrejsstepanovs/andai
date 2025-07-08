@@ -211,18 +211,20 @@ func (g *Git) BranchExists(branchName string) (bool, error) {
 	return exists, err
 }
 
-func (g *Git) ExecCheckoutBranch(branchName string) error {
+// ExecCheckoutBranch checks out a branch or creates it if it does not exist.
+// Returns true if new branch was created, false if it already existed.
+func (g *Git) ExecCheckoutBranch(branchName string) (bool, error) {
 	respGit, err := Exec("git", time.Second*10, "branch")
 	if err != nil {
 		log.Printf("stderr: %s", respGit.Stderr)
-		return fmt.Errorf("failed to check if branch exists err: %v", err)
+		return false, fmt.Errorf("failed to check if branch exists err: %v", err)
 	}
 	branches := strings.Split(respGit.Stdout, "\n")
 	branchExists := false
 	for _, branch := range branches {
 		if strings.HasPrefix(branch, "*") && strings.TrimSpace(strings.TrimPrefix(branch, "*")) == branchName {
 			log.Printf("Already on branch %s\n", branchName)
-			return nil
+			return false, nil
 		}
 		if strings.TrimSpace(branch) == branchName {
 			branchExists = true
@@ -241,6 +243,8 @@ func (g *Git) ExecCheckoutBranch(branchName string) error {
 		checkoutResp, checkoutErr = Exec("git", time.Second*10, "checkout", "-b", branchName)
 	}
 
+	branchCreated := !branchExists
+
 	if checkoutErr != nil {
 		exec, errDiff := Exec("git", time.Second*10, "diff", "--name-only")
 		if errDiff == nil && exec.Stdout != "" {
@@ -249,10 +253,10 @@ func (g *Git) ExecCheckoutBranch(branchName string) error {
 				for i, file := range files {
 					log.Printf("Unmerged file %d: %s", i+1, file)
 				}
-				return fmt.Errorf("failed to checkout branch. %d unmerged files detected in branch: %s", len(files), branchName)
+				return branchCreated, fmt.Errorf("failed to checkout branch. %d unmerged files detected in branch: %s", len(files), branchName)
 			}
 		}
-		return fmt.Errorf("failed to checkout branch err: %v", checkoutErr)
+		return branchCreated, fmt.Errorf("failed to checkout branch err: %v", checkoutErr)
 	}
 
 	if checkoutResp.Stderr != "" {
@@ -262,7 +266,7 @@ func (g *Git) ExecCheckoutBranch(branchName string) error {
 		log.Printf("git: %s", checkoutResp.Stdout)
 	}
 
-	return nil
+	return branchCreated, nil
 }
 
 // CheckoutBranch checks out a branch or creates if missing.

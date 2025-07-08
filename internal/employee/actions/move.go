@@ -22,8 +22,12 @@ func TransitionToNextStatus(workflow settings.Workflow, model *model.Model, issu
 	}
 
 	//log.Printf("Next issue status (%d): %s\n", issue.Id, nextIssueStatus.Name)
+	updatedIssue, err := model.API().Issue(issue.Id) // load issue again to get the latest data, because Transition will update
+	if err != nil {
+		return fmt.Errorf("failed to reload issue after saving custom field: %v", err)
+	}
 
-	err = model.Transition(issue, nextIssueStatus)
+	err = model.Transition(*updatedIssue, nextIssueStatus)
 	if err != nil {
 		return fmt.Errorf("failed to transition issue err: %v", err)
 	}

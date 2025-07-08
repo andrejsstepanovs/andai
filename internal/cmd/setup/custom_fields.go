@@ -43,6 +43,8 @@ func setupCustomFields(mod *model.Model) error {
 				"",
 			},
 			IsFilter: 1,
+			Visible:  1,
+			Editable: 1,
 		},
 		{
 			Name:        model.CustomFieldSkipMerge,
@@ -55,6 +57,36 @@ func setupCustomFields(mod *model.Model) error {
 				"",
 			},
 			IsFilter: 1,
+			Visible:  1,
+			Editable: 1,
+		},
+		{
+			Name:        model.CustomFieldParentSha,
+			Description: "Git SHA of parent task. Auto set as soon as branch is created.",
+			Type:        "string",
+			Default:     "",
+			FormatStore: []string{
+				"text_formatting: ''",
+				"url_pattern: ''",
+				"",
+			},
+			IsFilter: 1,
+			Visible:  0,
+			Editable: 1,
+		},
+		{
+			Name:        model.CustomFieldLastSha,
+			Description: "Git SHA of last commit in branch. Auto set as soon as branch is merged.",
+			Type:        "string",
+			Default:     "",
+			FormatStore: []string{
+				"text_formatting: ''",
+				"url_pattern: ''",
+				"",
+			},
+			IsFilter: 1,
+			Visible:  0,
+			Editable: 1,
 		},
 	}
 

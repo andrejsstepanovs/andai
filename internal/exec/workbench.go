@@ -24,7 +24,7 @@ type GitInterface interface {
 	GetLastCommitHash() (string, error)
 	BranchName(issueID int) string
 	CheckoutBranch(name string) error
-	ExecCheckoutBranch(name string) error
+	ExecCheckoutBranch(name string) (bool, error)
 	GetPath() string
 	SetPath(path string)
 	Reload()
@@ -42,35 +42,35 @@ func (i *Workbench) GoToRepo() error {
 	return nil
 }
 
-func (i *Workbench) PrepareWorkplace(targetBranches ...string) error {
+func (i *Workbench) PrepareWorkplace(targetBranches ...string) (bool, error) {
 	err := i.GoToRepo()
 	if err != nil {
 		log.Printf("Failed to change directory: %v", err)
-		return err
+		return false, err
 	}
 
 	// start with first target branch and create new from it until we reach the issue branch
 	// this will always keep the issue branch up to date with the parent branches
 	for k, targetBranch := range targetBranches {
 		log.Printf("Checkout %d target branch %q", k+1, targetBranch)
-		err = i.CheckoutBranch(targetBranch)
+		_, err := i.CheckoutBranch(targetBranch)
 		if err != nil {
 			log.Printf("Prepare workplace: failed to checkout parent branch: %v", err)
-			return err
+			return false, err
 		}
 		i.Git.Reload()
 	}
 
 	branchName := i.GetIssueBranchName(i.Issue)
 	log.Printf("Now current branch %q", branchName)
-	err = i.CheckoutBranch(branchName)
+	created, err := i.CheckoutBranch(branchName)
 	if err != nil {
 		log.Printf("Prepare workplace: failed to checkout branch: %v", err)
-		return err
+		return false, err
 	}
 	i.Git.Reload()
 
-	return nil
+	return created, nil
 }
 
 func (i *Workbench) changeDirectory() error {
@@ -98,8 +98,29 @@ func (i *Workbench) changeDirectory() error {
 	return nil
 }
 
-func (i *Workbench) CheckoutBranch(branchName string) error {
+func (i *Workbench) CheckoutBranch(branchName string) (bool, error) {
 	return i.Git.ExecCheckoutBranch(branchName)
+}
+
+// GetIssueParentLastSha returns the parent and last git sha from issue custom fields.
+func (i *Workbench) GetIssueParentLastSha(issue redmine.Issue) (string, string) {
+	if issue.CustomFields == nil {
+		return "", ""
+	}
+	parentSha := ""
+	lastSha := ""
+	for _, field := range issue.CustomFields {
+		if field.Name == model.CustomFieldParentSha {
+			parentSha = field.Value.(string)
+		}
+		if field.Name != model.CustomFieldLastSha {
+			lastSha = field.Value.(string)
+		}
+		if parentSha != "" && lastSha != "" {
+			break
+		}
+	}
+	return parentSha, lastSha
 }
 
 // GetIssueBranchNameOverride in UI user can set branch name override. Use it if set.
@@ -154,6 +175,10 @@ func (i *Workbench) GetIssueBranchName(issue redmine.Issue) string {
 
 func (i *Workbench) DeleteBranch(branch string) error {
 	return i.Git.DeleteBranch(branch)
+}
+
+func (i *Workbench) GetLastCommits(count int) ([]string, error) {
+	return i.Git.GetLastCommits(count)
 }
 
 // GetLastCommit returns the last commit hash

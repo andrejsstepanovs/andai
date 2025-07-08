@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/andrejsstepanovs/andai/internal/exec"
+	model "github.com/andrejsstepanovs/andai/internal/redmine"
 )
 
 // CommitCommentFormat is the format for the commit comment
@@ -143,6 +144,7 @@ func (i *Routine) commentCurrentAboutMerge() error {
 	if i.parentExists() {
 		commentText = fmt.Sprintf("Merged #%d -> #%d - Branch %q -> %q", i.issue.Id, i.issue.Parent.Id, currentBranchName, parentBranchName)
 	}
+
 	err := i.AddComment(commentText)
 	if err != nil {
 		return fmt.Errorf("failed to add merge comment to issue: %v", err)
@@ -151,31 +153,79 @@ func (i *Routine) commentCurrentAboutMerge() error {
 }
 
 func (i *Routine) commentParentBranchDiff() error {
+	if !i.parentExists() {
+		return nil
+	}
+
+	parentSha := ""
+	lastSha := ""
+	for _, field := range i.issue.CustomFields {
+		if field.Name == model.CustomFieldParentSha {
+			parentSha = field.Value.(string)
+		}
+		if field.Name == model.CustomFieldLastSha {
+			lastSha = field.Value.(string)
+		}
+	}
+
+	if parentSha == "" || lastSha == "" || parentSha == lastSha {
+		return nil
+	}
+
+	parentBranches := i.getTargetBranch()
+	parentBranchName := parentBranches[len(parentBranches)-1]
+	currentBranchName := i.workbench.GetIssueBranchName(i.issue)
+
+	branchDiffURL := fmt.Sprintf("[Merge Diff: %s <- %s](/projects/%s/repository/%s/diff?rev=%s&rev_to=%s)", parentBranchName, currentBranchName, i.project.Identifier, i.project.Identifier, lastSha, parentSha)
+
+	existingComments, err := i.getParentComments()
+	if err != nil {
+		return fmt.Errorf("failed to get parent comments: %v", err)
+	}
+	for _, comment := range existingComments {
+		if comment.Text == branchDiffURL {
+			return nil
+		}
+	}
+
+	err = i.AddCommentToParent(branchDiffURL)
+	if err != nil {
+		return fmt.Errorf("failed to add merge comment to parent: %v", err)
+	}
+
+	{ // mention all in-between commits. will be useful for "context-commits" command later on.
+		allLastCommits, err := i.workbench.GetLastCommits(10)
+		if err != nil {
+			return fmt.Errorf("failed to get last commits: %v", err)
+		}
+
+		txt := make([]string, 0)
+		start := false
+		n := 0
+		for _, commit := range allLastCommits {
+			if commit == parentSha {
+				break
+			}
+			if commit == lastSha {
+				start = true
+			}
+			if start {
+				txt = append(txt, fmt.Sprintf(CommitCommentFormat, n+1, commit, i.project.Identifier, i.project.Identifier, commit, "code changes"))
+			}
+		}
+
+		if len(txt) == 0 {
+			log.Println("No commits to mention in parent branch diff comment")
+			return nil
+		}
+		commentText := fmt.Sprintf("### Commits in branch %q:\n%s\n\n### %s", currentBranchName, strings.Join(txt, "\n"), branchDiffURL)
+		err = i.AddComment(commentText)
+		if err != nil {
+			return fmt.Errorf("failed to add comment about commits in parent branch diff: %v", err)
+		}
+	}
+
 	return nil
-	//if !i.parentExists() {
-	//	return nil
-	//}
-	//
-	//// TODO. url is not working as expected.
-	//parentBranches := i.getTargetBranch()
-	//targetBranch := parentBranches[len(parentBranches)-1]
-	//branchDiffURL := fmt.Sprintf("[Git Diff: %s <-> %s](/projects/%s/repository/%s/diff?rev=%s&rev_to=%s)", targetBranch, i.projectCfg.FinalBranch, i.project.Identifier, i.project.Identifier, targetBranch, i.projectCfg.FinalBranch)
-	//
-	//existingComments, err := i.getParentComments()
-	//if err != nil {
-	//	return fmt.Errorf("failed to get parent comments: %v", err)
-	//}
-	//for _, comment := range existingComments {
-	//	if comment.Text == branchDiffURL {
-	//		return nil
-	//	}
-	//}
-	//
-	//err = i.AddCommentToParent(branchDiffURL)
-	//if err != nil {
-	//	return fmt.Errorf("failed to add merge comment to parent: %v", err)
-	//}
-	//return nil
 }
 
 func (i *Routine) commentParentAboutMerge() error {

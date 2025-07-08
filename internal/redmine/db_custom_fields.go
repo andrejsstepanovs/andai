@@ -16,6 +16,8 @@ const (
 	CustomFieldIssue     = "IssueCustomField"
 	CustomFieldBranch    = "Branch"
 	CustomFieldSkipMerge = "Skip merge"
+	CustomFieldParentSha = "Parent SHA"
+	CustomFieldLastSha   = "Last SHA"
 )
 
 func (c *Model) DBSaveCustomFields(customFields []models.CustomField, current []redmine.CustomField) ([]int64, error) {
@@ -57,7 +59,7 @@ func (c *Model) DBInsertCustomField(customFieldType string, field models.CustomF
 
 	queryInsertCustomField := fmt.Sprintf("INSERT INTO custom_fields " +
 		"(`type`, `name`, field_format, possible_values, `regexp`, min_length, max_length, is_required, is_for_all, is_filter, position, searchable, default_value, editable, visible, multiple, format_store, description) " +
-		"VALUES (?, ?,     ?,           NULL,            '',       NULL,       NULL,       ?,           1,          ?,         ?,        0,          ?,             1,        1,       0,        ?,            ?)")
+		"VALUES (?, ?,     ?,           NULL,            '',       NULL,       NULL,       ?,           1,          ?,         ?,        0,          ?,             ?,        ?,       0,        ?,            ?)")
 
 	result, err := c.execDML(
 		queryInsertCustomField,
@@ -68,6 +70,8 @@ func (c *Model) DBInsertCustomField(customFieldType string, field models.CustomF
 		field.IsFilter,    // is_filter
 		position,          // position
 		field.Default,     // default_value
+		field.Editable,    // editable
+		field.Visible,     // visible
 		formatStoreStr,    // format_store
 		field.Description, // description
 	)
